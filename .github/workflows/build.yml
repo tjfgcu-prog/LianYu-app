@@ -18,8 +18,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Prepare fake keystore
-        run: cp fake.keystore release.keystore
+      - name: Generate matching debug keystore
+        run: keytool -genkeypair -v -keystore release.keystore -alias your_alias -keyalg RSA -keysize 2048 -validity 10000 -storepass debug_password_placeholder -keypass debug_password_placeholder -dname "CN=LianYu Dev, OU=Dev, O=Dev, L=Dev, S=Dev, C=CN"
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
