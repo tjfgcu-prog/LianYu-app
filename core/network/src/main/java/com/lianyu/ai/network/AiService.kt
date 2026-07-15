@@ -810,7 +810,7 @@ class AiService(context: Context) : AiServiceProvider {
         // PARTNER 模式下，读取用户配置密钥（强制刷新）
         if (keysToTry.isEmpty() && config.provider == ApiProvider.PARTNER) {
             SecureLog.d("AiService", "PARTNER queryBalance: fetching keys from remote server...")
-            val remoteKeys = com.lianyu.ai.common.RemoteKeyProvider.fetchKeysAsync(appContext, forceRefresh = true)
+            val remoteKeys = emptyList<String>()
             if (remoteKeys.isNotEmpty()) {
                 keysToTry = remoteKeys
                 SecureLog.d("AiService", "Using ${remoteKeys.size} remote keys for balance query")
@@ -1355,7 +1355,7 @@ $chatText
         val (startIdx, keys) = selectApiKey(config)
         if (keys.isEmpty() && config.provider == ApiProvider.PARTNER) {
             SecureLog.d("AiService", "PARTNER keys empty, fetching from RemoteKeyProvider...")
-            val remoteKeys = com.lianyu.ai.common.RemoteKeyProvider.fetchKeysAsync(appContext, forceRefresh = false)
+            val remoteKeys = emptyList<String>()
             if (remoteKeys.isNotEmpty()) {
                 SecureLog.d("AiService", "Fetched ${remoteKeys.size} remote keys for PARTNER send path")
                 return 0 to remoteKeys
