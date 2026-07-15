@@ -18,6 +18,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Prepare fake keystore
+        run: cp fake.keystore release.keystore
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
