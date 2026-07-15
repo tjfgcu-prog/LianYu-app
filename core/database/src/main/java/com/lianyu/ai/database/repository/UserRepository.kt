@@ -36,7 +36,7 @@ class UserRepository(context: Context) {
     }
 
     fun updateSelectedRole(role: CompanionRole) {
-        prefs.edit { putString("selected_role", role.name) }
+        prefs.edit(commit = true) { putString("selected_role", role.name) }
         _selectedRole.value = role
     }
 }
