@@ -3,7 +3,7 @@ package com.lianyu.ai.push
 import android.app.Application
 import com.lianyu.ai.common.RomUtils
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.push.vendor.HuaweiPushInitializer
+
 import com.lianyu.ai.push.vendor.OppoPushInitializer
 import com.lianyu.ai.push.vendor.VivoPushInitializer
 import com.lianyu.ai.push.vendor.XiaomiPushInitializer
@@ -25,7 +25,7 @@ object PushManager {
             RomUtils.isOppo -> OppoPushInitializer.register(application)
             RomUtils.isVivo -> VivoPushInitializer.register(application)
             RomUtils.isXiaomi -> XiaomiPushInitializer.register(application)
-            RomUtils.isHuawei -> HuaweiPushInitializer.register(application)
+            
             else -> SecureLog.d(TAG, "No vendor push match for this device")
         }
     }
