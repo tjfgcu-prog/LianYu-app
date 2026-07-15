@@ -279,19 +279,9 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // === 第六组：关于与支持 ===
-        SolidMenuGroup(
-            items = listOf(
-                MenuItemData(Icons.Filled.Groups, stringResource(R.string.dev_team), stringResource(R.string.dev_team_desc), onTeamClick),
-                MenuItemData(Icons.Filled.Favorite, stringResource(R.string.support_us), stringResource(R.string.support_us_desc), onSupportClick),
-                MenuItemData(Icons.Filled.ThumbUp, stringResource(R.string.thanks_title), stringResource(R.string.thanks_card_desc), onThanksClick),
-                MenuItemData(Icons.Filled.Info, stringResource(R.string.about_app), stringResource(R.string.about_app_desc), onAboutClick)
-            ),
-            isVisible = isVisible, delayMillis = 320
-        )
+        
 
-        Spacer(modifier = Modifier.height(80.dp))
-    }
+        
 
     if (showBackgroundDialog) {
         ChatBackgroundPickerDialog(
