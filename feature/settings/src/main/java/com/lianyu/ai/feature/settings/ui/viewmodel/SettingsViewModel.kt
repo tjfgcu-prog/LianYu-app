@@ -447,9 +447,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 if (ok) {
                     val clientId = handshakeJson.optString("client_id").ifEmpty { null }
                     val sessionToken = handshakeJson.optString("session_token").ifEmpty { null }
-                    if (clientId != null && sessionToken != null) {
-                        com.lianyu.ai.common.RemoteKeyProvider.storeHandshakeResult(getApplication(), handshakeJson)
-                    }
+                    
                     val groupName = handshakeJson.optString("group_name").ifEmpty { null }
                     val remaining = handshakeJson.optDouble("remaining", 0.0)
                     val daily = if (handshakeJson.has("daily_quota_limit") && !handshakeJson.isNull("daily_quota_limit"))
@@ -498,7 +496,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                         val rpm = handshakeJson.optInt("rpm_limit", 0)
                         val disc = handshakeJson.optDouble("discount", 1.0)
 
-                        com.lianyu.ai.common.RemoteKeyProvider.storeHandshakeResult(getApplication(), handshakeJson)
+                        
                         updateConnectionStatus(key, ConnectionResult(
                             ConnectionStatus.CONNECTED, latency, null, null,
                             groupName, remaining, daily, rpm, disc, clientId
@@ -774,7 +772,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 var keyToUse = apiKey
                 if (resolvedProvider == ApiProvider.PARTNER && keyToUse.isBlank()) {
                     SecureLog.d("SettingsViewModel", "PARTNER fetchModels: fetching keys from remote server...")
-                    val remoteKeys = com.lianyu.ai.common.RemoteKeyProvider.fetchKeysAsync(getApplication(), forceRefresh = true)
+                    val remoteKeys = emptyList<String>()
                     if (remoteKeys.isNotEmpty()) {
                         keyToUse = remoteKeys.first()
                         SecureLog.d("SettingsViewModel", "Using remote key for fetchModels: ${keyToUse.take(8)}...")
