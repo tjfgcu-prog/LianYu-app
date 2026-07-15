@@ -22,7 +22,8 @@ android {
         // Developer: 苏苏 / Organization: LianYu
 
         // Force multi-DEX output
-        multiDexEnabled = true
+        multiDexEnabled = true
+
 
         manifestPlaceholders[
             "VIVO_PUSH_API_KEY"] = project.findProperty("VIVO_PUSH_API_KEY")?.toString() ?: ""
@@ -191,8 +192,7 @@ dependencies {
     if (vivoAar.exists()) {
         implementation(files(vivoAar))
     }
-    // 华为 HMS Push 使用 Maven 依赖
-    implementation(libs.huawei.hms.push)
+    
 
     // 小米推送：请从 https://dev.mi.com/ 下载 aar 放到 app/libs/xiaomi-push-x.x.x.aar，
     // 然后取消下面注释并同步 Gradle。
