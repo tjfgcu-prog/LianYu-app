@@ -75,14 +75,7 @@ android {
             resValue("string", "app_name", "LianYu")
         }
     }
-    sourceSets {
-        getByName("debug") {
-            manifest.srcFile("src/shell/AndroidManifest.xml")
-        }
-        getByName("release") {
-            manifest.srcFile("src/shell/AndroidManifest.xml")
-        }
-    }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
