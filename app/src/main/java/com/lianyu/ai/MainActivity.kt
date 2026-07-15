@@ -139,18 +139,20 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         showRoleSelection -> {
-                            RoleSelectionScreen(
-                                onRoleSelected = { role ->
-                                    profileViewModel.switchRole(role) {
-                                        showRoleSelection = false
-                                    }
-                                },
-                                onSkip = {
-                                    profileViewModel.switchRole(CompanionRole.GIRLFRIEND) {
-                                        showRoleSelection = false
-                                    }
-                                }
-                            )
+    RoleSelectionScreen(
+        onRoleSelected = { role ->
+            userPrefs.edit(commit = true) { putString("selected_role", role.name) }
+            profileViewModel.switchRole(role) {
+                showRoleSelection = false
+            }
+        },
+        onSkip = {
+            userPrefs.edit(commit = true) { putString("selected_role", CompanionRole.GIRLFRIEND.name) }
+            profileViewModel.switchRole(CompanionRole.GIRLFRIEND) {
+                showRoleSelection = false
+            }
+        }
+    )
                         }
                         !isServiceReady -> {
                             // 等待跨模块依赖注册中心就绪，避免冷启动后快速进入
