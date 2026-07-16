@@ -60,7 +60,7 @@ class MessagePipelineRunner(
                 // 本地 GGUF 模型会占满 CPU，第三层贝叶斯检测在此模式下极易被 CPU 资源挤占而卡死，故跳过
                 ChatDebugLog.log("[Pipeline] STEP3: Bayesian skipped (local GGUF model in use)")
                 com.lianyu.ai.common.safety.SafetyScore(
-                    score = 1.0,
+                    score = 0.0,
                     source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
                     explanation = "Skipped: local GGUF model mode"
                 )
