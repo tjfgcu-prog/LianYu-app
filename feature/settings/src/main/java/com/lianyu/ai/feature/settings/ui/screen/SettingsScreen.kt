@@ -717,37 +717,52 @@ private fun GgufLocalModelSection(
     textSecondaryColor: Color
 ) {
     val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val prefs = remember {
         context.getSharedPreferences("gguf_model_prefs", android.content.Context.MODE_PRIVATE)
     }
 
     var ggufEnabled by remember { mutableStateOf(prefs.getBoolean("gguf_enabled", false)) }
     var ggufFileName by remember { mutableStateOf(prefs.getString("gguf_file_name", null)) }
+    var isCopying by remember { mutableStateOf(false) }
 
     val filePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
     ) { uri: android.net.Uri? ->
         if (uri != null) {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: Exception) { }
+            isCopying = true
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    var pickedName: String? = null
+                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (cursor.moveToFirst() && nameIndex >= 0) {
+                            pickedName = cursor.getString(nameIndex)
+                        }
+                    }
 
-            var name: String? = null
-            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (cursor.moveToFirst() && nameIndex >= 0) {
-                    name = cursor.getString(nameIndex)
+                    val targetFile = java.io.File(context.filesDir, "local_gguf_model.gguf")
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        targetFile.outputStream().use { output ->
+                            input.copyTo(output, bufferSize = 1024 * 1024)
+                        }
+                    }
+                    val localUriString = android.net.Uri.fromFile(targetFile).toString()
+
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        ggufFileName = pickedName ?: "已选择文件"
+                        prefs.edit()
+                            .putString("gguf_file_name", ggufFileName)
+                            .putString("gguf_file_uri", localUriString)
+                            .commit()
+                        isCopying = false
+                    }
+                } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        isCopying = false
+                    }
                 }
             }
-
-            ggufFileName = name ?: "已选择文件"
-            prefs.edit()
-                .putString("gguf_file_name", ggufFileName)
-                .putString("gguf_file_uri", uri.toString())
-                .commit()
         }
     }
 
@@ -792,7 +807,11 @@ private fun GgufLocalModelSection(
                             color = textPrimaryColor
                         )
                         Text(
-                            text = ggufFileName ?: "未选择文件",
+                            text = when {
+                                isCopying -> "正在复制模型文件到 App 内部..."
+                                ggufFileName != null -> ggufFileName!!
+                                else -> "未选择文件"
+                            },
                             fontSize = 12.sp,
                             color = textSecondaryColor
                         )
@@ -810,9 +829,16 @@ private fun GgufLocalModelSection(
 
             Button(
                 onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
+                enabled = !isCopying,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (ggufFileName == null) "选择 .gguf 模型文件" else "重新选择文件")
+                Text(
+                    when {
+                        isCopying -> "复制中，请稍候..."
+                        ggufFileName == null -> "选择 .gguf 模型文件"
+                        else -> "重新选择文件"
+                    }
+                )
             }
         }
     }
