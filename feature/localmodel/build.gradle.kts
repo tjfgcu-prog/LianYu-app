@@ -3,7 +3,7 @@ plugins {
 
 android {
     namespace = "com.lianyu.ai.feature.localmodel"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
