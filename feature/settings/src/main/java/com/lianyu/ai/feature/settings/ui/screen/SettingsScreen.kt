@@ -841,6 +841,40 @@ private fun GgufLocalModelSection(
                     }
                 )
             }
+            var showLogDialog by remember { mutableStateOf(false) }
+            var logContent by remember { mutableStateOf("") }
+
+            Button(
+                onClick = {
+                    val logFile = java.io.File("/data/data/com.lianyu.ai/files/chatvm_debug.log")
+                    logContent = if (logFile.exists()) {
+                        logFile.readText().takeLast(4000)
+                    } else {
+                        "日志文件不存在（可能还没触发过任何日志记录）"
+                    }
+                    showLogDialog = true
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("查看调试日志")
+            }
+
+            if (showLogDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogDialog = false },
+                    confirmButton = {
+                        Button(onClick = { showLogDialog = false }) { Text("关闭") }
+                    },
+                    title = { Text("调试日志（最近部分）") },
+                    text = {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                            androidx.compose.foundation.text.selection.SelectionContainer {
+                                Text(text = logContent, fontSize = 10.sp)
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
