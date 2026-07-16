@@ -113,6 +113,7 @@ import com.lianyu.ai.uicommon.theme.ThemeViewModel
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.SecureLog
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.foundation.isSystemInDarkTheme
 
