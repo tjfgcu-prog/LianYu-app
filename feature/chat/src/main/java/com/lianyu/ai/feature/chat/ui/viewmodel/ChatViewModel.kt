@@ -715,7 +715,7 @@ class ChatViewModel(
         }
 
         // 无 API 时：仅做安全检查 + 提示，用户消息已在 sendMessage 中乐观存库显示
-        if (_availableApis.value.isEmpty()) {
+        if (_availableApis.value.isEmpty() && !isLocalModelEnabled()) {
             // 对批次中每条消息都做安全检查
             for (msg in batch) {
                 try {
