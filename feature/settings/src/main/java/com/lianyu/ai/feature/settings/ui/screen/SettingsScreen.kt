@@ -374,7 +374,14 @@ fun SettingsScreen(
                     }
                 }
             }
+Spacer(modifier = Modifier.height(16.dp))
 
+            // ====== GGUF Local Model Section (custom import) ======
+            GgufLocalModelSection(
+                isVisible = isVisible,
+                textPrimaryColor = textPrimaryColor,
+                textSecondaryColor = textSecondaryColor
+            )
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -701,7 +708,115 @@ private fun VisionModelSection(
         ApiTutorialCard(isDarkTheme, textPrimaryColor, textSecondaryColor)
     }
 }
+// ==================== GGUF 本地大模型（自定义导入）====================
 
+@Composable
+private fun GgufLocalModelSection(
+    isVisible: Boolean,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    val context = LocalContext.current
+    val prefs = remember {
+        context.getSharedPreferences("gguf_model_prefs", android.content.Context.MODE_PRIVATE)
+    }
+
+    var ggufEnabled by remember { mutableStateOf(prefs.getBoolean("gguf_enabled", false)) }
+    var ggufFileName by remember { mutableStateOf(prefs.getString("gguf_file_name", null)) }
+
+    val filePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri: android.net.Uri? ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { }
+
+            var name: String? = null
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst() && nameIndex >= 0) {
+                    name = cursor.getString(nameIndex)
+                }
+            }
+
+            ggufFileName = name ?: "已选择文件"
+            prefs.edit()
+                .putString("gguf_file_name", ggufFileName)
+                .putString("gguf_file_uri", uri.toString())
+                .commit()
+        }
+    }
+
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(400, delayMillis = 260)) +
+                slideInVertically(tween(400, delayMillis = 260)) { it / 4 }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(PetalPrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "📦", fontSize = 22.dp.value.sp)
+                    }
+
+                    Column {
+                        Text(
+                            text = "自定义 GGUF 本地模型",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimaryColor
+                        )
+                        Text(
+                            text = ggufFileName ?: "未选择文件",
+                            fontSize = 12.sp,
+                            color = textSecondaryColor
+                        )
+                    }
+                }
+
+                Switch(
+                    checked = ggufEnabled,
+                    onCheckedChange = { checked ->
+                        ggufEnabled = checked
+                        prefs.edit().putBoolean("gguf_enabled", checked).commit()
+                    }
+                )
+            }
+
+            Button(
+                onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (ggufFileName == null) "选择 .gguf 模型文件" else "重新选择文件")
+            }
+        }
+    }
+}
 // ==================== Reused Components (unchanged logic) ====================
 
 @Composable
