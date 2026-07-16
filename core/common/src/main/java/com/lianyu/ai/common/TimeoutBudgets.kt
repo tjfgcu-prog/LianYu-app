@@ -23,6 +23,7 @@ object TimeoutBudgets {
     const val STT_RECOGNIZE_MS = 15_000L     // 语音识别 (15s)
     // [M11 FIX] ChatViewModel 使用的实际超时值（OkHttp callTimeout 对齐，网络慢时需更长）
     const val CHAT_VM_API_TIMEOUT_MS = 30_000L      // ChatViewModel AI 调用超时
+    const val CHAT_VM_LOCAL_MODEL_TIMEOUT_MS = 180_000L  // ChatViewModel 本地GGUF模型调用超时时（含加载耗时，给足3分钟）
     const val CHAT_VM_VISION_TIMEOUT_MS = 60_000L   // ChatViewModel 视觉调用超时
     const val CHAT_VM_SAFETY_CLASSIFY_MS = 30_000L  // ChatViewModel 安全分类超时
     const val CHAT_VM_MEMORY_EXTRACT_MS = 5_000L    // ChatViewModel 记忆提取超时
