@@ -19,7 +19,17 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         try { LocalAiService.getInstance(appContext) } catch (_: Exception) { null }
     }
 
+    private val ggufPrefs by lazy {
+        appContext.getSharedPreferences("gguf_model_prefs", Context.MODE_PRIVATE)
+    }
+    private val ggufModel by lazy { GgufLocalModel(appContext) }
+
+    private fun isGgufEnabled(): Boolean =
+        ggufPrefs.getBoolean("gguf_enabled", false) &&
+            !ggufPrefs.getString("gguf_file_uri", null).isNullOrBlank()
+
     override suspend fun isAvailable(): Boolean {
+        if (isGgufEnabled()) return true
         val state = manager.state.value
         return LocalAiService.isNativeLibrarySupported &&
             state.status == LocalModelUiStatus.ENABLED &&
@@ -27,6 +37,13 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
     }
 
     override suspend fun generateResponse(prompt: String, context: String): String {
+        if (isGgufEnabled()) {
+            val uri = ggufPrefs.getString("gguf_file_uri", null)
+                ?: throw IllegalStateException("未选择 GGUF 模型文件")
+            val fullPrompt = if (context.isNotBlank()) "$context\n\n$prompt" else prompt
+            return ggufModel.generate(uri, fullPrompt)
+        }
+
         val ai = aiService ?: throw IllegalStateException("Local AI service not available")
         ai.acquire()
         return try {
