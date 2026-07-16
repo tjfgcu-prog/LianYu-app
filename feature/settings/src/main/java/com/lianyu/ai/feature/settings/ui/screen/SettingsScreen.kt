@@ -846,6 +846,14 @@ private fun GgufLocalModelSection(
 
             Button(
                 onClick = {
+                    com.lianyu.ai.common.BanManager.unbanUser(context)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("解除封禁")
+            }
+            Button(
+                onClick = {
                     val logFile = java.io.File("/data/data/com.lianyu.ai/files/chatvm_debug.log")
                     logContent = if (logFile.exists()) {
                         logFile.readText().takeLast(4000)
