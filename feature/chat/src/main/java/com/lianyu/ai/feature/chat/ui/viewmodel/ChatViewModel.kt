@@ -842,7 +842,7 @@ class ChatViewModel(
                     aiService.sendMessageWithImage(companion.toAiCompanionInfo(), history.toAiChatMessages(), imagePath, stickerProbability, ntpTimeEnabled)
                 } ?: throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
             } else if (isLocalModelEnabled()) {
-                AiResponse(content = runInterruptibleSafe(timeoutMs = TimeoutBudgets.CHAT_VM_API_TIMEOUT_MS) {
+                AiResponse(content = runInterruptibleSafe(timeoutMs = TimeoutBudgets.CHAT_VM_LOCAL_MODEL_TIMEOUT_MS) {
                     generateWithLocalModel(companion, history, stickerProbability, ntpTimeEnabled)
                 } ?: throw java.util.concurrent.TimeoutException("Local model timeout"))
             } else {
