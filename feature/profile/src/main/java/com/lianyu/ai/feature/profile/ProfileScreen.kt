@@ -289,6 +289,7 @@ fun ProfileScreen(
             onDismiss = { showBackgroundDialog = false },
             onSelect = { key -> setChatBackgroundKey(context, key); showBackgroundDialog = false }
         )
+        }
     }
 }
 
