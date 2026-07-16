@@ -54,14 +54,26 @@ class MessagePipelineRunner(
             ChatDebugLog.log("[Pipeline] STEP2: checkVector done")
 
             _pipelineState.value = MessagePipeline.PipelineState(stage = MessagePipeline.Stage.CLASSIFY)
-            ChatDebugLog.log("[Pipeline] STEP3: Bayesian start (timeout=${TimeoutBudgets.SAFETY_CLASSIFY_MS}ms)")
-            val bayesianScore = withTimeoutOrNull(TimeoutBudgets.SAFETY_CLASSIFY_MS) {
-                ContentSafetyVerifier.verifyUserInputAsync(input.rawText, filterResult, vectorResult)
-            } ?: com.lianyu.ai.common.safety.SafetyScore(
-                score = 1.0,
-                source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
-                explanation = "Safety check timed out, fail-closed"
-            )
+            val localModelProvider = com.lianyu.ai.domain.ServiceRegistry.get(com.lianyu.ai.domain.LocalModelProvider::class.java)
+            val useLocalModel = localModelProvider?.isAvailable() == true
+            val bayesianScore = if (useLocalModel) {
+                // 本地 GGUF 模型会占满 CPU，第三层贝叶斯检测在此模式下极易被 CPU 资源挤占而卡死，故跳过
+                ChatDebugLog.log("[Pipeline] STEP3: Bayesian skipped (local GGUF model in use)")
+                com.lianyu.ai.common.safety.SafetyScore(
+                    score = 1.0,
+                    source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
+                    explanation = "Skipped: local GGUF model mode"
+                )
+            } else {
+                ChatDebugLog.log("[Pipeline] STEP3: Bayesian start (timeout=${TimeoutBudgets.SAFETY_CLASSIFY_MS}ms)")
+                withTimeoutOrNull(TimeoutBudgets.SAFETY_CLASSIFY_MS) {
+                    ContentSafetyVerifier.verifyUserInputAsync(input.rawText, filterResult, vectorResult)
+                } ?: com.lianyu.ai.common.safety.SafetyScore(
+                    score = 1.0,
+                    source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
+                    explanation = "Safety check timed out, fail-closed"
+                )
+            }
             ChatDebugLog.log("[Pipeline] STEP3: Bayesian done, dangerous=${bayesianScore.isDangerous}")
 
             if (bayesianScore.isDangerous) {
