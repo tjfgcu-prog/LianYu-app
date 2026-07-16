@@ -627,48 +627,7 @@ private fun ApiCardsSection(
             modifier = Modifier.padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val partnerConfig = configs.firstOrNull { it.provider == ApiProvider.PARTNER }
-                ?: ApiConfig(
-                    provider = ApiProvider.PARTNER,
-                    apiKey = "",
-                    extraApiKeys = "",
-                    baseUrl = ApiProvider.PARTNER.defaultBaseUrl,
-                    model = ApiProvider.PARTNER.defaultModel
-                )
-
-            val partnerExpanded = expandedProvider == ApiProvider.PARTNER
-
-            PetalApiCard(
-                config = partnerConfig,
-                connectionResult = connectionStatus[viewModel.connectionKey(partnerConfig)]
-                    ?: SettingsViewModel.ConnectionResult(SettingsViewModel.ConnectionStatus.UNKNOWN),
-                isExpanded = partnerExpanded,
-                isActive = partnerConfig.isEnabled,
-                onExpandToggle = {
-                    onExpandedProviderChange(if (partnerExpanded) null else ApiProvider.PARTNER)
-                },
-                onEdit = { selectedConfig: ApiConfig ->
-                    viewModel.saveConfig(selectedConfig)
-                },
-                onTest = { selectedConfig: ApiConfig ->
-                    viewModel.testConnection(selectedConfig)
-                },
-                onToggleEnabled = { viewModel.toggleConfigEnabled(partnerConfig) },
-                onSelectActive = { viewModel.selectActiveConfig(partnerConfig) },
-                onFetchModels = { baseUrl: String, apiKey: String, provider: String, skipCertVerify: Boolean ->
-                    viewModel.fetchModels(baseUrl, apiKey, provider, skipCertVerify)
-                },
-                fetchedModels = fetchedModels,
-                modelFetchStates = modelFetchStates,
-                testedConfigs = testedConfigs,
-                connectionKey = viewModel.connectionKey(partnerConfig),
-                isDarkTheme = isDarkTheme,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                balanceInfo = null,
-                balanceQueryFailed = false,
-                onQueryBalance = null  // PARTNER uses handshake group quota, not /balance
-            )
+            
 
             configs.filter { it.provider != ApiProvider.PARTNER }.forEach { config ->
                 val result = connectionStatus[viewModel.connectionKey(config)]
