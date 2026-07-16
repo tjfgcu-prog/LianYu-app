@@ -140,15 +140,7 @@ fun GeneralSettingsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // === 第二组：平台集成 ===
-            SolidMenuGroup(
-                items = listOf(
-                    MenuItemData(Icons.Filled.ChatBubble, stringResource(R.string.wechat_settings), stringResource(R.string.wechat_settings_desc), onWeChatClick),
-                    MenuItemData(Icons.Filled.ChatBubble, stringResource(R.string.qqbot_settings), stringResource(R.string.qqbot_settings_desc), onQQBotClick),
-                    MenuItemData(Icons.Filled.Coffee, stringResource(R.string.coffee_title), stringResource(R.string.coffee_desc), onCoffeeClick)
-                ),
-                isVisible = isVisible, delayMillis = 160
-            )
+            
 
             Spacer(modifier = Modifier.height(12.dp))
 
