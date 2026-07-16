@@ -26,6 +26,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.litertlm.android)
-
+    implementation("io.github.ljcamargo:llamacpp-kotlin:0.4.0")
     testImplementation(libs.junit)
 }
