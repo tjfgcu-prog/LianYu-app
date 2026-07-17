@@ -40,8 +40,7 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         if (isGgufEnabled()) {
             val uri = ggufPrefs.getString("gguf_file_uri", null)
                 ?: throw IllegalStateException("未选择 GGUF 模型文件")
-            val fullPrompt = if (context.isNotBlank()) "$context\n\n$prompt" else prompt
-            return ggufModel.generate(uri, fullPrompt)
+            return ggufModel.generate(uri, context, prompt)
         }
 
         val ai = aiService ?: throw IllegalStateException("Local AI service not available")
