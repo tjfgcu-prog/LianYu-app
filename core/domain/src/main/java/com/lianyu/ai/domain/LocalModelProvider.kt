@@ -7,6 +7,7 @@ package com.lianyu.ai.domain
 interface LocalModelProvider {
     suspend fun isAvailable(): Boolean
     suspend fun generateResponse(prompt: String, context: String): String
+    suspend fun preloadIfEnabled()
     fun getModelName(): String
     fun getModelVersion(): String
 
