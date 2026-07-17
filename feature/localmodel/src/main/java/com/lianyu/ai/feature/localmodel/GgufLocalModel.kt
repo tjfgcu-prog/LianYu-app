@@ -81,4 +81,4 @@ class GgufLocalModel(context: Context) {
         }
     }
 } 
-}
+
