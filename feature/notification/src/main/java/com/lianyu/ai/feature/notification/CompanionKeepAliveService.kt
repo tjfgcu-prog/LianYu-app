@@ -158,8 +158,8 @@ open class CompanionKeepAliveService : Service() {
         )
 
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("恋语")
-            .setContentText("虚拟恋人正在守护你~")
+            .setContentTitle("爱人～")
+            .setContentText("爱人正在守护你~")
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
