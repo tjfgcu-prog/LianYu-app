@@ -830,6 +830,13 @@ private fun GgufLocalModelSection(
                                     com.lianyu.ai.domain.LocalModelProvider::class.java
                                 )
                                 provider?.preloadIfEnabled()
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "本地模型预加载完成",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
                     }
