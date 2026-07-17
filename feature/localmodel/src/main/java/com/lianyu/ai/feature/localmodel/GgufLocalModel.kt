@@ -48,18 +48,25 @@ class GgufLocalModel(context: Context) {
         Log.d("GgufLocalModel", "ensureLoaded: load coroutine resumed, done")
     }
 
-    suspend fun generate(modelUri: String, prompt: String): String {
+   suspend fun generate(modelUri: String, prompt: String): String {
+        Log.d("GgufLocalModel", "generate: called, prompt.length=${prompt.length}")
         ensureLoaded(modelUri)
+        Log.d("GgufLocalModel", "generate: ensureLoaded returned, about to predict")
         val builder = StringBuilder()
         return suspendCancellableCoroutine { cont ->
             val collectJob = scope.launch {
                 llmFlow.collect { event ->
                     when (event) {
-                        is LlamaHelper.LLMEvent.Ongoing -> builder.append(event.word)
+                        is LlamaHelper.LLMEvent.Ongoing -> {
+                            Log.d("GgufLocalModel", "event: Ongoing, word='${event.word}'")
+                            builder.append(event.word)
+                        }
                         is LlamaHelper.LLMEvent.Done -> {
+                            Log.d("GgufLocalModel", "event: Done, totalLength=${builder.length}")
                             if (cont.isActive) cont.resume(builder.toString())
                         }
                         is LlamaHelper.LLMEvent.Error -> {
+                            Log.d("GgufLocalModel", "event: Error")
                             if (cont.isActive) cont.resumeWithException(
                                 IllegalStateException("GGUF 本地模型生成失败")
                             )
@@ -69,7 +76,9 @@ class GgufLocalModel(context: Context) {
                 }
             }
             cont.invokeOnCancellation { collectJob.cancel() }
+            Log.d("GgufLocalModel", "generate: calling llamaHelper.predict()")
             scope.launch { llamaHelper.predict(prompt) }
         }
     }
+} 
 }
