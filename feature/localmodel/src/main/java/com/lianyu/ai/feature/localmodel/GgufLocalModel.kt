@@ -40,7 +40,7 @@ class GgufLocalModel(context: Context) {
 
     @Volatile private var loadedUri: String? = null
 
-    private suspend fun ensureLoaded(modelUri: String) {
+    suspend fun ensureLoaded(modelUri: String) {
         if (loadedUri == modelUri) {
             logD("ensureLoaded: already loaded, skip. uri=$modelUri")
             return
