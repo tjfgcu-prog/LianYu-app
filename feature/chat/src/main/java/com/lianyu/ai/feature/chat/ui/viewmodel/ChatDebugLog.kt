@@ -16,7 +16,7 @@ import java.util.Locale
 object ChatDebugLog {
     private val file by lazy {
         if (!BuildConfig.DEBUG) return@lazy null
-        File("/data/data/com.lianyu.ai/files/chatvm_debug.log")
+        File("/data/data/com.lianyu.ai.zzz/files/chatvm_debug.log")
     }
 
     fun log(msg: String) {
