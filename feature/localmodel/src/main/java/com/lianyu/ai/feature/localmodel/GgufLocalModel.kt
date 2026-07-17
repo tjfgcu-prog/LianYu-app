@@ -1,5 +1,6 @@
 package com.lianyu.ai.feature.localmodel
 
+import kotlinx.coroutines.Job
 import android.content.Context
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -72,7 +73,8 @@ class GgufLocalModel(context: Context) {
         logD("generate: ensureLoaded returned, about to predict")
         val builder = StringBuilder()
         return suspendCancellableCoroutine { cont ->
-            val collectJob = scope.launch {
+            lateinit var collectJob: Job
+            collectJob = scope.launch {
                 llmFlow.collect { event ->
                     when (event) {
                         is LlamaHelper.LLMEvent.Ongoing -> {
@@ -82,12 +84,14 @@ class GgufLocalModel(context: Context) {
                         is LlamaHelper.LLMEvent.Done -> {
                             logD("event: Done, totalLength=${builder.length}")
                             if (cont.isActive) cont.resume(builder.toString())
+                            collectJob.cancel()
                         }
                         is LlamaHelper.LLMEvent.Error -> {
                             logD("event: Error")
                             if (cont.isActive) cont.resumeWithException(
                                 IllegalStateException("GGUF 本地模型生成失败")
                             )
+                            collectJob.cancel()
                         }
                         else -> {}
                     }
