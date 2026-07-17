@@ -824,6 +824,14 @@ private fun GgufLocalModelSection(
                     onCheckedChange = { checked ->
                         ggufEnabled = checked
                         prefs.edit().putBoolean("gguf_enabled", checked).commit()
+                        if (checked) {
+                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                val provider = com.lianyu.ai.domain.ServiceRegistry.get(
+                                    com.lianyu.ai.domain.LocalModelProvider::class.java
+                                )
+                                provider?.preloadIfEnabled()
+                            }
+                        }
                     }
                 )
             }
