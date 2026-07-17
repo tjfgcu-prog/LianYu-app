@@ -1,7 +1,7 @@
 <div align="center">
   <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="120" height="120" alt="LianYu Logo" />
 
-# LianYu / 恋语
+# 时
 
 ### 面向 Android 的 AI 虚拟陪伴应用开源框架
 
