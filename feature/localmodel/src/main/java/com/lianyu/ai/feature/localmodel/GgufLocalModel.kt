@@ -1,5 +1,6 @@
 package com.lianyu.ai.feature.localmodel
 
+import android.util.Log
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,13 +33,19 @@ class GgufLocalModel(context: Context) {
     @Volatile private var loadedUri: String? = null
 
     private suspend fun ensureLoaded(modelUri: String) {
-        if (loadedUri == modelUri) return
+        if (loadedUri == modelUri) {
+            Log.d("GgufLocalModel", "ensureLoaded: already loaded, skip. uri=$modelUri")
+            return
+        }
+        Log.d("GgufLocalModel", "ensureLoaded: begin load, uri=$modelUri")
         suspendCancellableCoroutine<Unit> { cont ->
-            llamaHelper.load(path = modelUri, contextLength = 2048) {
+            llamaHelper.load(path = modelUri, contextLength = 2048) { id ->
+                Log.d("GgufLocalModel", "ensureLoaded: load callback fired, id=$id")
                 loadedUri = modelUri
                 if (cont.isActive) cont.resume(Unit)
             }
         }
+        Log.d("GgufLocalModel", "ensureLoaded: load coroutine resumed, done")
     }
 
     suspend fun generate(modelUri: String, prompt: String): String {
