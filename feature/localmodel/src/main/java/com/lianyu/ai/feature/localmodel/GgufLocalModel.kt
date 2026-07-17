@@ -55,8 +55,19 @@ class GgufLocalModel(context: Context) {
         logD("ensureLoaded: load coroutine resumed, done")
     }
 
-    suspend fun generate(modelUri: String, prompt: String): String {
-        logD("generate: called, prompt.length=${prompt.length}")
+    suspend fun generate(modelUri: String, systemPrompt: String, userPrompt: String): String {
+        val chatMlPrompt = buildString {
+            if (systemPrompt.isNotBlank()) {
+                append("<|im_start|>system\n")
+                append(systemPrompt)
+                append("<|im_end|>\n")
+            }
+            append("<|im_start|>user\n")
+            append(userPrompt)
+            append("<|im_end|>\n")
+            append("<|im_start|>assistant\n")
+        }
+        logD("generate: called, chatMlPrompt.length=${chatMlPrompt.length}")
         ensureLoaded(modelUri)
         logD("generate: ensureLoaded returned, about to predict")
         val builder = StringBuilder()
@@ -84,7 +95,7 @@ class GgufLocalModel(context: Context) {
             }
             cont.invokeOnCancellation { collectJob.cancel() }
             logD("generate: calling llamaHelper.predict()")
-            scope.launch { llamaHelper.predict(prompt) }
+            scope.launch { llamaHelper.predict(chatMlPrompt) }
         }
     }
 }
