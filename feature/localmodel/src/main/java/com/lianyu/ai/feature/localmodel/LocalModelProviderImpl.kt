@@ -58,6 +58,16 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
             ai.close()
         }
     }
+    override suspend fun preloadIfEnabled() {
+        if (isGgufEnabled()) {
+            val uri = ggufPrefs.getString("gguf_file_uri", null)
+            if (!uri.isNullOrBlank()) {
+                try {
+                    ggufModel.ensureLoaded(uri)
+                } catch (_: Exception) { }
+            }
+        }
+    }
 
     override fun getModelName(): String =
         aiService?.activeModel?.displayName ?: "None"
