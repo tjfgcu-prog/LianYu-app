@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.lianyu.ai.zzz"
+        applicationId = "com.lianyu.ai.ceshi"
         minSdk = 26
         targetSdk = 35
         versionCode = 13
