@@ -1,7 +1,7 @@
 package com.lianyu.ai.feature.localmodel
 
-import android.util.Log
 import android.content.Context
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +21,13 @@ class GgufLocalModel(context: Context) {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    private fun logD(msg: String) {
+        try {
+            val f = File(appContext.filesDir, "chatvm_debug.log")
+            f.appendText("${System.currentTimeMillis()} [GgufLocalModel] $msg\n")
+        } catch (_: Exception) { }
+    }
+
     private val llmFlow = MutableSharedFlow<LlamaHelper.LLMEvent>(
         extraBufferCapacity = 64,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -34,39 +41,39 @@ class GgufLocalModel(context: Context) {
 
     private suspend fun ensureLoaded(modelUri: String) {
         if (loadedUri == modelUri) {
-            Log.d("GgufLocalModel", "ensureLoaded: already loaded, skip. uri=$modelUri")
+            logD("ensureLoaded: already loaded, skip. uri=$modelUri")
             return
         }
-        Log.d("GgufLocalModel", "ensureLoaded: begin load, uri=$modelUri")
+        logD("ensureLoaded: begin load, uri=$modelUri")
         suspendCancellableCoroutine<Unit> { cont ->
             llamaHelper.load(path = modelUri, contextLength = 2048) { id ->
-                Log.d("GgufLocalModel", "ensureLoaded: load callback fired, id=$id")
+                logD("ensureLoaded: load callback fired, id=$id")
                 loadedUri = modelUri
                 if (cont.isActive) cont.resume(Unit)
             }
         }
-        Log.d("GgufLocalModel", "ensureLoaded: load coroutine resumed, done")
+        logD("ensureLoaded: load coroutine resumed, done")
     }
 
-   suspend fun generate(modelUri: String, prompt: String): String {
-        Log.d("GgufLocalModel", "generate: called, prompt.length=${prompt.length}")
+    suspend fun generate(modelUri: String, prompt: String): String {
+        logD("generate: called, prompt.length=${prompt.length}")
         ensureLoaded(modelUri)
-        Log.d("GgufLocalModel", "generate: ensureLoaded returned, about to predict")
+        logD("generate: ensureLoaded returned, about to predict")
         val builder = StringBuilder()
         return suspendCancellableCoroutine { cont ->
             val collectJob = scope.launch {
                 llmFlow.collect { event ->
                     when (event) {
                         is LlamaHelper.LLMEvent.Ongoing -> {
-                            Log.d("GgufLocalModel", "event: Ongoing, word='${event.word}'")
+                            logD("event: Ongoing, word='${event.word}'")
                             builder.append(event.word)
                         }
                         is LlamaHelper.LLMEvent.Done -> {
-                            Log.d("GgufLocalModel", "event: Done, totalLength=${builder.length}")
+                            logD("event: Done, totalLength=${builder.length}")
                             if (cont.isActive) cont.resume(builder.toString())
                         }
                         is LlamaHelper.LLMEvent.Error -> {
-                            Log.d("GgufLocalModel", "event: Error")
+                            logD("event: Error")
                             if (cont.isActive) cont.resumeWithException(
                                 IllegalStateException("GGUF 本地模型生成失败")
                             )
@@ -76,9 +83,8 @@ class GgufLocalModel(context: Context) {
                 }
             }
             cont.invokeOnCancellation { collectJob.cancel() }
-            Log.d("GgufLocalModel", "generate: calling llamaHelper.predict()")
+            logD("generate: calling llamaHelper.predict()")
             scope.launch { llamaHelper.predict(prompt) }
         }
     }
-} 
-
+}
