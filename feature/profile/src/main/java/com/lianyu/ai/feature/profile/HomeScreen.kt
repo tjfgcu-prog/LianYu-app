@@ -87,7 +87,7 @@ fun HomeScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -206,9 +206,9 @@ fun HomeScreen(
                             AnimatedVisibility(
                                 visible = isVisible,
                                 enter = fadeIn(
-                                    animationSpec = tween(300, delayMillis = index * 60)
+                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
                                 ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = index * 60),
+                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
                                     initialOffsetY = { it / 3 }
                                 )
                             ) {
@@ -231,9 +231,9 @@ fun HomeScreen(
                             AnimatedVisibility(
                                 visible = isVisible,
                                 enter = fadeIn(
-                                    animationSpec = tween(300, delayMillis = (index + displayGroups.size) * 60)
+                                    animationSpec = tween(300, delayMillis = ((index + displayGroups.size) * 20).coerceAtMost(200))
                                 ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = (index + displayGroups.size) * 60),
+                                    animationSpec = tween(300, delayMillis = ((index + displayGroups.size) * 20).coerceAtMost(200))
                                     initialOffsetY = { it / 3 }
                                 )
                             ) {
