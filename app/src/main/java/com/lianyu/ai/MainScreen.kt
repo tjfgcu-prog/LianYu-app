@@ -1,5 +1,6 @@
 package com.lianyu.ai
 
+import androidx.compose.ui.graphics.graphicsLayer
 import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.tween
@@ -231,39 +232,18 @@ fun MainScreen(mainActivity: Activity) {
                         beyondViewportPageCount = 1,
                         flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = 0.4f),
                         modifier = Modifier.fillMaxSize()
-                            .pointerInput(pagerState) {
-                                awaitEachGesture {
-                                    val down = awaitFirstDown(requireUnconsumed = false)
-                                    var totalDragX = 0f
-                                    do {
-                                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                                        event.changes.forEach { change ->
-                                            totalDragX += change.position.x - change.previousPosition.x
-                                        }
-                                        if (abs(totalDragX) > size.width * 0.6f) {
-                                            val target = (pagerState.currentPage + if (totalDragX < 0) 1 else -1).coerceIn(0, pagerState.pageCount - 1)
-                                            coroutineScope.launch { pagerState.animateScrollToPage(target) }
-                                            event.changes.forEach { it.consume() }
-                                        }
-                                    } while (event.changes.any { it.pressed })
-                                }
-                            }
                             .nestedScroll(angleNestedScrollConnection)
                     ) { page ->
                         val cp = pagerState.currentPage
-                        val visible = remember(page, cp, pagerOffset) {
-                            when {
-                                page == cp -> pagerOffset in -0.6f..0.6f
-                                page == cp + 1 -> pagerOffset > 0.3f
-                                page == cp - 1 -> pagerOffset < -0.3f
-                                else -> false
-                            }
-                        }
-                        AnimatedVisibility(
-                            visible = visible,
-                            enter = fadeIn(animationSpec = tween(350)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350)),
-                            exit = fadeOut(animationSpec = tween(200))
-                        ) {
+                        val alpha = remember(page, cp, pagerOffset) {
+    when {
+        page == cp -> 1f - (abs(pagerOffset) * 0.6f).coerceIn(0f, 1f)
+        page == cp + 1 -> (pagerOffset * 2f).coerceIn(0f, 1f)
+        page == cp - 1 -> (-pagerOffset * 2f).coerceIn(0f, 1f)
+        else -> 0f
+    }
+}
+Box(Modifier.graphicsLayer { this.alpha = alpha }) {
                             when (page) {
                                 0 -> HomeScreen(
                                     onCompanionClick = { openCompanionChat(it) },
