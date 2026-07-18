@@ -128,6 +128,18 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             bgScope.launch { autoBackupDatabase(app) }
             bgScope.launch { initVectorLibrary(app) }
             bgScope.launch { initSafetyClassifier(app) }
+            bgScope.launch { initSafetyClassifier(app) }
+
+            // 调试日志定时清理：每10分钟清空一次，前后台均执行，只清日志文件
+            bgScope.launch {
+                while (true) {
+                    kotlinx.coroutines.delay(10 * 60 * 1000L)
+                    try {
+                        java.io.File(app.filesDir, "chatvm_debug.log").let { if (it.exists()) it.delete() }
+                        java.io.File(app.filesDir, "aiservice_debug.log").let { if (it.exists()) it.delete() }
+                    } catch (_: Exception) {}
+                }
+            }
             bgScope.launch { initSafetyVerifier(app) }
             bgScope.launch { initYandereMode(app) }
         }
