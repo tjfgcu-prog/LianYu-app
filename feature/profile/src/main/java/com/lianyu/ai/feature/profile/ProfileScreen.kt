@@ -301,7 +301,8 @@ internal data class MenuItemData(
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
-    val onClick: () -> Unit
+    val onClick: () -> Unit,
+    val emojiIcon: String? = null
 )
 
 @Composable
@@ -321,21 +322,25 @@ internal fun SolidMenuGroup(items: List<MenuItemData>, isVisible: Boolean, delay
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             items.forEachIndexed { index, item ->
-                SolidMenuItem(item.icon, item.title, item.subtitle, item.onClick, index < items.size - 1)
+                SolidMenuItem(item.icon, item.title, item.subtitle, item.onClick, index < items.size - 1, item.emojiIcon)
             }
         }
     }
 }
 
 @Composable
-internal fun SolidMenuItem(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit, showDivider: Boolean) {
+ internal fun SolidMenuItem(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit, showDivider: Boolean, emojiIcon: String? = null) {
     val colorScheme = MaterialTheme.colorScheme
     Column {
         Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, title, Modifier.size(24.dp), tint = Color(0xFF07C160))
+            if (emojiIcon != null) {
+    Text(emojiIcon, fontSize = 20.sp, modifier = Modifier.size(24.dp))
+} else {
+    Icon(icon, title, Modifier.size(24.dp), tint = Color(0xFF07C160))
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium, fontSize = 16.sp), color = colorScheme.onSurface)
