@@ -132,7 +132,7 @@ fun GeneralSettingsScreen(
                 items = listOf(
                     MenuItemData(Icons.Filled.Language, stringResource(R.string.language), stringResource(R.string.language_desc), onLanguageClick),
                     MenuItemData(Icons.Filled.Refresh, stringResource(R.string.framerate), currentFrameRate.label, onFrameRateClick),
-                    MenuItemData(Icons.Filled.Science, stringResource(R.string.experimental_features), stringResource(R.string.experimental_features_desc), onExperimentalFeaturesClick),
+                    MenuItemData(Icons.Filled.Science, "妙哉", "", onExperimentalFeaturesClick, emojiIcon = "😉"),
                     ThinkingSettingsEntry()
                 ),
                 isVisible = isVisible, delayMillis = 100
