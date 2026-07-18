@@ -173,7 +173,7 @@ fun SettingsScreen(
         viewModel.refreshLocalModel()
         viewModel.refreshConnectionStatus()
         viewModel.refreshPartnerQuota()
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -254,7 +254,7 @@ fun SettingsScreen(
 
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 }
+                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
             ) {
                 Text(
                     text = stringResource(R.string.settings_hint),
@@ -291,8 +291,8 @@ fun SettingsScreen(
             // ====== Vision Model Settings Section ======
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400, delayMillis = 200)) +
-                        slideInVertically(tween(400, delayMillis = 200)) { it / 4 }
+                enter = fadeIn(tween(200, delayMillis = 100)) +
+        slideInVertically(tween(200, delayMillis = 100)) { it / 4 }
             ) {
                 Row(
                     modifier = Modifier
@@ -351,8 +351,8 @@ fun SettingsScreen(
             // ====== Local Model Section ======
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400, delayMillis = 250)) +
-                        slideInVertically(tween(400, delayMillis = 250)) { it / 4 }
+                enter = fadeIn(tween(200, delayMillis = 130)) +
+        slideInVertically(tween(200, delayMillis = 130)) { it / 4 }
             ) {
                 Column(
                     modifier = Modifier
