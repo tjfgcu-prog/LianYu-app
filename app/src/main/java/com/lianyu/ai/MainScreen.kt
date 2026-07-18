@@ -380,11 +380,9 @@ fun MainScreen(mainActivity: Activity) {
                         onFrameRateClick = { navController.navigate(MainRoute.FrameRate.route) },
                         onTtsSettingsClick = { navController.navigate(MainRoute.TtsSettings.route) },
                         onTokenUsageClick = { navController.navigate(MainRoute.TokenUsage.route) },
-                        onCheckUpdateClick = { navController.navigate(MainRoute.CheckUpdate.route) },
                         onWeChatClick = { navController.navigate(MainRoute.WeChatSettings.route) },
                         onQQBotClick = { navController.navigate(MainRoute.QQBotSettings.route) },
                         onDataBackupClick = { navController.navigate(MainRoute.DataBackup.route) },
-                        onOriginOSAdaptionClick = { navController.navigate(MainRoute.OriginOSAdaption.route) },
                         onCoffeeClick = { navController.navigate(MainRoute.Coffee.route) },
                         onExperimentalFeaturesClick = { navController.navigate(MainRoute.ExperimentalFeatures.route) }
                     )
