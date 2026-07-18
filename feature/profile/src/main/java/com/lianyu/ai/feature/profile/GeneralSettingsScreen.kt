@@ -89,11 +89,9 @@ fun GeneralSettingsScreen(
     onFrameRateClick: () -> Unit,
     onTtsSettingsClick: () -> Unit,
     onTokenUsageClick: () -> Unit,
-    onCheckUpdateClick: () -> Unit,
     onWeChatClick: () -> Unit,
     onQQBotClick: () -> Unit,
     onDataBackupClick: () -> Unit,
-    onOriginOSAdaptionClick: () -> Unit = {},
     onCoffeeClick: () -> Unit = {},
     onExperimentalFeaturesClick: () -> Unit = {}
 ) {
@@ -156,22 +154,12 @@ fun GeneralSettingsScreen(
                 items = listOf(
                     MenuItemData(Icons.Filled.RecordVoiceOver, stringResource(R.string.tts_settings), stringResource(R.string.tts_settings_desc), onTtsSettingsClick),
                     MenuItemData(Icons.Filled.Token, stringResource(R.string.token_usage), stringResource(R.string.token_usage_desc), onTokenUsageClick),
-                    MenuItemData(Icons.Filled.SystemUpdate, stringResource(R.string.check_new_version), stringResource(R.string.check_new_version_desc), onCheckUpdateClick),
-                    MenuItemData(Icons.Filled.SaveAlt, stringResource(R.string.data_backup), stringResource(R.string.data_backup_desc), onDataBackupClick),
-                    MenuItemData(Icons.Filled.Tune, stringResource(R.string.originos_adaption), stringResource(R.string.originos_adaption_desc), onOriginOSAdaptionClick)
+                    
+                    MenuItemData(Icons.Filled.SaveAlt, stringResource(R.string.data_backup), stringResource(R.string.data_backup_desc), onDataBackupClick)
+                    
                 ),
                 isVisible = isVisible, delayMillis = 220
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 权限管理卡片（内嵌在系统与维护组下方）
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(400, delayMillis = 280)) + slideInVertically(tween(400, delayMillis = 280)) { it / 4 }
-            ) {
-                PermissionSettingsCard()
-            }
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -251,63 +239,3 @@ private fun ThinkingSettingsDialog(showDialog: MutableState<Boolean>, settingsSt
         dismissButton = { TextButton(onClick = { showDialog.value = false }) { Text("取消") } }
     )
 }
-
-// ============================================================================
-// 权限管理卡片
-// ============================================================================
-
-@Composable
-private fun PermissionSettingsCard() {
-    val context = LocalContext.current
-    val colorScheme = MaterialTheme.colorScheme
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(colorScheme.surfaceVariant)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        PermissionItem(stringResource(R.string.auto_start), stringResource(R.string.auto_start_desc)) {
-            com.lianyu.ai.common.BatteryOptimizationHelper.openAutoStartSettings(context)
-        }
-        PermissionDivider()
-        PermissionItem(stringResource(R.string.battery_whitelist), stringResource(R.string.battery_whitelist_desc)) {
-            if (!com.lianyu.ai.common.BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context))
-                com.lianyu.ai.common.BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(context)
-            else
-                com.lianyu.ai.common.BatteryOptimizationHelper.openBatteryOptimizationSettings(context)
-        }
-        PermissionDivider()
-        PermissionItem(stringResource(R.string.notification_permission), stringResource(R.string.notification_permission_desc)) {
-            com.lianyu.ai.common.BatteryOptimizationHelper.openNotificationSettings(context)
-        }
-    }
-}
-
-@Composable
-private fun PermissionItem(title: String, subtitle: String, onClick: () -> Unit) {
-    val colorScheme = MaterialTheme.colorScheme
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Filled.PowerSettingsNew, title, Modifier.size(24.dp), tint = Color(0xFF07C160))
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium, fontSize = 16.sp), color = colorScheme.onSurface)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp), color = colorScheme.onSurfaceVariant)
-        }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-    }
-}
-
-@Composable
-private fun PermissionDivider() {
-    Box(Modifier.fillMaxWidth().padding(start = 36.dp).height(0.5.dp).background(MaterialTheme.colorScheme.outline))
-}
-
-// ============================================================================
-// 权限管理卡片
-// ============================================================================
