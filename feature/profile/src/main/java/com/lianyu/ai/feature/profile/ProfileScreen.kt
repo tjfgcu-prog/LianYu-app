@@ -116,7 +116,7 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -132,7 +132,7 @@ fun ProfileScreen(
         // 顶部用户信息区域
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 }
+            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
         ) {
             Column(
                 modifier = Modifier
@@ -309,8 +309,8 @@ internal fun SolidMenuGroup(items: List<MenuItemData>, isVisible: Boolean, delay
     val colorScheme = MaterialTheme.colorScheme
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(tween(400, delayMillis = delayMillis)) +
-                slideInVertically(tween(400, delayMillis = delayMillis)) { it / 4 }
+        enter = fadeIn(tween(200, delayMillis = delayMillis)) +
+                slideInVertically(tween(200, delayMillis = delayMillis)) { it / 4 }
     ) {
         Column(
             modifier = Modifier
