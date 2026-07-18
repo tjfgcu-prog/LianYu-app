@@ -128,7 +128,7 @@ fun ContactsScreen(
                                 enter = fadeIn(
                                     animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
                                 ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
+                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200)),
                                     initialOffsetY = { it / 3 }
                                 )
                             ) {
@@ -157,7 +157,7 @@ fun ContactsScreen(
                                 enter = fadeIn(
                                     animationSpec = tween(300, delayMillis = ((index + groups.size) * 20).coerceAtMost(200))
                                 ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = ((index + groups.size) * 20).coerceAtMost(200))
+                                    animationSpec = tween(300, delayMillis = ((index + groups.size) * 20).coerceAtMost(200)),
                                     initialOffsetY = { it / 3 }
                                 )
                             ) {
