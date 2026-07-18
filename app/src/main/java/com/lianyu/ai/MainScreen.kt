@@ -126,16 +126,7 @@ fun MainScreen(mainActivity: Activity) {
                 openCompanionChat(companionId)
                 intent.removeExtra("open_chat")
                 intent.removeExtra("companion_id")
-                return@LaunchedEffect
             }
-        }
-
-        val restoredCompanionId = LastOpenedCompanionStore.resolveInitialCompanionId(
-            context,
-            ServiceRegistry.getOrThrow(com.lianyu.ai.database.repository.CompanionRepository::class.java)
-        )
-        if (restoredCompanionId != null) {
-            openCompanionChat(restoredCompanionId)
         }
     }
 
