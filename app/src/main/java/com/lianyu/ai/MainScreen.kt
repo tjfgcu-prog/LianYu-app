@@ -217,23 +217,6 @@ fun MainScreen(mainActivity: Activity) {
                         beyondViewportPageCount = 1,
                         flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = 0.4f),
                         modifier = Modifier.fillMaxSize()
-                            .pointerInput(pagerState) {
-                                awaitEachGesture {
-                                    val down = awaitFirstDown(requireUnconsumed = false)
-                                    var totalDragX = 0f
-                                    do {
-                                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                                        event.changes.forEach { change ->
-                                            totalDragX += change.position.x - change.previousPosition.x
-                                        }
-                                        if (abs(totalDragX) > size.width * 0.6f) {
-                                            val target = (pagerState.currentPage + if (totalDragX < 0) 1 else -1).coerceIn(0, pagerState.pageCount - 1)
-                                            coroutineScope.launch { pagerState.animateScrollToPage(target) }
-                                            event.changes.forEach { it.consume() }
-                                        }
-                                    } while (event.changes.any { it.pressed })
-                                }
-                            }
                             .nestedScroll(angleNestedScrollConnection)
                     ) { page ->
                         val cp = pagerState.currentPage
