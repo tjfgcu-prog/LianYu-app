@@ -235,21 +235,7 @@ fun SettingsScreen(
                     color = textPrimaryColor
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { }
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = PetalPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                
             }
 
             AnimatedVisibility(
