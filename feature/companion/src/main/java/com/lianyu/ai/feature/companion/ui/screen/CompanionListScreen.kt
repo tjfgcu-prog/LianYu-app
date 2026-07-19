@@ -87,7 +87,7 @@ fun CompanionListScreen(
     var isVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -163,9 +163,9 @@ fun CompanionListScreen(
                         AnimatedVisibility(
                             visible = isVisible,
                             enter = fadeIn(
-                                animationSpec = tween(300, delayMillis = index * 100)
+                                animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
                             ) + slideInVertically(
-                                animationSpec = tween(300, delayMillis = index * 100),
+                                animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200)),
                                 initialOffsetY = { it / 2 }
                             ),
                             exit = fadeOut() + slideOutVertically()
