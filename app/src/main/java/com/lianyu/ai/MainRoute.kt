@@ -32,7 +32,7 @@ sealed class MainRoute(val route: String) {
     object TokenUsage : MainRoute("token_usage")
     object Theme : MainRoute("theme")
     object Language : MainRoute("language")
-    object CheckUpdate : MainRoute("check_update")
+    
     object FrameRate : MainRoute("frame_rate")
     object YandereMode : MainRoute("yandere_mode")
     object ExperimentalFeatures : MainRoute("experimental_features")
@@ -52,8 +52,7 @@ sealed class MainRoute(val route: String) {
     object Support : MainRoute("support")
     object Thanks : MainRoute("thanks")
     object ThanksFullList : MainRoute("thanks_full_list")
-    object OriginOSAdaption : MainRoute("originos_adaption")
-
+    
     // === 微信 ===
     object WeChatSettings : MainRoute("wechat_settings")
     object WeChatBind : MainRoute("wechat_bind")
@@ -94,7 +93,7 @@ sealed class MainRoute(val route: String) {
             route == "role_manager" -> RoleManager
             route == "theme" -> Theme
             route == "language" -> Language
-            route == "check_update" -> CheckUpdate
+            
             route == "about" -> About
             route == "agreement_view" -> AgreementView
             route == "frame_rate" -> FrameRate
@@ -105,7 +104,7 @@ sealed class MainRoute(val route: String) {
             route == "support" -> Support
             route == "thanks" -> Thanks
             route == "thanks_full_list" -> ThanksFullList
-            route == "originos_adaption" -> OriginOSAdaption
+            
             route == "wechat_settings" -> WeChatSettings
             route == "wechat_bind" -> WeChatBind
             route == "qqbot_settings" -> QQBotSettings
