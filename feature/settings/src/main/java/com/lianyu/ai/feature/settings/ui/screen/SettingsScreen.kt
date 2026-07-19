@@ -230,10 +230,12 @@ fun SettingsScreen(
 
                 Text(
                     text = "API 设置",
-                    fontSize = 20.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = textPrimaryColor
                 )
+
+                Spacer(modifier = Modifier.size(40.dp))
 
                 
             }
@@ -334,33 +336,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ====== Local Model Section ======
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200, delayMillis = 130)) +
-        slideInVertically(tween(200, delayMillis = 130)) { it / 4 }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val modelEntries = modelStates.entries.toList()
-                    modelEntries.forEach { (modelId, state) ->
-                        ModelSelectionCard(
-                            state = state,
-                            onSelect = { viewModel.selectModel(modelId) },
-                            onDownload = { viewModel.downloadModel(modelId) },
-                            onCancel = { viewModel.cancelGemmaDownload() },
-                            onEnable = { viewModel.enableGemma() },
-                            onDisable = { viewModel.disableGemma() },
-                            onDelete = { viewModel.deleteGemma() },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
+            
 Spacer(modifier = Modifier.height(16.dp))
 
             // ====== GGUF Local Model Section (custom import) ======
