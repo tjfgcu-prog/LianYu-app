@@ -897,7 +897,7 @@ private fun GgufLocalModelSection(
         ) {
             Button(
                 onClick = {
-                    val logFile = java.io.File("/data/data/com.lianyu.ai/files/chatvm_debug.log")
+                    val logFile = java.io.File("/data/data/com.lianyu.ai.zzz/files/chatvm_debug.log")
                     logContent = if (logFile.exists()) {
                         logFile.readText().takeLast(4000)
                     } else {
