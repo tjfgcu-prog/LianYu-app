@@ -260,9 +260,7 @@ fun ProfileScreen(
         SolidMenuGroup(
             items = listOf(
                 MenuItemData(Icons.Filled.Brush, stringResource(R.string.theme_mode), stringResource(R.string.theme_mode_desc), onThemeClick),
-                MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc)) {
-                    showBackgroundDialog = true
-                }
+                MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc), onClick = { showBackgroundDialog = true })
             ),
             isVisible = isVisible, delayMillis = 200
         )
