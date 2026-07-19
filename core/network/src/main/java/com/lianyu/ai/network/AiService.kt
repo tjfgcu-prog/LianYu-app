@@ -544,11 +544,13 @@ class AiService(context: Context) : AiServiceProvider {
     suspend fun generateProactiveMessage(companion: CompanionModel, recentMessages: List<ChatMessage>, settings: ProactiveMessageSettings? = null): String? {
         return withContext(Dispatchers.IO) {
             val config = resolveConfig()
-            if (config == null) {
-                SecureLog.w("AiService", "No active API config, skipping proactive message")
+            val localModelProvider = com.lianyu.ai.domain.ServiceRegistry.get(com.lianyu.ai.domain.LocalModelProvider::class.java)
+            val useLocalModel = config == null && localModelProvider?.isAvailable() == true
+            if (config == null && !useLocalModel) {
+                SecureLog.w("AiService", "No active API config and no local model available, skipping proactive message")
                 return@withContext null
             }
-            if (config.model.isBlank()) {
+            if (config != null && config.model.isBlank()) {
                 SecureLog.w("AiService", "Model not configured, skipping proactive message")
                 return@withContext null
             }
@@ -568,7 +570,12 @@ class AiService(context: Context) : AiServiceProvider {
             )
 
             try {
-                val rawResponse = when (config.provider) {
+                val rawResponse = if (useLocalModel) {
+                    localModelProvider!!.generateResponse(
+                        prompt = "$contextMessages\n\n以${companion.name}的身份，继续刚才的对话，15-50字，像真人聊天一样自然",
+                        context = systemPrompt
+                    )
+                } else when (config!!.provider) {
                     ApiProvider.OPENAI, ApiProvider.DEEPSEEK, ApiProvider.DASHSCOPE, ApiProvider.KIMI, ApiProvider.GEMINI, ApiProvider.XIAOMI, ApiProvider.ZHIPU, ApiProvider.SILICONFLOW, ApiProvider.OPENROUTER, ApiProvider.GROQ, ApiProvider.CUSTOM, ApiProvider.IFLYTEK, ApiProvider.PARTNER -> {
                         callOpenAiCompatible(config, messages)
                     }
