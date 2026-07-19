@@ -730,13 +730,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
         } // end try
     }
-
-    fun selectModel(modelId: String) {
-        viewModelScope.launch {
-            localModelProvider.enableModel(modelId)
-        }
-    }
-
+    
     private val _fetchedModels = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     val fetchedModels: StateFlow<Map<String, List<String>>> = _fetchedModels.asStateFlow()
 
@@ -861,51 +855,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun downloadModel(modelId: String) {
-        viewModelScope.launch {
-            localModelProvider.downloadModel(modelId)
-        }
-    }
-
-    fun cancelGemmaDownload() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                val selected = _modelStates.value.values.find { it.isSelected }?.modelId
-                if (selected != null) provider.cancelDownload(selected)
-            }
-        }
-    }
-
-    fun enableGemma() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                val selected = _modelStates.value.values.find { it.isSelected }?.modelId
-                if (selected != null) provider.enableModel(selected)
-            }
-        }
-    }
-
-    fun disableGemma() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                val selected = _modelStates.value.values.find { it.isSelected }?.modelId
-                if (selected != null) provider.disableModel(selected)
-            }
-        }
-    }
-
-    fun deleteGemma() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                val selected = _modelStates.value.values.find { it.isSelected }?.modelId
-                if (selected != null) provider.deleteModel(selected)
-            }
-        }
-    }
+    
 
     fun refreshLocalModel() {
         viewModelScope.launch {
