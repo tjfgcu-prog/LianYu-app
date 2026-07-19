@@ -772,6 +772,7 @@ private fun GgufLocalModelSection(
         enter = fadeIn(tween(400, delayMillis = 260)) +
                 slideInVertically(tween(400, delayMillis = 260)) { it / 4 }
     ) {
+        Column {
         var showLogDialog by remember { mutableStateOf(false) }
         var logContent by remember { mutableStateOf("") }
 
@@ -926,6 +927,7 @@ private fun GgufLocalModelSection(
                     }
                 )
             }
+        }
     }
 }
 // ==================== Reused Components (unchanged logic) ====================
