@@ -65,7 +65,7 @@ fun ExperimentalFeaturesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.experimental_features),
+                        "",
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -90,14 +90,7 @@ fun ExperimentalFeaturesScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.experimental_features_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
+            
             items(features) { feature ->
                 ExperimentalFeatureCard(feature = feature)
             }
