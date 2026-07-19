@@ -59,7 +59,7 @@ import com.lianyu.ai.feature.groupchat.ui.GroupDetailScreen
 import com.lianyu.ai.feature.memory.MemoryScreen
 import com.lianyu.ai.feature.profile.*
 import com.lianyu.ai.feature.settings.ui.screen.*
-import com.lianyu.ai.feature.update.AppUpdateManager
+
 import com.lianyu.ai.feature.wechat.ui.WeChatBindScreen
 import com.lianyu.ai.feature.wechat.ui.WeChatSettingsScreen
 import com.lianyu.ai.feature.qqbot.ui.QQBotSettingsScreen
@@ -69,7 +69,7 @@ import com.lianyu.ai.feature.coffee.ui.CoffeeOrderQueryScreen
 import com.lianyu.ai.feature.coffee.ui.CoffeeSettingsScreen
 import com.lianyu.ai.feature.coffee.ui.CoffeeTokenInputScreen
 import com.lianyu.ai.feature.coffee.ui.ProductDetailScreen
-import com.lianyu.ai.uicommon.component.UpdateDialog
+
 import com.lianyu.ai.uicommon.theme.LianYuTheme
 import com.lianyu.ai.uicommon.theme.ThemeViewModel
 
@@ -105,12 +105,7 @@ fun MainScreen(mainActivity: Activity) {
     val context = LocalContext.current
     val valActivity = context as ComponentActivity
 
-    val updateManager = remember {
-        (valActivity as? MainActivity)?.updateManager ?: AppUpdateManager(context)
-    }
-    val showUpdateDialog by updateManager.showUpdateDialog.collectAsState()
-    val updateInfo by updateManager.updateInfo.collectAsState()
-    val downloadProgress by updateManager.downloadProgress.collectAsState()
+    
 
     fun openCompanionChat(companionId: Long) {
         LastOpenedCompanionStore.save(context, companionId)
@@ -342,7 +337,7 @@ fun MainScreen(mainActivity: Activity) {
                 }
                 composable(MainRoute.Theme.route) { ThemeScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.Language.route) { LanguageScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
-                composable(MainRoute.CheckUpdate.route) { CheckUpdateScreen(onNavigateBack = { navController.popBackStack() }) }
+                
                 composable(MainRoute.About.route) { AboutScreen(onNavigateBack = { navController.popBackStack() }, onAgreementClick = { navController.navigate(MainRoute.AgreementView.route) }) }
                 composable(MainRoute.AgreementView.route) { AgreementViewScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.FrameRate.route) { FrameRateScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
@@ -364,9 +359,7 @@ fun MainScreen(mainActivity: Activity) {
                     ThanksFullListScreen(onNavigateBack = { navController.popBackStack() })
                 }
                 composable(MainRoute.ContextMemory.route) { ContextMemoryScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.OriginOSAdaption.route) {
-                    OriginOSAdaptionScreen(onNavigateBack = { navController.popBackStack() })
-                }
+                
                 composable(MainRoute.ExperimentalFeatures.route) {
                     ExperimentalFeaturesScreen(
                         onNavigateBack = { navController.popBackStack() },
@@ -446,23 +439,7 @@ fun MainScreen(mainActivity: Activity) {
                 }
             }
 
-            // 更新弹窗
-            if (showUpdateDialog && updateInfo != null) {
-                UpdateDialog(
-                    updateInfo = updateInfo!!,
-                    downloadProgress = downloadProgress,
-                    onUpdate = {
-                        updateInfo?.let { info ->
-                            if (info.updateUrl.isNotEmpty()) {
-                                if (updateManager.checkInstallPermission()) updateManager.startDownload(info.updateUrl)
-                                else updateManager.requestInstallPermission(valActivity)
-                            }
-                        }
-                    },
-                    onCancel = { updateManager.ignoreThisVersion() },
-                    onDismiss = { updateManager.dismissUpdate() }
-                )
-            }
+            
         }
     }
 }
