@@ -772,6 +772,10 @@ private fun GgufLocalModelSection(
         enter = fadeIn(tween(400, delayMillis = 260)) +
                 slideInVertically(tween(400, delayMillis = 260)) { it / 4 }
     ) {
+        var showLogDialog by remember { mutableStateOf(false) }
+        var logContent by remember { mutableStateOf("") }
+
+        // 卡片1：模型信息 + 选择文件
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -856,9 +860,19 @@ private fun GgufLocalModelSection(
                     }
                 )
             }
-            var showLogDialog by remember { mutableStateOf(false) }
-            var logContent by remember { mutableStateOf("") }
+        }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 卡片2：解除封禁
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(20.dp)
+        ) {
             Button(
                 onClick = {
                     com.lianyu.ai.common.BanManager.unbanUser(context)
@@ -867,9 +881,22 @@ private fun GgufLocalModelSection(
             ) {
                 Text("解除封禁")
             }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 卡片3：查看调试日志
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(20.dp)
+        ) {
             Button(
                 onClick = {
-                    val logFile = java.io.File("/data/data/com.lianyu.ai.zzz/files/chatvm_debug.log")
+                    val logFile = java.io.File("/data/data/com.lianyu.ai/files/chatvm_debug.log")
                     logContent = if (logFile.exists()) {
                         logFile.readText().takeLast(4000)
                     } else {
@@ -881,6 +908,7 @@ private fun GgufLocalModelSection(
             ) {
                 Text("查看调试日志")
             }
+        }
 
             if (showLogDialog) {
                 AlertDialog(
@@ -898,7 +926,6 @@ private fun GgufLocalModelSection(
                     }
                 )
             }
-        }
     }
 }
 // ==================== Reused Components (unchanged logic) ====================
