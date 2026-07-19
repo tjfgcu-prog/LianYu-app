@@ -839,6 +839,7 @@ private fun GgufLocalModelSection(
             Button(
                 onClick = {
                     com.lianyu.ai.common.BanManager.unbanUser(context)
+                    android.widget.Toast.makeText(context, "解除封禁成功", android.widget.Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -870,6 +871,23 @@ private fun GgufLocalModelSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("查看调试日志")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    val logFile = java.io.File("/data/data/com.lianyu.ai.zzz/files/chatvm_debug.log")
+                    val deleted = if (logFile.exists()) logFile.delete() else true
+                    android.widget.Toast.makeText(
+                        context,
+                        if (deleted) "日志已清空" else "清空失败",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("清空日志")
             }
         }
 
