@@ -35,7 +35,7 @@ import com.lianyu.ai.feature.notification.CompanionMessageWorker
 import com.lianyu.ai.feature.profile.AgreementScreen
 import com.lianyu.ai.feature.profile.ProfileViewModel
 import com.lianyu.ai.feature.profile.RoleSelectionScreen
-import com.lianyu.ai.feature.update.AppUpdateManager
+
 import com.lianyu.ai.uicommon.theme.LianYuTheme
 import com.lianyu.ai.uicommon.theme.ThemeViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
  */
 class MainActivity : ComponentActivity() {
 
-    val updateManager by lazy { AppUpdateManager(this) }
+    
     private val appScope = CoroutineScope(Dispatchers.Main)
     private var memoryAlertActive = false // 滞环: 触发后需降到阈值以下才解除
 
@@ -181,7 +181,7 @@ class MainActivity : ComponentActivity() {
             scheduleIqooKeepAliveJob()
         }
 
-        appScope.launch { updateManager.checkForUpdates() }
+        
         startMemoryMonitor()
     }
 
