@@ -7,7 +7,7 @@ import java.util.Locale
 
 /** File-based debug logger — bypasses vivo/ROM logcat filtering */
 object FileLogger {
-    private val file by lazy { File("/data/data/com.lianyu.ai/files/aiservice_debug.log") }
+    private val file by lazy { File("/data/data/com.lianyu.ai.zzz/files/aiservice_debug.log") }
 
     fun log(tag: String, msg: String) {
         try {
