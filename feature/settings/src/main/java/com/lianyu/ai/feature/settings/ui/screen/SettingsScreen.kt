@@ -810,18 +810,42 @@ private fun GgufLocalModelSection(
                 )
             }
 
-            Button(
-                onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
-                enabled = !isCopying,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    when {
-                        isCopying -> "复制中，请稍候..."
-                        ggufFileName == null -> "选择 .gguf 模型文件"
-                        else -> "重新选择文件"
-                    }
-                )
+                Button(
+                    onClick = {
+                        val modelFile = java.io.File(context.filesDir, "local_gguf_model.gguf")
+                        if (modelFile.exists()) modelFile.delete()
+                        prefs.edit()
+                            .remove("gguf_file_name")
+                            .remove("gguf_file_uri")
+                            .putBoolean("gguf_enabled", false)
+                            .commit()
+                        ggufFileName = null
+                        ggufEnabled = false
+                        android.widget.Toast.makeText(context, "模型已删除", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    enabled = !isCopying && ggufFileName != null,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("删除模型")
+                }
+
+                Button(
+                    onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
+                    enabled = !isCopying,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        when {
+                            isCopying -> "复制中..."
+                            ggufFileName == null -> "选择文件"
+                            else -> "重新选择"
+                        }
+                    )
+                }
             }
         }
 
