@@ -72,7 +72,7 @@ fun CreateGroupScreen(
     var isVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
