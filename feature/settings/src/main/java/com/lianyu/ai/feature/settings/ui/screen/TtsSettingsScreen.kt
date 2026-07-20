@@ -172,7 +172,7 @@ fun TtsSettingsScreen(
         selectedProvider = TtsProvider.entries.find { it.name == providerName } ?: TtsProvider.ANDROID
         selectedVoiceId = prefs.getString("tts_voice_${selectedProvider.name}", "") ?: ""
 
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -281,7 +281,7 @@ fun TtsSettingsScreen(
 
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 }
+                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
