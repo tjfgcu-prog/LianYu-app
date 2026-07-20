@@ -579,9 +579,6 @@ fun ChatScreen(
                     items = messages,
                     key = { it.id }
                 ) { message ->
-                    if (message.id > 0 && message.id % 5 == 0L) {
-                        android.util.Log.w("ChatScreen", "[ChatScreen] rendering message id=${message.id} content='${message.content.take(20)}'")
-                    }
                     ChatBubble(
                         message = message,
                         companionData = companionData,
