@@ -102,7 +102,7 @@ fun TokenUsageScreen(
 
     LaunchedEffect(Unit) {
         loadData()
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
