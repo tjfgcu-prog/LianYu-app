@@ -780,7 +780,7 @@ private fun GgufLocalModelSection(
                                 ggufFileName != null -> ggufFileName!!
                                 else -> "未选择文件"
                             },
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = textSecondaryColor
                         )
                     }
