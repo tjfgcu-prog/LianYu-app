@@ -125,7 +125,7 @@ fun VisionModelSettingsScreen(
     }
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -183,7 +183,7 @@ fun VisionModelSettingsScreen(
 
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 }
+                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
             ) {
                 Text(
                     text = "配置图片识别的视觉AI模型及API连接信息",
@@ -198,8 +198,8 @@ fun VisionModelSettingsScreen(
 
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(400, delayMillis = 150)) +
-                        slideInVertically(tween(400, delayMillis = 150)) { it / 4 }
+                enter = fadeIn(tween(200, delayMillis = 70)) +
+        slideInVertically(tween(200, delayMillis = 70)) { it / 4 }
             ) {
                 Column(
                     modifier = Modifier
@@ -569,8 +569,8 @@ fun VisionModelSettingsScreen(
 
             AnimatedVisibility(
                 visible = isVisible && visionEnabled,
-                enter = fadeIn(tween(400, delayMillis = 250)) +
-                        slideInVertically(tween(400, delayMillis = 250)) { it / 4 }
+                enter = fadeIn(tween(200, delayMillis = 130)) +
+        slideInVertically(tween(200, delayMillis = 130)) { it / 4 }
             ) {
                 Column(
                     modifier = Modifier
