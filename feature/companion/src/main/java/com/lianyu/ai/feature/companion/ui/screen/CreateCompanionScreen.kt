@@ -195,7 +195,7 @@ fun CreateCompanionScreen(
         if (isEditMode && companionId != null) {
             viewModel.loadCompanion(companionId)
         }
-        delay(100)
+        delay(30)
         isVisible = true
     }
 
@@ -386,8 +386,8 @@ fun CreateCompanionScreen(
                 // 角色类型选择
                 AnimatedVisibility(
                     visible = isVisible,
-                    enter = fadeIn(tween(400, delayMillis = 80)) +
-                            slideInVertically(tween(400, delayMillis = 80)) { it / 3 }
+                    enter = fadeIn(tween(200, delayMillis = 40)) +
+        slideInVertically(tween(200, delayMillis = 40)) { it / 3 }
                 ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -497,8 +497,8 @@ fun CreateCompanionScreen(
                 // 性格标签
                 AnimatedVisibility(
                     visible = isVisible,
-                    enter = fadeIn(tween(400, delayMillis = 220)) +
-                            slideInVertically(tween(400, delayMillis = 220)) { it / 3 }
+                    enter = fadeIn(tween(200, delayMillis = 110)) +
+        slideInVertically(tween(200, delayMillis = 110)) { it / 3 }
                 ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -578,8 +578,8 @@ fun CreateCompanionScreen(
 
                 AnimatedVisibility(
                     visible = isVisible,
-                    enter = fadeIn(tween(400, delayMillis = 250)) +
-                            slideInVertically(tween(400, delayMillis = 250)) { it / 3 }
+                    enter = fadeIn(tween(200, delayMillis = 130)) +
+        slideInVertically(tween(200, delayMillis = 130)) { it / 3 }
                 ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -984,8 +984,8 @@ fun AnimatedFormField(
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(400, delayMillis = delayMillis)) +
-                slideInVertically(tween(400, delayMillis = delayMillis)) { it / 3 }
+        enter = fadeIn(tween(200, delayMillis = delayMillis)) +
+        slideInVertically(tween(200, delayMillis = delayMillis)) { it / 3 }
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
