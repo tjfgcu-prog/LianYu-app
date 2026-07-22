@@ -188,9 +188,9 @@ class LocalAiService private constructor(private val context: Context) {
         val config = ConversationConfig(
             systemInstruction = Contents.of(systemPrompt),
             samplerConfig = SamplerConfig(
-                topK = 1,
+                topK = 30,
                 topP = 0.95,
-                temperature = 0.3
+                temperature = 0.7
             )
         )
 
