@@ -248,18 +248,10 @@ class YandereModeManager(private val context: Context) {
      * 判断本轮是否应该触发病娇提及。
      * 基于最小间隔和概率控制，避免过度触发。
      */
-    fun shouldTriggerThisRound(): Boolean {
-        // [R11 FIX] 用 synchronized 保证自增+比较+更新的原子性
+    fun shouldTriggerThisRound(lastUserMessageTime: Long): Boolean {
         synchronized(triggerLock) {
-            currentRound++
-            if (currentRound - lastTriggerRound < MIN_TRIGGER_INTERVAL) {
-                return false
-            }
-            val shouldTrigger = true
-            if (shouldTrigger) {
-                lastTriggerRound = currentRound
-            }
-            return shouldTrigger
+            val elapsed = System.currentTimeMillis() - lastUserMessageTime
+            return elapsed >= 60 * 60 * 1000L
         }
     }
 
