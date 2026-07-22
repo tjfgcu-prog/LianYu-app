@@ -64,11 +64,7 @@ import com.lianyu.ai.feature.wechat.ui.WeChatBindScreen
 import com.lianyu.ai.feature.wechat.ui.WeChatSettingsScreen
 import com.lianyu.ai.feature.qqbot.ui.QQBotSettingsScreen
 import com.lianyu.ai.feature.backup.BackupScreen
-import com.lianyu.ai.feature.coffee.ui.CoffeeScreen
-import com.lianyu.ai.feature.coffee.ui.CoffeeOrderQueryScreen
-import com.lianyu.ai.feature.coffee.ui.CoffeeSettingsScreen
-import com.lianyu.ai.feature.coffee.ui.CoffeeTokenInputScreen
-import com.lianyu.ai.feature.coffee.ui.ProductDetailScreen
+
 
 import com.lianyu.ai.uicommon.theme.LianYuTheme
 import com.lianyu.ai.uicommon.theme.ThemeViewModel
