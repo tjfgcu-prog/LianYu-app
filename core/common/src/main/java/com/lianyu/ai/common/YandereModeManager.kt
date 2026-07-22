@@ -33,7 +33,7 @@ class YandereModeManager(private val context: Context) {
         private const val CACHE_FILE_NAME = "yandere_mode_cache.json"
         private const val CACHE_EXPIRE_HOURS = 6L
         private const val TOP_USAGE_APPS = 10
-        private const val MIN_TRIGGER_INTERVAL = 5
+        private const val MIN_TRIGGER_INTERVAL = 3
 
         private val json = Json {
             prettyPrint = true
@@ -255,7 +255,7 @@ class YandereModeManager(private val context: Context) {
             if (currentRound - lastTriggerRound < MIN_TRIGGER_INTERVAL) {
                 return false
             }
-            val shouldTrigger = Math.random() < 0.3
+            val shouldTrigger = true
             if (shouldTrigger) {
                 lastTriggerRound = currentRound
             }
