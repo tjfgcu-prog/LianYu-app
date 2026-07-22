@@ -257,12 +257,8 @@ fun MainScreen(mainActivity: Activity) {
                                     // 总设置
                                     onGeneralSettingsClick = { navController.navigate(MainRoute.GeneralSettings.route) },
                                     // 角色管理
-                                    onRoleManagerClick = { navController.navigate(MainRoute.RoleManager.route) },
-                                    // 关于与支持
-                                    onTeamClick = { navController.navigate(MainRoute.Team.route) },
-                                    onSupportClick = { navController.navigate(MainRoute.Support.route) },
-                                    onThanksClick = { navController.navigate(MainRoute.Thanks.route) },
-                                    onAboutClick = { navController.navigate(MainRoute.About.route) }
+                                    onRoleManagerClick = { navController.navigate(MainRoute.RoleManager.route) }
+                                    
                                 )
                             }
                         }
@@ -320,9 +316,6 @@ fun MainScreen(mainActivity: Activity) {
                 }
                 composable(MainRoute.Theme.route) { ThemeScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.Language.route) { LanguageScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
-                
-                composable(MainRoute.About.route) { AboutScreen(onNavigateBack = { navController.popBackStack() }, onAgreementClick = { navController.navigate(MainRoute.AgreementView.route) }) }
-                composable(MainRoute.AgreementView.route) { AgreementViewScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.FrameRate.route) { FrameRateScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.YandereMode.route) {
                     val manager = ServiceRegistry.get(YandereModeManager::class.java)
