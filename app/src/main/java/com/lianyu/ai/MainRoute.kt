@@ -35,7 +35,7 @@ sealed class MainRoute(val route: String) {
     
     object FrameRate : MainRoute("frame_rate")
     object YandereMode : MainRoute("yandere_mode")
-    object ExperimentalFeatures : MainRoute("experimental_features")
+    
 
     // === 总设置 ===
     object GeneralSettings : MainRoute("general_settings")
@@ -98,7 +98,7 @@ sealed class MainRoute(val route: String) {
             route == "agreement_view" -> AgreementView
             route == "frame_rate" -> FrameRate
             route == "yandere_mode" -> YandereMode
-            route == "experimental_features" -> ExperimentalFeatures
+            
             route == "general_settings" -> GeneralSettings
             route == "team" -> Team
             route == "support" -> Support
