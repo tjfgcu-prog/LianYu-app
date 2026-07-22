@@ -21,6 +21,8 @@
     <!-- 总设置 -->
     <string name="general_settings">总设置</string>
     <string name="general_settings_desc">决策</string>
+    <string name="yandere_mode">病娇模式</string>
+    <string name="yandere_mode_desc">让 AI 以病娇口吻关注你的设备使用情况</string>
 
     <!-- 记忆与管理 -->
     <string name="context_memory">上下文记忆</string>
