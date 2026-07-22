@@ -90,11 +90,7 @@ fun ProfileScreen(
     onGeneralSettingsClick: () -> Unit,
     // 角色管理
     onRoleManagerClick: () -> Unit,
-    // 关于与支持
-    onTeamClick: () -> Unit = {},
-    onSupportClick: () -> Unit = {},
-    onThanksClick: () -> Unit = {},
-    onAboutClick: () -> Unit,
+    
     viewModel: ProfileViewModel = viewModel()
 ) {
     val context = LocalContext.current
