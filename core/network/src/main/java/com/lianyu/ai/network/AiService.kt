@@ -94,12 +94,12 @@ class AiService(context: Context) : AiServiceProvider {
      * 仅在全局开关开启、本轮概率触发且能构建出非空提示词时追加。
      * 失败时静默降级，不影响正常对话。
      */
-    private suspend fun appendYanderePromptIfNeeded(systemPrompt: String, companion: CompanionModel): String {
+    private suspend fun appendYanderePromptIfNeeded(systemPrompt: String, companion: CompanionModel, lastUserMessageTime: Long): String {
         return try {
             val manager = ServiceRegistry.get(YandereModeManager::class.java)
                 ?: return systemPrompt
             if (!appSettingsStore.getYandereModeEnabled()) return systemPrompt
-            if (!manager.shouldTriggerThisRound()) return systemPrompt
+            if (!manager.shouldTriggerThisRound(lastUserMessageTime)) return systemPrompt
             val role = ServiceRegistry.get(UserRepository::class.java)?.selectedRole?.value
                 ?: CompanionRole.GIRLFRIEND
             val yanderePrompt = manager.buildYandereModeSystemPrompt(role)
@@ -501,7 +501,7 @@ class AiService(context: Context) : AiServiceProvider {
                 }.distinct()
                 val role = userRepository.selectedRole.value
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion)
+                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sanitizedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
                 SecureLog.api("SEND", "provider=${config.provider}, model=${config.model}, messages=${messages.size}, contextLimit=$contextLimit, stickerProb=$stickerProbability, stickers=${availableStickers.size}")
@@ -1832,7 +1832,7 @@ $chatText
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion)
+                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sortedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
 
                 SecureLog.api("VISION", "provider=${config.provider}, model=${config.model}, image=$imagePath")
 
@@ -2219,7 +2219,7 @@ $chatText
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
                 val role = userRepository.selectedRole.value
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion)
+                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sanitizedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
                 SecureLog.api("SEND", "provider=${config.provider}, model=${config.model}, messages=${messages.size}, tools=${tools.size}")
