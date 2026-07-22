@@ -100,103 +100,73 @@ class CompanionMessageWorker(
                 return@withContext Result.success()
             }
 
-            // 从符合条件的伴侣中随机选一个
-            val randomCompanion = eligibleCompanions.random()
-            val settings = runCatching { readCompanionSettings(randomCompanion.id) }.getOrNull()
-                ?: ProactiveSettings()
+            var lastUsedSettings: ProactiveSettings? = null
 
-            // ── 免打扰检查 ──
-            if (settings.doNotDisturbEnabled && !settings.allowPriorityMessageInDnd) {
-                val now = java.util.Calendar.getInstance()
-                val totalMinutes = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
-                val inDndRange = if (settings.dndStartMinutes > settings.dndEndMinutes) {
-                    // 跨午夜：如 23:00 ~ 08:00
-                    totalMinutes >= settings.dndStartMinutes || totalMinutes < settings.dndEndMinutes
-                } else {
-                    totalMinutes in settings.dndStartMinutes until settings.dndEndMinutes
-                }
-                if (inDndRange && !settings.allowLateNightMessage) {
-                    SecureLog.d("CompanionMessageWorker", "DND active for ${randomCompanion.name}, skip")
-                    scheduleNext(context, settings)
-                    return@withContext Result.success()
-                }
-            }
+            for (companionItem in eligibleCompanions) {
+                val settings = runCatching { readCompanionSettings(companionItem.id) }.getOrNull()
+                    ?: ProactiveSettings()
+                lastUsedSettings = settings
 
-            // ── 每日上限检查（精确计数，跨天自动重置） ──
-            if (settings.proactiveDailyLimit > 0) {
-                val todayCount = getTodayProactiveCount(context, randomCompanion.id)
-                if (todayCount >= settings.proactiveDailyLimit) {
-                    SecureLog.d("CompanionMessageWorker", "Daily limit reached ($todayCount/${settings.proactiveDailyLimit}) for ${randomCompanion.name}")
-                    scheduleNext(context, settings)
-                    return@withContext Result.success()
-                }
-            }
-
-            val recentMessages = chatMessageDao.getRecentMessagesSync(randomCompanion.id, 10)
-                .map { ChatMessageCrypto.decryptFromStorage(it) }
-                .filterDecrypted()
-
-            // 传入自定义设置，让 shouldProactivelyMessage/generateProactiveMessage 按其行为
-            val domainSettings = settings.toDomain()
-            if (!aiServiceProvider.shouldProactivelyMessage(randomCompanion.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)) {
-                scheduleNext(context, settings)
-                return@withContext Result.success()
-            }
-
-            val messageContent = aiServiceProvider.generateProactiveMessage(randomCompanion.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)
-
-            if (messageContent == null) {
-                SecureLog.w("CompanionMessageWorker", "Proactive message is null, skipping")
-                scheduleNext(context, settings)
-                return@withContext Result.success()
-            }
-
-            // 安全检查：拦截 AI 主动消息中的违规内容（仅最终防线，不累计封禁）
-            // AiService 生成时已做过 checkOutputSafety，这里只做兜底
-            val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(messageContent)
-            if (!outputSafety.isSafe) {
-                SecureLog.w("CompanionMessageWorker", "Proactive message blocked by safety filter: ${outputSafety.reason}")
-                // AI 输出违规不应累加用户封禁（见 Bug #1 根因 A3）
-                scheduleNext(context, settings)
-                return@withContext Result.success()
-            }
-
-            // ── 分段发送：按自然句号/感叹号/问号/换行拆分，逐条入库+广播 ──
-            val segments = splitIntoSegments(messageContent)
-            var totalSegmentsSent = 0
-
-            for ((index, segment) in segments.withIndex()) {
-                if (index > 0) {
-                    // 段间延迟 1~2 秒，模拟真人分段打字效果
-                    delay(Random.nextLong(1000L, 2000L))
+                // ── 免打扰检查 ──
+                if (settings.doNotDisturbEnabled && !settings.allowPriorityMessageInDnd) {
+                    val now = java.util.Calendar.getInstance()
+                    val totalMinutes = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
+                    val inDndRange = if (settings.dndStartMinutes > settings.dndEndMinutes) {
+                        totalMinutes >= settings.dndStartMinutes || totalMinutes < settings.dndEndMinutes
+                    } else {
+                        totalMinutes in settings.dndStartMinutes until settings.dndEndMinutes
+                    }
+                    if (inDndRange && !settings.allowLateNightMessage) {
+                        SecureLog.d("CompanionMessageWorker", "DND active for ${companionItem.name}, skip")
+                        continue
+                    }
                 }
 
-                val message = ChatMessage(
-                    companionId = randomCompanion.id,
-                    content = segment,
-                    isFromUser = false
-                )
-                val messageId = chatMessageDao.insertMessage(ChatMessageCrypto.encryptForStorage(message))
-                broadcastProactiveWeChatMessage(randomCompanion.id, messageId)
-                totalSegmentsSent++
+                val recentMessages = chatMessageDao.getRecentMessagesSync(companionItem.id, 10)
+                    .map { ChatMessageCrypto.decryptFromStorage(it) }
+                    .filterDecrypted()
+
+                val domainSettings = settings.toDomain()
+                if (!aiServiceProvider.shouldProactivelyMessage(companionItem.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)) {
+                    continue
+                }
+
+                val messageContent = aiServiceProvider.generateProactiveMessage(companionItem.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)
+                    ?: continue
+
+                val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(messageContent)
+                if (!outputSafety.isSafe) {
+                    SecureLog.w("CompanionMessageWorker", "Proactive message blocked by safety filter: ${outputSafety.reason}")
+                    continue
+                }
+
+                val segments = splitIntoSegments(messageContent)
+
+                for ((index, segment) in segments.withIndex()) {
+                    if (index > 0) {
+                        delay(Random.nextLong(1000L, 2000L))
+                    }
+
+                    val message = ChatMessage(
+                        companionId = companionItem.id,
+                        content = segment,
+                        isFromUser = false
+                    )
+                    val messageId = chatMessageDao.insertMessage(ChatMessageCrypto.encryptForStorage(message))
+                    broadcastProactiveWeChatMessage(companionItem.id, messageId)
+                }
+
+                if (!AppForegroundTracker.isInForeground && segments.isNotEmpty()) {
+                    NotificationHelper.showCompanionMessageNotification(
+                        context,
+                        companionItem.name,
+                        segments.first(),
+                        companionItem.id
+                    )
+                }
             }
 
-            // 精确增加今日主动消息计数
-            if (totalSegmentsSent > 0 && settings.proactiveDailyLimit > 0) {
-                incrementTodayProactiveCount(context, randomCompanion.id, 1)
-            }
-
-            // 仅在最后一条段时推送通知，避免通知轰炸
-            if (!AppForegroundTracker.isInForeground && segments.isNotEmpty()) {
-                NotificationHelper.showCompanionMessageNotification(
-                    context,
-                    randomCompanion.name,
-                    segments.first(), // 通知显示第一条即可
-                    randomCompanion.id
-                )
-            }
-
-            scheduleNext(context, settings)
+            scheduleNext(context, lastUsedSettings)
 
             Result.success()
         } catch (_: Exception) {
