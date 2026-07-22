@@ -27,7 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Coffee
+
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Psychology
@@ -92,7 +92,7 @@ fun GeneralSettingsScreen(
     onWeChatClick: () -> Unit,
     onQQBotClick: () -> Unit,
     onDataBackupClick: () -> Unit,
-    onCoffeeClick: () -> Unit = {},
+    
     onYandereModeClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
