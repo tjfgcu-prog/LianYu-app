@@ -93,7 +93,7 @@ fun GeneralSettingsScreen(
     onQQBotClick: () -> Unit,
     onDataBackupClick: () -> Unit,
     onCoffeeClick: () -> Unit = {},
-    onExperimentalFeaturesClick: () -> Unit = {}
+    onYandereModeClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
@@ -130,7 +130,7 @@ fun GeneralSettingsScreen(
                 items = listOf(
                     MenuItemData(Icons.Filled.Language, stringResource(R.string.language), stringResource(R.string.language_desc), onLanguageClick),
                     MenuItemData(Icons.Filled.Refresh, stringResource(R.string.framerate), currentFrameRate.label, onFrameRateClick),
-                    MenuItemData(Icons.Filled.Science, "妙哉", "", onExperimentalFeaturesClick, emojiIcon = "😉"),
+                    
                     ThinkingSettingsEntry()
                 ),
                 isVisible = isVisible, delayMillis = 100
@@ -159,6 +159,15 @@ fun GeneralSettingsScreen(
                     
                 ),
                 isVisible = isVisible, delayMillis = 220
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // === 第四组：病娇模式（独立卡片）===
+            SolidMenuGroup(
+                items = listOf(
+                    MenuItemData(Icons.Filled.Science, stringResource(R.string.yandere_mode), stringResource(R.string.yandere_mode_desc), onYandereModeClick)
+                ),
+                isVisible = isVisible, delayMillis = 260
             )
 
             Spacer(modifier = Modifier.height(80.dp))
