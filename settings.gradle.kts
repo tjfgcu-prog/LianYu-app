@@ -44,4 +44,4 @@ include(":feature:localmodel")
 include(":feature:wechat")
 include(":feature:qqbot")
 include(":feature:backup")
-include(":feature:coffee")
+
