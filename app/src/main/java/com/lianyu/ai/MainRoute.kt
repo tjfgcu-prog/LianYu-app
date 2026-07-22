@@ -46,12 +46,7 @@ sealed class MainRoute(val route: String) {
     // === 个人中心 ===
     object Memory : MainRoute("memory")
     object ContextMemory : MainRoute("context_memory")
-    object About : MainRoute("about")
-    object AgreementView : MainRoute("agreement_view")
-    object Team : MainRoute("team")
-    object Support : MainRoute("support")
-    object Thanks : MainRoute("thanks")
-    object ThanksFullList : MainRoute("thanks_full_list")
+    
     
     // === 微信 ===
     object WeChatSettings : MainRoute("wechat_settings")
@@ -94,16 +89,12 @@ sealed class MainRoute(val route: String) {
             route == "theme" -> Theme
             route == "language" -> Language
             
-            route == "about" -> About
-            route == "agreement_view" -> AgreementView
+            
             route == "frame_rate" -> FrameRate
             route == "yandere_mode" -> YandereMode
             
             route == "general_settings" -> GeneralSettings
-            route == "team" -> Team
-            route == "support" -> Support
-            route == "thanks" -> Thanks
-            route == "thanks_full_list" -> ThanksFullList
+            
             
             route == "wechat_settings" -> WeChatSettings
             route == "wechat_bind" -> WeChatBind
