@@ -343,12 +343,6 @@ fun MainScreen(mainActivity: Activity) {
                 }
                 composable(MainRoute.ContextMemory.route) { ContextMemoryScreen(onNavigateBack = { navController.popBackStack() }) }
                 
-                composable(MainRoute.ExperimentalFeatures.route) {
-                    ExperimentalFeaturesScreen(
-                        onNavigateBack = { navController.popBackStack() },
-                        onYandereModeClick = { navController.navigate(MainRoute.YandereMode.route) }
-                    )
-                }
                 composable(MainRoute.GeneralSettings.route) {
                     GeneralSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
@@ -360,7 +354,7 @@ fun MainScreen(mainActivity: Activity) {
                         onQQBotClick = { navController.navigate(MainRoute.QQBotSettings.route) },
                         onDataBackupClick = { navController.navigate(MainRoute.DataBackup.route) },
                         onCoffeeClick = { navController.navigate(MainRoute.Coffee.route) },
-                        onExperimentalFeaturesClick = { navController.navigate(MainRoute.ExperimentalFeatures.route) }
+                        onYandereModeClick = { navController.navigate(MainRoute.YandereMode.route) }
                     )
                 }
                 composable(MainRoute.WeChatSettings.route) {
