@@ -323,17 +323,7 @@ fun MainScreen(mainActivity: Activity) {
                         YandereModeScreen(onNavigateBack = { navController.popBackStack() }, yandereModeManager = manager)
                     }
                 }
-                composable(MainRoute.Team.route) { TeamScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.Support.route) { SupportScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.Thanks.route) {
-                    ThanksScreen(
-                        onNavigateBack = { navController.popBackStack() },
-                        onViewFullList = { navController.navigate(MainRoute.ThanksFullList.route) }
-                    )
-                }
-                composable(MainRoute.ThanksFullList.route) {
-                    ThanksFullListScreen(onNavigateBack = { navController.popBackStack() })
-                }
+                
                 composable(MainRoute.ContextMemory.route) { ContextMemoryScreen(onNavigateBack = { navController.popBackStack() }) }
                 
                 composable(MainRoute.GeneralSettings.route) {
