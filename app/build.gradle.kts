@@ -147,7 +147,7 @@ dependencies {
     implementation(project(":feature:wechat"))
     implementation(project(":feature:qqbot"))
     implementation(project(":feature:backup"))
-    implementation(project(":feature:coffee"))
+    
 
     // sherpa-onnx: 离线流式语音识别，运行时由 app 模块提供
     implementation(files("../core/network/libs/sherpa-onnx-1.13.3.aar"))
