@@ -336,7 +336,7 @@ fun MainScreen(mainActivity: Activity) {
                         onWeChatClick = { navController.navigate(MainRoute.WeChatSettings.route) },
                         onQQBotClick = { navController.navigate(MainRoute.QQBotSettings.route) },
                         onDataBackupClick = { navController.navigate(MainRoute.DataBackup.route) },
-                        onCoffeeClick = { navController.navigate(MainRoute.Coffee.route) },
+                        
                         onYandereModeClick = { navController.navigate(MainRoute.YandereMode.route) }
                     )
                 }
@@ -346,57 +346,7 @@ fun MainScreen(mainActivity: Activity) {
                 composable(MainRoute.WeChatBind.route) { WeChatBindScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.QQBotSettings.route) { QQBotSettingsScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.DataBackup.route) { BackupScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.Coffee.route) {
-                    CoffeeScreen(
-                        onBack = { navController.popBackStack() },
-                        onProductClick = { deptId, productId ->
-                            navController.navigate(MainRoute.CoffeeProduct(deptId, productId).route)
-                        },
-                        onSettingsClick = { navController.navigate(MainRoute.CoffeeSettings.route) },
-                        onOrderQueryClick = { navController.navigate(MainRoute.CoffeeOrderQuery.route) }
-                    )
-                }
-                composable(
-                    MainRoute.CoffeeProduct(0, 0).route.replace("0", "{deptId}/{productId}"),
-                    arguments = listOf(
-                        navArgument("deptId") { type = NavType.LongType },
-                        navArgument("productId") { type = NavType.LongType }
-                    )
-                ) { backStackEntry ->
-                    val deptId = backStackEntry.arguments?.getLong("deptId") ?: 0L
-                    val productId = backStackEntry.arguments?.getLong("productId") ?: 0L
-                    ProductDetailScreen(
-                        deptId = deptId,
-                        productId = productId,
-                        onBack = { navController.popBackStack() },
-                        onAddedToCart = { navController.popBackStack() }
-                    )
-                }
-                composable(MainRoute.CoffeeSettings.route) {
-                    CoffeeSettingsScreen(
-                        onBack = { navController.popBackStack() },
-                        onReplaceToken = { navController.navigate(MainRoute.CoffeeToken.route) },
-                        onQueryOrder = { orderId ->
-                            navController.navigate(MainRoute.CoffeeOrderQueryWithId(orderId).route)
-                        }
-                    )
-                }
-                composable(MainRoute.CoffeeToken.route) {
-                    CoffeeTokenInputScreen(onBack = { navController.popBackStack() })
-                }
-                composable(MainRoute.CoffeeOrderQuery.route) {
-                    CoffeeOrderQueryScreen(onBack = { navController.popBackStack() })
-                }
-                composable(
-                    MainRoute.CoffeeOrderQueryWithId("placeholder").route.replace("placeholder", "{orderId}"),
-                    arguments = listOf(navArgument("orderId") { type = NavType.StringType; nullable = false })
-                ) { backStackEntry ->
-                    val orderId = backStackEntry.arguments?.getString("orderId").orEmpty()
-                    CoffeeOrderQueryScreen(
-                        initialOrderId = orderId,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
+                
             }
 
             
