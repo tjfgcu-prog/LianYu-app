@@ -305,7 +305,7 @@ fun BanScreen(
             }
 
             // 各级别
-            items(BanManager.getViolationLevels()) { level ->
+            items(BanManager.getViolationLevels(), key = { it.name }) { level ->
                 val bgColor = when (level.level) {
                     ContentFilter.ViolationLevel.LOW -> Color(0xFFFFF8E1)
                     ContentFilter.ViolationLevel.MEDIUM -> Color(0xFFFFF3E0)
