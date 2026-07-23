@@ -14,7 +14,7 @@ import com.lianyu.ai.database.dao.ChatGroupDao
 import com.lianyu.ai.database.dao.ChatMessageDao
 import com.lianyu.ai.database.dao.CompanionDao
 import com.lianyu.ai.database.dao.GroupMessageDao
-import com.lianyu.ai.database.dao.KeywordDao
+
 import com.lianyu.ai.database.dao.MemoryDao
 import com.lianyu.ai.database.dao.QuizQuestionDao
 import com.lianyu.ai.database.dao.TokenUsageDao
@@ -25,7 +25,7 @@ import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.model.FileFormat
 import com.lianyu.ai.database.model.GroupMessage
-import com.lianyu.ai.database.model.KeywordEntity
+
 import com.lianyu.ai.database.model.MemoryCategory
 import com.lianyu.ai.database.model.MemoryEntry
 import com.lianyu.ai.database.model.MessageType
@@ -43,7 +43,7 @@ import java.io.File
         TempMemory::class,
         ChatGroup::class,
         GroupMessage::class,
-        KeywordEntity::class,
+        
         QuizQuestionEntity::class,
         TokenUsage::class
     ],
@@ -58,7 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun chatGroupDao(): ChatGroupDao
     abstract fun groupMessageDao(): GroupMessageDao
-    abstract fun keywordDao(): KeywordDao
+    
     abstract fun quizQuestionDao(): QuizQuestionDao
     abstract fun tokenUsageDao(): TokenUsageDao
 
