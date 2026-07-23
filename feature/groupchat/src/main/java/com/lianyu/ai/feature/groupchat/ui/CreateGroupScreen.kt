@@ -176,7 +176,7 @@ fun CreateGroupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(companions) { companion ->
+                    items(companions, key = { it.id }) { companion ->
                         val isSelected = selectedIds.contains(companion.id)
                         CompanionSelectItem(
                             companion = companion,
