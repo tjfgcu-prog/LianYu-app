@@ -372,7 +372,7 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filteredMemories) { memory ->
+                items(filteredMemories, key = { it.id }) { memory ->
                     MemoryItemCard(
                         memory = memory,
                         onDelete = { viewModel.deleteMemory(memory) },
@@ -437,7 +437,7 @@ fun TempMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(tempMemories) { tempMemory ->
+            items(tempMemories, key = { it.id }) { tempMemory ->
                 TempMemoryItemCard(tempMemory = tempMemory)
             }
         }
