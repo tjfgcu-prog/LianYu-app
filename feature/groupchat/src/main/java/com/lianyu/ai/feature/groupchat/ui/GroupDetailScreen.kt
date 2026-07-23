@@ -285,7 +285,7 @@ fun GroupDetailScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "退出群聊",
+                            text = "删除",
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -299,8 +299,8 @@ fun GroupDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("退出群聊") },
-            text = { Text("确定要退出并删除这个群聊吗？聊天记录将无法恢复。") },
+            title = { Text("删除") },
+            text = { Text("确定删除这个群聊吗？聊天记录将无法恢复。") },
             confirmButton = {
                 TextButton(
                     onClick = {
