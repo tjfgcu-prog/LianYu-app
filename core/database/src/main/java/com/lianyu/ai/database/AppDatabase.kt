@@ -14,7 +14,7 @@ import com.lianyu.ai.database.dao.ChatGroupDao
 import com.lianyu.ai.database.dao.ChatMessageDao
 import com.lianyu.ai.database.dao.CompanionDao
 import com.lianyu.ai.database.dao.GroupMessageDao
-import com.lianyu.ai.database.dao.KeywordDao
+
 import com.lianyu.ai.database.dao.MemoryDao
 import com.lianyu.ai.database.dao.QuizQuestionDao
 import com.lianyu.ai.database.dao.TokenUsageDao
@@ -25,7 +25,7 @@ import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.model.FileFormat
 import com.lianyu.ai.database.model.GroupMessage
-import com.lianyu.ai.database.model.KeywordEntity
+
 import com.lianyu.ai.database.model.MemoryCategory
 import com.lianyu.ai.database.model.MemoryEntry
 import com.lianyu.ai.database.model.MessageType
@@ -43,11 +43,10 @@ import java.io.File
         TempMemory::class,
         ChatGroup::class,
         GroupMessage::class,
-        KeywordEntity::class,
         QuizQuestionEntity::class,
         TokenUsage::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -58,7 +57,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun chatGroupDao(): ChatGroupDao
     abstract fun groupMessageDao(): GroupMessageDao
-    abstract fun keywordDao(): KeywordDao
     abstract fun quizQuestionDao(): QuizQuestionDao
     abstract fun tokenUsageDao(): TokenUsageDao
 
@@ -699,6 +697,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 移除本地内容过滤/封禁功能后，关键词表不再需要
+                db.execSQL("DROP TABLE IF EXISTS keywords")
+            }
+        }
+
         val MIGRATIONS = arrayOf(
             MIGRATION_1_6,
             MIGRATION_2_6,
@@ -717,7 +722,8 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_15_16,
             MIGRATION_16_17,
             MIGRATION_17_18,
-            MIGRATION_18_19
+            MIGRATION_18_19,
+            MIGRATION_19_20
         )
 
         private var lastBackupTime: Long = 0L
