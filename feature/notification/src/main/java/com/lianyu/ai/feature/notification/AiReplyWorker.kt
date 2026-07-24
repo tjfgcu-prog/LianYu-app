@@ -46,18 +46,6 @@ class AiReplyWorker(
                 return@withContext Result.failure()
             }
 
-            // 封禁检查：已封禁用户不触发 AI 回复
-            if (com.lianyu.ai.common.BanManager.isBanned(applicationContext)) {
-                return@withContext Result.failure()
-            }
-
-            // 防御性输入安全检查
-            val inputCheck = com.lianyu.ai.common.ContentFilter.checkInput(userMessageContent)
-            if (inputCheck.isViolating) {
-                com.lianyu.ai.common.BanManager.recordViolation(applicationContext, inputCheck.level)
-                return@withContext Result.failure()
-            }
-
             val database = AppDatabase.getDatabase(applicationContext)
             val companionRepository = CompanionRepository(database.companionDao())
             val chatRepository = ChatRepository(database.chatMessageDao())
@@ -80,15 +68,7 @@ class AiReplyWorker(
                 val trimmedResponse = response.content.trim()
 
                 if (trimmedResponse.isNotEmpty()) {
-                    // 安全检查：拦截 AI 违规输出
-                    val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(trimmedResponse)
-                    val safeResponse = if (!outputSafety.isSafe) {
-                        android.util.Log.w("AiReplyWorker", "AI output blocked by safety filter: ${outputSafety.reason}")
-                        com.lianyu.ai.common.BanManager.recordViolation(applicationContext, outputSafety.level)
-                        "抱歉，我无法回应这个话题。"
-                    } else {
-                        trimmedResponse
-                    }
+                    val safeResponse = trimmedResponse
 
                     val aiMessage = ChatMessage(
                         companionId = companionId,
