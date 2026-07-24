@@ -851,40 +851,7 @@ private fun GgufLocalModelSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 卡片2：解除封禁
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(20.dp)
-        ) {
-            var isBannedState by remember { mutableStateOf(com.lianyu.ai.common.BanManager.isBanned(context)) }
-
-            Text(
-                text = "当前状态：${if (isBannedState) "已封禁" else "未封禁"}",
-                fontSize = 14.sp,
-                color = if (isBannedState) androidx.compose.ui.graphics.Color.Red else textSecondaryColor
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {
-                    com.lianyu.ai.common.BanManager.unbanUser(context)
-                    isBannedState = com.lianyu.ai.common.BanManager.isBanned(context)
-                    android.widget.Toast.makeText(
-                        context,
-                        if (!isBannedState) "解除封禁成功" else "解除失败，请重试",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("解除封禁")
-            }
-        }
+        
 
         Spacer(modifier = Modifier.height(12.dp))
 
