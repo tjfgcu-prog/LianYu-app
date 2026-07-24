@@ -9,12 +9,12 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.lianyu.ai.common.ApplicationScopeProvider
 import com.lianyu.ai.common.ChatConstants
 import com.lianyu.ai.common.CompanionRole
-import com.lianyu.ai.common.ContentFilter
-import com.lianyu.ai.common.BanManager
+
+
 import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.common.safety.ContentSafetyVerifier
+
 import com.lianyu.ai.common.safety.RiskLevel
 import com.lianyu.ai.common.safety.SafetyScore
 import com.lianyu.ai.common.safety.ScoreSource
@@ -249,9 +249,8 @@ class ChatViewModel(
     val queueDepth: StateFlow<Int> = _queueDepth.asStateFlow()
 
     /** 消息处理流水线 — 5 阶段: VALIDATE → CLASSIFY → ENCRYPT → SEND → CONFIRM */
-    val pipeline = MessagePipelineRunner { level ->
-        com.lianyu.ai.common.BanManager.recordViolation(getApplication(), level)
-    }
+    val pipeline = MessagePipelineRunner()
+
 
     // 打包状态: 合并所有 StateFlow 为单一 observable
     val state: StateFlow<ChatState> = combine(
