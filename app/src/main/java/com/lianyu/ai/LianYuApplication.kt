@@ -3,13 +3,10 @@ package com.lianyu.ai
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
-import com.lianyu.ai.common.ContentFilter
 import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.common.RomUtils
 import com.lianyu.ai.common.SaltStore
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.common.embedding.VectorLibrary
-import com.lianyu.ai.common.safety.ContentSafetyVerifier
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.DefaultCompanionSeeder
 import com.lianyu.ai.database.SecurityDataSeeder
@@ -90,7 +87,6 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
 
     override fun onTerminate() {
         bgScope.launch {
-            ContentFilter.destroy()
             SaltStore.shutdown()
             // EncryptedDatabaseWrapper.sealDatabase(this@LianYuApplication)
             AppDatabase.shutdown()
@@ -121,16 +117,11 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             // Seed default companion asynchronously — must exist before any chat opens
             bgScope.launch { seedDefaultCompanion(app) }
 
-            bgScope.launch { ContentFilter.initialize(app) }
             bgScope.launch { preloadBackground(app) }
             bgScope.launch { initWeChat(app) }
             bgScope.launch { initSecurityData(app) }
             bgScope.launch { autoBackupDatabase(app) }
-            bgScope.launch { initVectorLibrary(app) }
-            bgScope.launch { initSafetyClassifier(app) }
-            bgScope.launch { initSafetyClassifier(app) }
 
-            bgScope.launch { initSafetyVerifier(app) }
             bgScope.launch { initYandereMode(app) }
         }
 
@@ -177,33 +168,6 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             // 在此异步执行，不阻塞首屏渲染。同时顺带清理过期备份。
             runCatching { AppDatabase.autoBackupIfNeeded(app.applicationContext) }
             runCatching { AppDatabase.clearOldBackups(app.applicationContext) }
-        }
-
-        private fun initVectorLibrary(app: Application) {
-            runCatching {
-                app.assets.open("safety/violation_vectors.bin").use { it.readBytes() }
-                    .let { VectorLibrary.Loader().load(it) }
-                    ?.let { ContentFilter.setVectorLibrary(it) }
-            }
-        }
-
-        private fun initSafetyClassifier(app: Application) {
-            runCatching {
-                if (!com.lianyu.ai.feature.localmodel.LocalAiService.isNativeLibrarySupported) return
-                val svc = com.lianyu.ai.feature.localmodel.LocalAiService.getInstance(app)
-                com.lianyu.ai.feature.localmodel.LocalModelCatalog.all.firstOrNull { it.modelFile(app).exists() }
-                    ?.let { svc.setActiveModel(it); ContentFilter.setSafetyClassifier(com.lianyu.ai.feature.localmodel.LocalSafetyClassifier(svc)) }
-            }
-        }
-
-        private suspend fun initSafetyVerifier(app: Application) {
-            runCatching {
-                ContentSafetyVerifier.init(app)
-                val keywords = SecurityDataSeeder.getEnabledKeywords(app)
-                if (keywords.isNotEmpty()) {
-                    ContentSafetyVerifier.bootstrap(keywords)
-                }
-            }
         }
 
         private fun registerServiceProviders(app: Application) {
