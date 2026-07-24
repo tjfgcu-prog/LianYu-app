@@ -2,9 +2,7 @@ package com.lianyu.ai.network
 
 import android.content.Context
 import com.lianyu.ai.common.AppSettingsStore
-import com.lianyu.ai.common.BanManager
 import com.lianyu.ai.common.CompanionRole
-import com.lianyu.ai.common.ContentFilter
 import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
@@ -525,13 +523,6 @@ class AiService(context: Context) : AiServiceProvider {
                     val cleaned = AiPromptBuilder.applyPersonaPostProcessing(rawResponse, sortedHistory)
                     SecureLog.api("SEND", "Response length=${cleaned.length}")
 
-                    val safetyResult = ContentFilter.checkOutputSafety(cleaned)
-                    if (!safetyResult.isSafe) {
-                        SecureLog.w("AiService", "Output safety violation: ${safetyResult.level} - ${safetyResult.reason}")
-                        // [FIX] AI 输出不应记录用户封禁——模型生成内容不是用户责任
-                        return@withContext AiResponse("抱歉，我无法继续这个话题。")
-                    }
-
                     AiResponse(cleaned, reasoning)
                 } catch (e: Exception) {
                     SecureLog.e("AiService", "sendMessage failed", e)
@@ -590,13 +581,6 @@ class AiService(context: Context) : AiServiceProvider {
                     .trimStart('，', ',', '.', '。', ' ')
                     .trim()
 
-                val safetyResult = ContentFilter.checkOutputSafety(singleLine)
-                if (!safetyResult.isSafe) {
-                    SecureLog.w("AiService", "Proactive output safety violation: ${safetyResult.level} - ${safetyResult.reason}")
-                    // [C4 FIX] AI 生成内容不应累加用户封禁
-                    return@withContext null
-                }
-
                 singleLine
             } catch (e: Exception) {
                 SecureLog.w("AiService", "Proactive message failed: ${e.message}")
@@ -645,14 +629,6 @@ class AiService(context: Context) : AiServiceProvider {
                     }
                     if (rawResponse.isBlank()) throw Exception("API返回空内容")
                     val cleaned = AiPromptBuilder.applyPersonaPostProcessing(rawResponse, sortedHistory)
-
-                    // 输出安全检查（与 sendMessage 保持一致）
-                    val safetyResult = ContentFilter.checkOutputSafety(cleaned)
-                    if (!safetyResult.isSafe) {
-                        SecureLog.w("AiService", "sendMessageWithCustomSystem output blocked: ${safetyResult.reason}")
-                        // [C4 FIX] AI 生成内容不应累加用户封禁
-                        return@withContext "抱歉，我无法继续这个话题。"
-                    }
 
                     cleaned
                 } catch (e: Exception) {
@@ -1863,14 +1839,6 @@ $chatText
                     val cleaned = AiPromptBuilder.applyPersonaPostProcessing(rawResponse, sortedHistory)
                     SecureLog.api("VISION", "Response length=${cleaned.length}")
 
-                    // 输出安全检查（与 sendMessage 保持一致）
-                    val safetyResult = ContentFilter.checkOutputSafety(cleaned)
-                    if (!safetyResult.isSafe) {
-                        SecureLog.w("AiService", "sendMessageWithImage output blocked: ${safetyResult.reason}")
-                        // [C4 FIX] AI 生成内容不应累加用户封禁
-                        return@withContext AiResponse("抱歉，我无法继续这个话题。")
-                    }
-
                     AiResponse(cleaned)
                 } catch (e: java.net.SocketTimeoutException) {
                     SecureLog.e("AiService", "sendMessageWithImage timeout", e)
@@ -2259,10 +2227,6 @@ $chatText
                     }
 
                     val cleaned = AiPromptBuilder.applyPersonaPostProcessing(rawResponse, sortedHistory)
-                    val safetyResult = ContentFilter.checkOutputSafety(cleaned)
-                    if (!safetyResult.isSafe) {
-                        return@withContext AiResponse("抱歉，我无法继续这个话题。")
-                    }
 
                     AiResponse(cleaned, reasoning, null, finishReason)
                 } catch (e: Exception) {
@@ -2413,9 +2377,6 @@ $chatText
                 .trim()
 
             if (cleaned.length < 2) return@withContext null
-
-            val safetyResult = ContentFilter.checkOutputSafety(cleaned)
-            if (!safetyResult.isSafe) return@withContext null
 
             cleaned
         } catch (e: Exception) {
