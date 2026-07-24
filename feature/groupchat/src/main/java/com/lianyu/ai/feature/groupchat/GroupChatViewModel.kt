@@ -360,14 +360,15 @@ class GroupChatViewModel(
 
         // AI 回复成功后提取记忆（跨会话共享）
         val lastUserMsg = baseHistorySnapshot.lastOrNull { it.companionId == -1L }?.content ?: ""
-        if (lastUserMsg.isNotBlank() && safeContent.isNotBlank()) {
-            memoryProvider.extractAndSaveFromConversation(
-                userInput = lastUserMsg,
-                aiResponse = safeContent,
-                companionId = companion.id,
-                groupId = groupId
-            )
-        }
+        if (lastUserMsg.isNotBlank() && enhancedContent.isNotBlank()) {
+    memoryProvider.extractAndSaveFromConversation(
+        userInput = lastUserMsg,
+        aiResponse = enhancedContent,
+        companionId = companion.id,
+        groupId = groupId
+    )
+}
+
 
         Log.d("GroupChatM", "[${companion.name}] 第${round}轮回复完成 (${aiContent.length}字)")
     }
