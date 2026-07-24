@@ -2,15 +2,12 @@ package com.lianyu.ai.feature.chat.ui.viewmodel
 
 import android.app.Application
 import com.lianyu.ai.common.ChatConstants
-import com.lianyu.ai.common.ContentFilter
+
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.common.TimeoutBudgets
-import com.lianyu.ai.common.safety.ContentSafetyVerifier
-import com.lianyu.ai.common.safety.RiskLevel
-import com.lianyu.ai.common.safety.SafetyScore
-import com.lianyu.ai.common.safety.ScoreSource
+
 import com.lianyu.ai.common.text.MessageSegmenter
 import com.lianyu.ai.common.wechat.WeChatBroadcastHelper
 import com.lianyu.ai.database.model.ChatMessage
@@ -92,80 +89,7 @@ class AiResponseFinalizer(
         val settings = chatDetailSettingsStore.getSettings(companionId)
         val processedText = TextProcessor.processStickerTagsForSplit(aiContent, stickerManager, settings.stickerProbability) { sendStickerMessage(it) }
 
-        // L1+L2特征提取 → 贝叶斯模型输出校验（协程上下文执行，避免 JNI 死锁）
-        // fail-closed: 超时视为高危拦截
-        val modelKw = try {
-            withTimeoutOrNull(TimeoutBudgets.CONTENT_FILTER_MS) { ContentFilter.checkFull(aiContent) }
-        } catch (e: Exception) { null }
-            ?: ContentFilter.CheckResult(true, ContentFilter.ViolationLevel.HIGH, "安全检查超时", emptyList())
-        val modelVec = try {
-            withTimeoutOrNull(TimeoutBudgets.CONTENT_FILTER_MS) { ContentFilter.checkVector(aiContent) }
-        } catch (e: Exception) { null }
-            ?: ContentFilter.CheckResult(true, ContentFilter.ViolationLevel.HIGH, "向量检查超时", emptyList())
-        // 关键词级拦截：HIGH 及以上违规直接拦截
-        if (modelKw.isViolating && modelKw.level >= ContentFilter.ViolationLevel.HIGH) {
-            SecureLog.w("ChatViewModel", "Output keyword violation: ${modelKw.level} - ${modelKw.reason}")
-            ChatDebugLog.log("[Finalizer] AI output blocked by keyword check: ${modelKw.level} - ${modelKw.reason}")
-            val safeFallback = "抱歉，我无法继续这个话题。"
-            val fallbackMsg = ChatMessage(
-                companionId = companionId,
-                content = safeFallback,
-                isFromUser = false,
-                timestamp = System.currentTimeMillis()
-            )
-            val fallbackId = chatRepository.sendMessageAndGetId(fallbackMsg)
-            reasoningText.value = ""
-            isReasoning.value = false
-            return fallbackId
-        }
-
-        // [P0 FIX] 贝叶斯模型输出校验必须带超时，防止 native JNI 死锁导致 AI 回复永久卡死。
-        val modelBayesian = try {
-            withTimeoutOrNull(TimeoutBudgets.MODEL_OUTPUT_VERIFY_MS) {
-                ContentSafetyVerifier.verifyModelOutputAsync(
-                    aiContent, modelKw,
-                    modelVec ?: ContentFilter.CheckResult(false, ContentFilter.ViolationLevel.NONE, "timeout", emptyList()),
-                    userContentForMemory ?: ""
-                )
-            } ?: SafetyScore(
-                score = 0.0,
-                source = ScoreSource.MODEL_OUTPUT,
-                explanation = "模型输出校验超时"
-            )
-        } catch (e: Exception) {
-            SecureLog.e("ChatViewModel", "Model output verification failed", e)
-            SafetyScore(
-                score = 0.0,
-                source = ScoreSource.MODEL_OUTPUT,
-                explanation = "模型输出校验异常"
-            )
-        }
-        if (modelBayesian.isDangerous) {
-            SecureLog.w("ChatViewModel", "Bayesian model output blocked (" + "%.3f".format(modelBayesian.score) + "): " + modelBayesian.explanation)
-            ChatDebugLog.log("[Finalizer] AI output blocked by Bayesian: score=${"%.3f".format(modelBayesian.score)}, reason=${modelBayesian.explanation}")
-            val safeFallback = "抱歉，我无法继续这个话题。"
-            val fallbackMsg = ChatMessage(
-                companionId = companionId,
-                content = safeFallback,
-                isFromUser = false,
-                timestamp = System.currentTimeMillis()
-            )
-            val fallbackId = chatRepository.sendMessageAndGetId(fallbackMsg)
-            reasoningText.value = ""
-            isReasoning.value = false
-            return fallbackId
-        }
-        if (modelBayesian.riskLevel == RiskLevel.SUSPICIOUS) {
-            SecureLog.w("ChatViewModel", "Bayesian model output suspicious (" + "%.3f".format(modelBayesian.score) + "): " + modelBayesian.explanation)
-        }
-
-        // 利用验证结果训练模型输出分类器（不增加额外计算）
-        if (modelBayesian.isDangerous || modelKw.isViolating) {
-            ContentSafetyVerifier.trainModelOutput(
-                aiContent, modelBayesian.isDangerous,
-                kwResult = modelKw, vecResult = modelVec
-            )
-        }
+        
 
         // 分段发送：将AI回复拆分为多条短消息，模拟真人连续发送
         val segments = splitIntoSegments(processedText)
