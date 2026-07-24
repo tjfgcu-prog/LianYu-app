@@ -2,26 +2,14 @@ package com.lianyu.ai.database
 
 import android.content.Context
 import android.util.Log
-import com.lianyu.ai.database.dao.KeywordDao
 import com.lianyu.ai.database.dao.QuizQuestionDao
-import com.lianyu.ai.database.model.KeywordEntity
 import com.lianyu.ai.database.model.QuizQuestionEntity
 
 class SecurityDataSeeder(
-    private val keywordDao: KeywordDao,
     private val quizQuestionDao: QuizQuestionDao
 ) {
 
     companion object {
-        private val OBF_KEY = "6728FF6CACC15874194AD66D51DAA08296B804C57CEDA107A0281BFB11A41EF9".chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-
-        private fun d(enc: String): String {
-            val b = enc.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-            val k = OBF_KEY
-            for (i in b.indices) b[i] = (b[i].toInt() xor (k[i % 32].toInt() and 0xFF)).toByte()
-            return String(b, Charsets.UTF_8)
-        }
-
         private const val TAG = "SecurityDataSeeder"
 
         /**
@@ -30,31 +18,13 @@ class SecurityDataSeeder(
          */
         suspend fun seedIfNeeded(context: Context) {
             AppDatabase.getDatabase(context.applicationContext).let {
-                SecurityDataSeeder(it.keywordDao(), it.quizQuestionDao()).seedIfEmpty()
+                SecurityDataSeeder(it.quizQuestionDao()).seedIfEmpty()
             }
-        }
-
-        /**
-         * 获取所有启用的关键词列表，供 ContentSafetyVerifier 引导使用。
-         * 封装 DAO 操作，避免 app 模块直接访问 keywordDao。
-         */
-        suspend fun getEnabledKeywords(context: Context): List<Pair<String, String>> {
-            return runCatching {
-                AppDatabase.getDatabase(context.applicationContext).keywordDao().getAllEnabled()
-                    .filter { it.type == "KEYWORD" }
-                    .map { it.keyword to it.level }
-            }.getOrDefault(emptyList())
         }
     }
 
     suspend fun seedIfEmpty() {
         try {
-            if (keywordDao.count() == 0) {
-                Log.i(TAG, "开始初始化关键词数据...")
-                seedKeywords()
-                Log.i(TAG, "关键词数据初始化完成，共 ${keywordDao.count()} 条")
-            }
-
             if (quizQuestionDao.count() == 0) {
                 Log.i(TAG, "开始初始化题库数据...")
                 seedQuizQuestions()
