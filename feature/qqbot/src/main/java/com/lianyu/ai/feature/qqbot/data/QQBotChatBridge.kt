@@ -108,11 +108,6 @@ class QQBotChatBridge(
             android.util.Log.d("QQBotBridge", "Extracted text: $text")
             if (text.isBlank()) return@withContext
 
-            if (com.lianyu.ai.common.BanManager.isBanned(context)) {
-                android.util.Log.w("QQBotBridge", "Banned, skip")
-                return@withContext
-            }
-
             val companionId = mappingManager.getOrCreateMapping(qqUserId) ?: run {
                 android.util.Log.w("QQBotBridge", "No companion mapping for $qqUserId")
                 return@withContext
@@ -120,16 +115,6 @@ class QQBotChatBridge(
             android.util.Log.d("QQBotBridge", "Mapped to companionId=$companionId")
             val companion = companionRepository.getCompanionById(companionId) ?: run {
                 android.util.Log.w("QQBotBridge", "Companion not found: $companionId")
-                return@withContext
-            }
-
-            val filterResult = com.lianyu.ai.common.ContentFilter.checkInput(text)
-            if (filterResult.isViolating) {
-                android.util.Log.w("QQBotBridge", "Input blocked: ${filterResult.reason}")
-                com.lianyu.ai.common.BanManager.recordViolation(context, filterResult.level)
-                val blockedResponse = "抱歉，我无法处理这个话题。"
-                sendReply(event, blockedResponse)
-                persistBlockedMessage(companionId, blockedResponse)
                 return@withContext
             }
 
@@ -145,9 +130,8 @@ class QQBotChatBridge(
             val history = chatRepository.getRecentMessagesSync(companionId, limit = 30).filterDecrypted()
             android.util.Log.d("QQBotBridge", "Calling AI with ${history.size} history messages")
 
-            // [R1 FIX] 改为非流式调用：原 sendMessageStream 违反「AI 输入/输出禁止流式」铁律，
-            // 且流式分段路径完全没有 ContentFilter.checkOutputSafety 检查，不安全输出直接发到 QQ。
-            // 现在全文接收 → 安全检查 → 分段发送。
+            // [R1 FIX] 改为非流式调用：原 sendMessageStream 违反「AI 输入/输出禁止流式」铁律。
+            // 现在全文接收 → 分段发送。
             val response = try {
                 aiServiceProvider.sendMessage(companion.toAiCompanionInfo(), history.toAiChatMessages(), 0)
             } catch (e: Exception) {
@@ -162,14 +146,7 @@ class QQBotChatBridge(
                 return@withContext
             }
 
-            // [R1 FIX] 全文安全检查：在发送和入库前对完整 AI 输出做 ContentFilter 校验。
-            val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(response.content)
-            val safeText = if (!outputSafety.isSafe) {
-                android.util.Log.w("QQBotBridge", "AI output blocked: ${outputSafety.reason}")
-                "抱歉，我无法回应这个话题。"
-            } else {
-                response.content
-            }
+            val safeText = response.content
 
             // 按句子边界分段发送（频率保护），但入库存完整回复
             var lastSendTime = 0L
