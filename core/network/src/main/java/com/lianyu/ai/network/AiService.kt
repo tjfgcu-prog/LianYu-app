@@ -4,7 +4,7 @@ import android.content.Context
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.BanManager
 import com.lianyu.ai.common.CompanionRole
-import com.lianyu.ai.common.ContentFilter
+
 import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
@@ -2252,7 +2252,7 @@ $chatText
                     }
 
                     val cleaned = AiPromptBuilder.applyPersonaPostProcessing(rawResponse, sortedHistory)
-                    val safetyResult = ContentFilter.checkOutputSafety(cleaned)
+                
                     if (!safetyResult.isSafe) {
                         return@withContext AiResponse("抱歉，我无法继续这个话题。")
                     }
@@ -2407,7 +2407,7 @@ $chatText
 
             if (cleaned.length < 2) return@withContext null
 
-            val safetyResult = ContentFilter.checkOutputSafety(cleaned)
+            
             if (!safetyResult.isSafe) return@withContext null
 
             cleaned
