@@ -314,13 +314,6 @@ class ChatViewModel(
         loadUserProfile()
         // 后台预热安全检查模块；即使失败，ContentFilter.checkKeywords 已降级为纯 Java 正则
         applicationApiScope.launch {
-            try {
-                ContentFilter.initialize(application)
-                val warmOk = ContentFilter.warmUpNativeAc()
-                ChatDebugLog.log("[ChatVM] ContentFilter warmUp: $warmOk")
-            } catch (e: Exception) {
-                ChatDebugLog.log("[ChatVM] ContentFilter init/warmUp failed: ${e.javaClass.simpleName}: ${e.message}")
-            }
             KeywordBridge.initialize(application)
         }
         startMessageConsumer()
