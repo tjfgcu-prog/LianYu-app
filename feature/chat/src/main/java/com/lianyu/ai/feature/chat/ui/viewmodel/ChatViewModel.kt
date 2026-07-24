@@ -692,20 +692,7 @@ class ChatViewModel(
         val content = if (batch.size == 1) batch[0] else batch.joinToString("\n")
         ChatDebugLog.log("[ChatVM] doSendMessage ENTER, batchSize=${batch.size}, mergedContent='${content.take(50)}', apis=${_availableApis.value.size}")
 
-        // 封禁检查：已封禁用户禁止发送
-        if (com.lianyu.ai.common.BanManager.isBanned(getApplication())) {
-            val banInfo = com.lianyu.ai.common.BanManager.getBanInfo(getApplication())
-            val banMsg = if (banInfo.remainingDays > 0) {
-                "账号已被封禁（剩余${banInfo.remainingDays}天${banInfo.remainingHours}小时），原因：${banInfo.levelName}。第${banInfo.violationCount}次违规。"
-            } else if (banInfo.remainingHours > 0) {
-                "账号已被封禁（剩余${banInfo.remainingHours}小时${banInfo.remainingMinutes}分钟），原因：${banInfo.levelName}。第${banInfo.violationCount}次违规。"
-            } else {
-                "账号已被封禁，原因：${banInfo.levelName}。第${banInfo.violationCount}次违规。请完成安全答题以解除封禁。"
-            }
-            ChatDebugLog.log("[ChatVM] doSendMessage BLOCKED: account is banned - $banMsg")
-            _events.tryEmit(ChatUiEvent.Error(banMsg))
-            return
-        }
+        
 
         // 等待 API 配置加载完成，避免冷启动时序竞态
         if (_availableApis.value.isEmpty() && !_apisLoaded) {
@@ -716,20 +703,7 @@ class ChatViewModel(
 
         // 无 API 时：仅做安全检查 + 提示，用户消息已在 sendMessage 中乐观存库显示
         if (_availableApis.value.isEmpty() && !isLocalModelEnabled()) {
-            // 对批次中每条消息都做安全检查
-            for (msg in batch) {
-                try {
-                    val inputCheck = ContentFilter.checkInput(msg)
-                    if (inputCheck.isViolating) {
-                        BanManager.recordViolation(getApplication(), inputCheck.level)
-                        _events.tryEmit(ChatUiEvent.ContentBlocked("内容违规: ${inputCheck.reason}"))
-                        return@doSendMessage
-                    }
-                } catch (_: Exception) {
-                    _events.tryEmit(ChatUiEvent.Error("安全检查异常"))
-                    return@doSendMessage
-                }
-            }
+            
             val tipMessage = ChatMessage(
                 companionId = companionId,
                 content = "请先配置API：我 → API设置 → 添加密钥",
@@ -740,25 +714,7 @@ class ChatViewModel(
             return@doSendMessage
         }
 
-        // 安全检查（对合并后的内容做pipeline检查）
-        val pipelineOk = try {
-            withTimeoutOrNull(TimeoutBudgets.PIPELINE_EXECUTE_MS) {
-                pipeline.execute(MessagePipeline.PipelineInput(rawText = content, companionId = companionId))
-            }
-        } catch (_: Exception) { null }
-
-        if (pipelineOk == false) {
-            // 明确违规 → 阻止发送
-            val err = pipeline.pipelineState.value.error ?: "内容可能违规"
-            ChatDebugLog.log("[ChatVM] doSendMessage BLOCKED by pipeline: $err")
-            _events.tryEmit(ChatUiEvent.ContentBlocked(err))
-            return@doSendMessage
-        }
-        // pipelineOk == null（超时）→ fail-open，允许继续发送
-        // pipelineOk == true → 正常通过
-        if (pipelineOk == null) {
-            ChatDebugLog.log("[ChatVM] doSendMessage: pipeline TIMEOUT, proceeding anyway (fail-open)")
-        }
+        
 
         // cancel已由消费者端统一处理（新批次开始时取消旧批次的AI Job），此处不再重复cancel
 
