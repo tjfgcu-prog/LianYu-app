@@ -22,7 +22,7 @@ import com.lianyu.ai.domain.AiMessageType
 import com.lianyu.ai.domain.ProactiveMessageSettings
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.common.AppForegroundTracker
-import com.lianyu.ai.common.BanManager
+
 import com.lianyu.ai.common.ChatDetailSettingsDataStoreProvider
 import com.lianyu.ai.common.SecureLog
 import androidx.datastore.preferences.core.edit
@@ -75,11 +75,6 @@ class CompanionMessageWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            if (BanManager.isBanned(context)) {
-                SecureLog.d("CompanionMessageWorker", "User is banned, skip proactive message")
-                return@withContext Result.success()
-            }
-
             val database = AppDatabase.getDatabase(context)
             val companionDao = database.companionDao()
             val chatMessageDao = database.chatMessageDao()
@@ -133,12 +128,6 @@ class CompanionMessageWorker(
 
                 val messageContent = aiServiceProvider.generateProactiveMessage(companionItem.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)
                     ?: continue
-
-                val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(messageContent)
-                if (!outputSafety.isSafe) {
-                    SecureLog.w("CompanionMessageWorker", "Proactive message blocked by safety filter: ${outputSafety.reason}")
-                    continue
-                }
 
                 val segments = splitIntoSegments(messageContent)
 
