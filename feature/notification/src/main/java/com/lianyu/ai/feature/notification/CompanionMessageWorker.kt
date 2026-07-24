@@ -22,7 +22,7 @@ import com.lianyu.ai.domain.AiMessageType
 import com.lianyu.ai.domain.ProactiveMessageSettings
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.common.AppForegroundTracker
-import com.lianyu.ai.common.BanManager
+
 import com.lianyu.ai.common.ChatDetailSettingsDataStoreProvider
 import com.lianyu.ai.common.SecureLog
 import androidx.datastore.preferences.core.edit
@@ -75,10 +75,7 @@ class CompanionMessageWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            if (BanManager.isBanned(context)) {
-                SecureLog.d("CompanionMessageWorker", "User is banned, skip proactive message")
-                return@withContext Result.success()
-            }
+            
 
             val database = AppDatabase.getDatabase(context)
             val companionDao = database.companionDao()
@@ -151,15 +148,7 @@ class CompanionMessageWorker(
                 return@withContext Result.success()
             }
 
-            // 安全检查：拦截 AI 主动消息中的违规内容（仅最终防线，不累计封禁）
-            // AiService 生成时已做过 checkOutputSafety，这里只做兜底
-            val outputSafety = com.lianyu.ai.common.ContentFilter.checkOutputSafety(messageContent)
-            if (!outputSafety.isSafe) {
-                SecureLog.w("CompanionMessageWorker", "Proactive message blocked by safety filter: ${outputSafety.reason}")
-                // AI 输出违规不应累加用户封禁（见 Bug #1 根因 A3）
-                scheduleNext(context, settings)
-                return@withContext Result.success()
-            }
+            
 
             // ── 分段发送：按自然句号/感叹号/问号/换行拆分，逐条入库+广播 ──
             val segments = splitIntoSegments(messageContent)
