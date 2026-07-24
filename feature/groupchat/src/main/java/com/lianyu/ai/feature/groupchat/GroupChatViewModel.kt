@@ -169,16 +169,7 @@ class GroupChatViewModel(
     }
 
     fun sendMessage(content: String) {
-        // 封禁检查
-        if (com.lianyu.ai.common.BanManager.isBanned(getApplication())) return
-
-        // 安全检查：拦截违规输入
-        val inputCheck = com.lianyu.ai.common.ContentFilter.checkInput(content)
-        if (inputCheck.isViolating) {
-            android.util.Log.w("GroupChatViewModel", "Input blocked by safety filter: ${inputCheck.reason}")
-            com.lianyu.ai.common.BanManager.recordViolation(getApplication(), inputCheck.level)
-            return
-        }
+        
 
         // Atomic compare-and-set to prevent concurrent send — avoids race condition
         // where two threads both read _isLoading.value == false and proceed
@@ -364,16 +355,8 @@ class GroupChatViewModel(
             recentContext = buildRecentContextSnapshots(isolatedHistory)
         )
         repliedIds[companion.id] = true
-        // 安全检查：拦截 AI 违规输出
-        val outputCheck = com.lianyu.ai.common.ContentFilter.checkOutputSafety(enhancedContent)
-        val safeContent = if (!outputCheck.isSafe) {
-            android.util.Log.w("GroupChatViewModel", "AI output blocked by safety filter: ${outputCheck.reason}")
-            com.lianyu.ai.common.BanManager.recordViolation(getApplication(), outputCheck.level)
-            "抱歉，我无法回应这个话题。"
-        } else {
-            enhancedContent
-        }
-        sendSplitAiMessages(safeContent, groupId, companion.id)
+        sendSplitAiMessages(enhancedContent, groupId, companion.id)
+
 
         // AI 回复成功后提取记忆（跨会话共享）
         val lastUserMsg = baseHistorySnapshot.lastOrNull { it.companionId == -1L }?.content ?: ""
@@ -786,13 +769,8 @@ class GroupChatViewModel(
 
                 val aiContent = generateAiReply(companion, activeCompanions, getRecentHistorySnapshot())
                 if (aiContent.isNotBlank()) {
-                    val outputCheck = com.lianyu.ai.common.ContentFilter.checkOutputSafety(aiContent)
-                    val safeContent = if (!outputCheck.isSafe) {
-                        android.util.Log.w("GroupChatViewModel", "triggerAiSpeak output blocked: ${outputCheck.reason}")
-                        com.lianyu.ai.common.BanManager.recordViolation(getApplication(), outputCheck.level)
-                        "抱歉，我无法回应这个话题。"
-                    } else aiContent
-                    sendSplitAiMessages(safeContent, groupId, companion.id)
+                    sendSplitAiMessages(aiContent, groupId, companion.id)
+
                 }
             } catch (e: Exception) {
                 Log.e("GroupChatViewModel", "triggerAiSpeak failed", e)
@@ -833,13 +811,8 @@ class GroupChatViewModel(
                     ?: throw IllegalStateException("Companion not found: $targetCompanionId")
                 val reply = generateAiReply(companion, _allCompanions.value, history)
                 if (reply.isNotBlank()) {
-                    val outputCheck = com.lianyu.ai.common.ContentFilter.checkOutputSafety(reply)
-                    val safeReply = if (!outputCheck.isSafe) {
-                        android.util.Log.w("GroupChatViewModel", "regenerate output blocked: ${outputCheck.reason}")
-                        com.lianyu.ai.common.BanManager.recordViolation(getApplication(), outputCheck.level)
-                        "抱歉，我无法回应这个话题。"
-                    } else reply
-                    sendSplitAiMessages(safeReply, groupId, targetCompanionId)
+                    sendSplitAiMessages(reply, groupId, targetCompanionId)
+
                     Log.d("GroupChatM", "[${companion.name}] 重新生成回复成功")
                 }
             } catch (e: Exception) {
