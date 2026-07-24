@@ -1,6 +1,6 @@
 package com.lianyu.ai.feature.chat.ui.viewmodel
 
-import com.lianyu.ai.common.ContentFilter
+
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.repository.ChatRepository
@@ -61,7 +61,7 @@ internal object ChatFollowUpTrigger {
                 ) ?: return@launch
 
                 // 追问消息安全检查
-                val followUpSafety = ContentFilter.checkOutputSafety(followUp)
+                
                 if (!followUpSafety.isSafe) {
                     SecureLog.w("ChatViewModel", "Follow-up safety violation: ${followUpSafety.reason}")
                     return@launch
