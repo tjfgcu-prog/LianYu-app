@@ -54,30 +54,11 @@ class WeChatChatBridge(
             val text = extractText(message) ?: return@withContext null
             if (text.isBlank()) return@withContext null
 
-            // 封禁检查
-            if (com.lianyu.ai.common.BanManager.isBanned(context)) return@withContext null
-
             val companionId = mappingManager.getOrCreateMapping(wechatUserId)
                 ?: return@withContext null
 
             val companion = companionRepository.getCompanionById(companionId)
                 ?: return@withContext null
-
-            // 安全检查：先检查后入库，避免违规原文持久化
-            val filterResult = com.lianyu.ai.common.ContentFilter.checkInput(text)
-            if (filterResult.isViolating) {
-                android.util.Log.w("WeChatBridge", "Input blocked by safety filter: ${filterResult.reason}")
-                com.lianyu.ai.common.BanManager.recordViolation(context, filterResult.level)
-                val blockedResponse = "抱歉，我无法处理这个话题。"
-                val blockedMsg = ChatMessage(
-                    companionId = companionId,
-                    content = blockedResponse,
-                    isFromUser = false,
-                    timestamp = System.currentTimeMillis()
-                )
-                chatRepository.sendMessage(blockedMsg)
-                return@withContext blockedResponse
-            }
 
             val userMessage = ChatMessage(
                 companionId = companionId,
@@ -99,24 +80,6 @@ class WeChatChatBridge(
             }
             val aiResponseText = aiResponse.content
             val hasReceivedContent = aiResponseText.isNotBlank()
-
-            // 安全检查：拦截 AI 违规输出
-            if (aiResponseText.isNotBlank()) {
-                val outputSafetyResult = com.lianyu.ai.common.ContentFilter.checkOutputSafety(aiResponseText)
-                if (!outputSafetyResult.isSafe) {
-                    android.util.Log.w("WeChatBridge", "AI output blocked by safety filter: ${outputSafetyResult.level} - ${outputSafetyResult.reason}")
-                    // [R2 FIX] AI 生成内容不应累加用户封禁——模型输出不是用户的责任（与 AiService/ChatViewModel 策略对齐）
-                    val blockedResponse = "抱歉，我无法回应这个话题。"
-                    val blockedMsg = ChatMessage(
-                        companionId = companionId,
-                        content = blockedResponse,
-                        isFromUser = false,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    chatRepository.sendMessage(blockedMsg)
-                    return@withContext blockedResponse
-                }
-            }
 
             val msg = ChatMessage(
                 companionId = companionId,
@@ -265,25 +228,6 @@ class WeChatChatBridge(
                 companion.toAiCompanionInfo(), history.toAiChatMessages(), imagePath
             )
             val responseText = aiResponse.content
-
-            // 安全检查：拦截 AI 违规输出
-            if (responseText.isNotBlank()) {
-                val outputSafetyResult = com.lianyu.ai.common.ContentFilter.checkOutputSafety(responseText)
-                if (!outputSafetyResult.isSafe) {
-                    android.util.Log.w("WeChatBridge", "Vision AI output blocked by safety filter: ${outputSafetyResult.level} - ${outputSafetyResult.reason}")
-                    // [R2 FIX] AI 生成内容不应累加用户封禁
-                    val blockedResponse = "抱歉，我无法回应这个话题。"
-                    weChatRepository.sendTextMessage(wechatUserId, blockedResponse)
-                    val blockedMsg = ChatMessage(
-                        companionId = companionId,
-                        content = blockedResponse,
-                        isFromUser = false,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    chatRepository.sendMessage(blockedMsg)
-                    return@withContext blockedResponse
-                }
-            }
 
             if (responseText.isNotBlank()) {
                 val (cleanText, stickers) = runCatching { extractStickerTags(responseText) }.getOrDefault(Pair(responseText, emptyList()))
