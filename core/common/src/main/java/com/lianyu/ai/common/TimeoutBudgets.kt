@@ -44,6 +44,9 @@ object TimeoutBudgets {
     const val WECHAT_POLL_TIMEOUT_MS = 15_000L // 长轮询超时（统一 Service 20s 与 Worker 15s 不一致）
     const val BROADCAST_GOASYNC_MS = 9_500L    // BroadcastReceiver goAsync() 10s 限制预留 500ms
 
+    // === AI 工具调用 (MCP / JSON-RPC over Streamable HTTP) ===
+    const val MCP_READ_MS = 30_000L          // MCP 读取超时（普通 JSON 响应）
+    
     // === 数据库操作 ===
     const val ROOM_WRITE_MS = 5_000L         // Room写入
     const val ROOM_QUERY_MS = 3_000L         // Room查询
