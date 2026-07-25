@@ -211,6 +211,22 @@ private fun ThinkingSettingsDialog(showDialog: MutableState<Boolean>, settingsSt
     var localResp by remember { mutableStateOf(respField) }
     var localReq by remember { mutableStateOf(reqField) }
 
+    // 修复：DataStore Flow 首帧只能拿到占位默认值，真实值要等一次协程调度后才到达；
+    // 上面的 remember 只在弹窗第一次进入组合时执行一次，会把占位值"钉死"，
+    // 导致弹窗打开时开关状态和菜单项小字显示的真实状态不一致。
+    // 这里用 LaunchedEffect 在真实值到达后同步一次本地状态（仅同步一次，避免覆盖用户正在编辑的修改）。
+    var localStateInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(showReasoning, sendReasoning, autoCollapse, respField, reqField) {
+        if (!localStateInitialized) {
+            localShow = showReasoning
+            localSend = sendReasoning
+            localCollapse = autoCollapse
+            localResp = respField
+            localReq = reqField
+            localStateInitialized = true
+        }
+    }
+
     AlertDialog(
         onDismissRequest = { showDialog.value = false },
         title = { Text("思考设置") },
