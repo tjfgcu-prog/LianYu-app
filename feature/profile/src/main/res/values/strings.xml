@@ -152,14 +152,4 @@
     <string name="feature_ui_desc">简洁优雅的视觉设计和动画效果</string>
     <string name="feature_edit">虚拟恋人编辑</string>
     <string name="feature_edit_desc">随时修改恋人的人设和性格</string>
-    <string name="view_agreement">查看用户协议与免责声明</string>
-
-    <!-- Auth Screen -->
-    <string name="login_title">欢迎回来</string>
-    <string name="login_subtitle">登录你的账号，继续探索</string>
-    <string name="email_label">邮箱</string>
-    <string name="email_placeholder">请输入邮箱地址</string>
-    <string name="password_label">密码</string>
-    <string name="password_placeholder">请输入密码（至少6位）</string>
-    <string name="login_button">登录</string>
 </resources>
