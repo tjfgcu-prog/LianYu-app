@@ -9,7 +9,7 @@ import com.lianyu.ai.common.SaltStore
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.DefaultCompanionSeeder
-import com.lianyu.ai.database.SecurityDataSeeder
+
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.CompanionRepository
 import com.lianyu.ai.database.repository.MemoryRepository
@@ -119,7 +119,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
 
             bgScope.launch { preloadBackground(app) }
             bgScope.launch { initWeChat(app) }
-            bgScope.launch { initSecurityData(app) }
+            
             bgScope.launch { autoBackupDatabase(app) }
 
             bgScope.launch { initYandereMode(app) }
@@ -159,9 +159,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             }
         }
 
-        private suspend fun initSecurityData(app: Application) {
-            SecurityDataSeeder.seedIfNeeded(app)
-        }
+        
 
         private fun autoBackupDatabase(app: Application) {
             // [M6 FIX] 备份涉及文件 IO，已从 AppDatabase.buildDatabase 主路径移除，
