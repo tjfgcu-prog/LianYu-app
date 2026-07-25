@@ -767,23 +767,12 @@ private fun GgufLocalModelSection(
                         Text(text = "📦", fontSize = 22.dp.value.sp)
                     }
 
-                    Column {
-                        Text(
-                            text = "自定义 GGUF 本地模型",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textPrimaryColor
-                        )
-                        Text(
-                            text = when {
-                                isCopying -> "正在复制模型文件到 App 内部..."
-                                ggufFileName != null -> ggufFileName!!
-                                else -> "未选择文件"
-                            },
-                            fontSize = 11.sp,
-                            color = textSecondaryColor
-                        )
-                    }
+                    Text(
+                        text = "自定义 GGUF 本地模型",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textPrimaryColor
+                    )
                 }
 
                 Switch(
@@ -810,6 +799,17 @@ private fun GgufLocalModelSection(
                 )
             }
 
+            Text(
+                text = when {
+                    isCopying -> "正在复制模型文件到 App 内部..."
+                    ggufFileName != null -> ggufFileName!!
+                    else -> "未选择文件"
+                },
+                fontSize = 11.sp,
+                color = textSecondaryColor,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -835,7 +835,8 @@ private fun GgufLocalModelSection(
 
                 Button(
                     onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
-                    enabled = !isCopying,
+                    // 已有模型时需先删除才能重新选择，避免误触覆盖当前模型
+                    enabled = !isCopying && ggufFileName == null,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
