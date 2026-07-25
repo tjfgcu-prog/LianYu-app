@@ -44,13 +44,6 @@ object TimeoutBudgets {
     const val WECHAT_POLL_TIMEOUT_MS = 15_000L // 长轮询超时（统一 Service 20s 与 Worker 15s 不一致）
     const val BROADCAST_GOASYNC_MS = 9_500L    // BroadcastReceiver goAsync() 10s 限制预留 500ms
 
-    // === 瑞幸 MCP (JSON-RPC over Streamable HTTP) ===
-    // 集中管理：原先硬编码在 LuckinMcpClient companion，现统一至此处
-    const val MCP_CONNECT_MS = 15_000L       // MCP 连接超时
-    const val MCP_READ_MS = 30_000L          // MCP 读取超时（普通 JSON 响应）
-    const val MCP_WRITE_MS = 15_000L         // MCP 写入超时
-    const val MCP_SSE_READ_MS = 30_000L      // SSE 流无数据超时（防协程永久阻塞）
-
     // === 数据库操作 ===
     const val ROOM_WRITE_MS = 5_000L         // Room写入
     const val ROOM_QUERY_MS = 3_000L         // Room查询
