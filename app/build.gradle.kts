@@ -86,37 +86,7 @@ android {
     // jniLibs are picked up automatically from src/main/jniLibs/
 }
 
-val isWindows = System.getProperty("os.name").lowercase().contains("windows")
-val pythonExecutable = if (isWindows) "python" else "python3"
 
-val shellPayloadAssetsDir = layout.projectDirectory.dir("src/main/assets/lianyu_shell")
-val unsignedReleaseApk = layout.buildDirectory.file("outputs/apk/release/app-release-unsigned.apk")
-
-tasks.register<Exec>("packageShellPayload") {
-    group = "security"
-    description = "Encrypt release classes*.dex into in-repo one-piece shell payload assets. Requires LIANYU_SHELL_PAYLOAD_KEY for CI smoke packaging; production should use native KMS-compatible exporter."
-    dependsOn("assembleRelease")
-    onlyIf { providers.environmentVariable("LIANYU_SHELL_PAYLOAD_KEY").orNull != null }
-    inputs.file(unsignedReleaseApk)
-    outputs.dir(shellPayloadAssetsDir)
-    commandLine(
-        pythonExecutable,
-        "${rootProject.projectDir}/tools/package_shell_payload.py",
-        "--apk",
-        unsignedReleaseApk.get().asFile.absolutePath,
-        "--out",
-        shellPayloadAssetsDir.asFile.absolutePath
-    )
-}
-
-
-// FIX 1: Strip plaintext classes*.dex from release APK
-//
-// The encrypted shell payload (assets/lianyu_shell/shell_payload.bin
-// and classes.bin) contains the full DEX. The plaintext classes.dex
-// in the APK root is a reverse-engineering weakness — it must be
-// removed after packaging and before signing.
-// ══════════════════════════════════════════════════════════════
 
 
 
