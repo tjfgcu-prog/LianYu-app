@@ -31,7 +31,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:ui-common"))
     implementation(project(":core:domain"))
-
+    implementation(libs.onnxruntime.android)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
