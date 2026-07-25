@@ -14,12 +14,9 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 13
-        versionName = "1.9.1"
+        versionName = "9.9.9"
 
-        manifestPlaceholders["developerName"] = "苏苏"
-        manifestPlaceholders["developerOrg"] = "LianYu"
-
-        // Developer: 苏苏 / Organization: LianYu
+        
 
         // Force multi-DEX output
         multiDexEnabled = true
