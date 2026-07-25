@@ -69,10 +69,7 @@ sealed class MainRoute(val route: String) {
             route == "token_usage" -> TokenUsage
             route == "memory" -> Memory
             route == "context_memory" -> ContextMemory
-            route == "role_manager" -> RoleManager
             route == "theme" -> Theme
-            route == "language" -> Language
-            
             
             route == "frame_rate" -> FrameRate
             route == "yandere_mode" -> YandereMode
