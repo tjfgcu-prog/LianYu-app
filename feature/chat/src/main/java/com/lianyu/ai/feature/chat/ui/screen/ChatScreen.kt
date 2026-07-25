@@ -967,27 +967,6 @@ fun ChatScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                // AI生成标识
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(
-                                            MaterialTheme.colorScheme.primary.copy(
-                                                alpha = if (isDarkTheme) 0.2f else 0.12f
-                                            )
-                                        )
-                                        .padding(horizontal = 5.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = "AI生成仅供参考",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(6.dp))
                                 IconButton(
                                     onClick = { onNavigateToDetail(companionId) },
                                     modifier = Modifier.size(32.dp)
