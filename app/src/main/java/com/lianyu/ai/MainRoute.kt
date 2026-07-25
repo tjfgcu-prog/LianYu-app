@@ -31,7 +31,6 @@ sealed class MainRoute(val route: String) {
     object TtsSettings : MainRoute("tts_settings")
     object TokenUsage : MainRoute("token_usage")
     object Theme : MainRoute("theme")
-    object Language : MainRoute("language")
     
     object FrameRate : MainRoute("frame_rate")
     object YandereMode : MainRoute("yandere_mode")
@@ -39,9 +38,6 @@ sealed class MainRoute(val route: String) {
 
     // === 总设置 ===
     object GeneralSettings : MainRoute("general_settings")
-
-    // === 角色管理 ===
-    object RoleManager : MainRoute("role_manager")
 
     // === 个人中心 ===
     object Memory : MainRoute("memory")
