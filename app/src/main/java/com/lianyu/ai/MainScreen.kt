@@ -251,10 +251,7 @@ fun MainScreen(mainActivity: Activity) {
                                     onSettingsClick = { navController.navigate(MainRoute.Settings.route) },
                                     onThemeClick = { navController.navigate(MainRoute.Theme.route) },
                                     // 总设置
-                                    onGeneralSettingsClick = { navController.navigate(MainRoute.GeneralSettings.route) },
-                                    // 角色管理
-                                    onRoleManagerClick = { navController.navigate(MainRoute.RoleManager.route) }
-                                    
+                                    onGeneralSettingsClick = { navController.navigate(MainRoute.GeneralSettings.route) }
                                 )
                             }
                         }
@@ -298,20 +295,7 @@ fun MainScreen(mainActivity: Activity) {
                 composable(MainRoute.TtsSettings.route) { TtsSettingsScreen(onNavigateBack = { navController.popBackStack() }, isDarkTheme = isDark) }
                 composable(MainRoute.TokenUsage.route) { TokenUsageScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.Memory.route) { MemoryScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.RoleManager.route) {
-                    val roleManagerViewModel: com.lianyu.ai.feature.profile.ProfileViewModel = viewModel()
-                    val managerCurrentRole by roleManagerViewModel.selectedRole.collectAsStateWithLifecycle()
-                    val managerSwitchState by roleManagerViewModel.switchState.collectAsStateWithLifecycle()
-                    com.lianyu.ai.feature.profile.RoleManagerScreen(
-                        currentRole = managerCurrentRole,
-                        switchState = managerSwitchState,
-                        onSwitchRole = { role -> roleManagerViewModel.switchRole(role) { navController.popBackStack() } },
-                        onNavigateBack = { navController.popBackStack() },
-                        onConsumeError = { roleManagerViewModel.consumeSwitchError() }
-                    )
-                }
                 composable(MainRoute.Theme.route) { ThemeScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
-                composable(MainRoute.Language.route) { LanguageScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.FrameRate.route) { FrameRateScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.YandereMode.route) {
                     val manager = ServiceRegistry.get(YandereModeManager::class.java)
@@ -325,7 +309,6 @@ fun MainScreen(mainActivity: Activity) {
                 composable(MainRoute.GeneralSettings.route) {
                     GeneralSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
-                        onLanguageClick = { navController.navigate(MainRoute.Language.route) },
                         onFrameRateClick = { navController.navigate(MainRoute.FrameRate.route) },
                         onTtsSettingsClick = { navController.navigate(MainRoute.TtsSettings.route) },
                         onTokenUsageClick = { navController.navigate(MainRoute.TokenUsage.route) },
