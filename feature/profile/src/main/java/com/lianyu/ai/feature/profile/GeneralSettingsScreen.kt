@@ -85,7 +85,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeneralSettingsScreen(
     onNavigateBack: () -> Unit,
-    onLanguageClick: () -> Unit,
     onFrameRateClick: () -> Unit,
     onTtsSettingsClick: () -> Unit,
     onTokenUsageClick: () -> Unit,
@@ -128,7 +127,6 @@ fun GeneralSettingsScreen(
             val currentFrameRate = FrameRateManager.getSavedFrameRate(context)
             SolidMenuGroup(
                 items = listOf(
-                    MenuItemData(Icons.Filled.Language, stringResource(R.string.language), stringResource(R.string.language_desc), onLanguageClick),
                     MenuItemData(Icons.Filled.Refresh, stringResource(R.string.framerate), currentFrameRate.label, onFrameRateClick),
                     
                     ThinkingSettingsEntry()
