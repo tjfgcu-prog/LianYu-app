@@ -27,7 +27,7 @@ appUpdate = "2.1.0"
 workRuntimeKtx = "2.9.0"
 animation = "1.7.5"
 lottie = "6.5.0"
-
+onnxruntimeAndroid = "1.19.2"
 zxing = "3.5.3"
 wechatIlinkSdk = "2.3.3"
 securityCrypto = "1.1.0-alpha06"
@@ -77,7 +77,7 @@ androidx-animation = { group = "androidx.compose.animation", name = "animation",
 androidx-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animation" }
 androidx-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics", version.ref = "animation" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
-
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntimeAndroid" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 wechat-ilink-sdk = { group = "io.github.lith0924", name = "wechat-ilink-sdk", version.ref = "wechatIlinkSdk" }
 androidx-tracing = { group = "androidx.tracing", name = "tracing", version = "1.2.0" }
