@@ -88,8 +88,6 @@ fun ProfileScreen(
     onThemeClick: () -> Unit,
     // 总设置
     onGeneralSettingsClick: () -> Unit,
-    // 角色管理
-    onRoleManagerClick: () -> Unit,
     
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -98,7 +96,6 @@ fun ProfileScreen(
 
     val userName by viewModel.userName.collectAsState()
     val userAvatar by viewModel.userAvatar.collectAsState()
-    val selectedRole by viewModel.selectedRole.collectAsState()
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
     var isVisible by remember { mutableStateOf(false) }
@@ -217,21 +214,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // === 第一组：角色管理 ===
-        val roleSubtitle = when (selectedRole) {
-            com.lianyu.ai.common.CompanionRole.GIRLFRIEND -> stringResource(R.string.role_manager_desc_girlfriend)
-            com.lianyu.ai.common.CompanionRole.BOYFRIEND -> stringResource(R.string.role_manager_desc_boyfriend)
-        }
-        SolidMenuGroup(
-            items = listOf(
-                MenuItemData(Icons.Filled.Favorite, stringResource(R.string.role_manager), roleSubtitle, onRoleManagerClick)
-            ),
-            isVisible = isVisible, delayMillis = 60
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // === 第二组：记忆与管理 ===
+        // === 第一组：记忆与管理 ===
         SolidMenuGroup(
             items = listOf(
                 MenuItemData(Icons.Filled.Memory, stringResource(R.string.memory_management), stringResource(R.string.memory_management_desc), onMemoryClick),
