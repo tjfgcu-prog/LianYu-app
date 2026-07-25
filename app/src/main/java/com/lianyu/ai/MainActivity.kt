@@ -26,15 +26,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.content.edit
 import com.lianyu.ai.common.AppForegroundTracker
 import com.lianyu.ai.common.BatteryOptimizationHelper
-import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.common.FrameRateManager
 import com.lianyu.ai.common.RomUtils
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.feature.notification.CompanionKeepAliveService
 import com.lianyu.ai.feature.notification.CompanionMessageWorker
-import com.lianyu.ai.feature.profile.AgreementScreen
-import com.lianyu.ai.feature.profile.ProfileViewModel
-import com.lianyu.ai.feature.profile.RoleSelectionScreen
 
 import com.lianyu.ai.uicommon.theme.LianYuTheme
 import com.lianyu.ai.uicommon.theme.ThemeViewModel
@@ -109,64 +105,28 @@ class MainActivity : ComponentActivity() {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
 
-        // 用户协议检查
+        // 引导流程已精简：不再展示用户协议页与角色选择页，
+        // 应用启动后直接使用默认 AI 女友「小鱼」。
         val activity = this
         setContent {
-            val agreementPrefs = getSharedPreferences("agreement_prefs", android.content.Context.MODE_PRIVATE)
-            val agreementAccepted = agreementPrefs.getBoolean("agreement_accepted", false)
-            val userPrefs = getSharedPreferences("user_prefs", android.content.Context.MODE_PRIVATE)
-            val roleSelected = userPrefs.contains("selected_role")
             val themeViewModel: ThemeViewModel = viewModel()
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
-            val profileViewModel: ProfileViewModel = viewModel()
-            var showRoleSelection by remember { mutableStateOf(agreementAccepted && !roleSelected) }
 
             val isServiceReady by ServiceRegistry.initialized.collectAsStateWithLifecycle()
 
             LianYuTheme(themeMode = themeMode) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    when {
-                        !agreementAccepted -> {
-                            AgreementScreen(
-                                onAgree = {
-                                    agreementPrefs.edit()
-                                        .putBoolean("agreement_accepted", true)
-                                        .putLong("agreement_time", System.currentTimeMillis())
-                                        .apply()
-                                    activity.recreate()
-                                },
-                                onDisagree = { activity.finishAffinity() }
-                            )
+                    if (!isServiceReady) {
+                        // 等待跨模块依赖注册中心就绪，避免冷启动后快速进入
+                        // 创建人设等页面时 ServiceRegistry.getOrThrow 抛异常导致闪退。
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
-                        showRoleSelection -> {
-    RoleSelectionScreen(
-        onRoleSelected = { role ->
-            userPrefs.edit(commit = true) { putString("selected_role", role.name) }
-            profileViewModel.switchRole(role) {
-                showRoleSelection = false
-            }
-        },
-        onSkip = {
-            userPrefs.edit(commit = true) { putString("selected_role", CompanionRole.GIRLFRIEND.name) }
-            profileViewModel.switchRole(CompanionRole.GIRLFRIEND) {
-                showRoleSelection = false
-            }
-        }
-    )
-                        }
-                        !isServiceReady -> {
-                            // 等待跨模块依赖注册中心就绪，避免冷启动后快速进入
-                            // 创建人设等页面时 ServiceRegistry.getOrThrow 抛异常导致闪退。
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                        else -> {
-                            MainScreen(activity)
-                        }
+                    } else {
+                        MainScreen(activity)
                     }
                 }
             }
