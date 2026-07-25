@@ -22,16 +22,8 @@ import com.lianyu.ai.uicommon.theme.WeChatDarkBackground
 object SystemBarController {
 
     fun applyBaseContextLocale(base: android.content.Context): android.content.Context {
-        val prefs = base.getSharedPreferences("language_prefs", android.content.Context.MODE_PRIVATE)
-        val savedLanguage = prefs.getString("language", "zh-CN") ?: "zh-CN"
-        val locale = when (savedLanguage) {
-            "zh-CN" -> java.util.Locale.SIMPLIFIED_CHINESE
-            "zh-TW" -> java.util.Locale.TRADITIONAL_CHINESE
-            "en" -> java.util.Locale.ENGLISH
-            "ja" -> java.util.Locale.JAPANESE
-            "ko" -> java.util.Locale.KOREAN
-            else -> java.util.Locale.SIMPLIFIED_CHINESE
-        }
+        // 语言设置入口已移除，应用固定使用简体中文。
+        val locale = java.util.Locale.SIMPLIFIED_CHINESE
         java.util.Locale.setDefault(locale)
         val config = Configuration(base.resources.configuration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
