@@ -2,13 +2,9 @@ package com.lianyu.ai.feature.chat.ui.viewmodel
 
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatDebugLog
 
-import com.lianyu.ai.common.ContentFilter
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.common.TimeoutBudgets
-import com.lianyu.ai.common.safety.ContentSafetyVerifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * ChatViewModel 消息流水线实现 — 5 阶段结构。
@@ -17,9 +13,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * 阶段输出 = 下一阶段输入，失败短路返回。
  * 流水线状态可观测，供 UI 监控使用。
  */
-class MessagePipelineRunner(
-    private val onViolation: ((ContentFilter.ViolationLevel) -> Unit)? = null
-) : MessagePipeline {
+class MessagePipelineRunner : MessagePipeline {
 
     private val _pipelineState = MutableStateFlow(MessagePipeline.PipelineState())
     override val pipelineState: StateFlow<MessagePipeline.PipelineState> = _pipelineState
@@ -33,59 +27,6 @@ class MessagePipelineRunner(
         _queueDepth.value = maxOf(0, _queueDepth.value + 1)
 
         return try {
-            ChatDebugLog.log("[Pipeline] calling ContentFilter.checkInput...")
-            ChatDebugLog.log("[Pipeline] STEP1: checkInput start")
-            val filterResult = ContentFilter.checkInput(input.rawText)
-            ChatDebugLog.log("[Pipeline] STEP1: checkInput done, violating=${filterResult.isViolating}")
-            ChatDebugLog.log("[Pipeline] ContentFilter returned: violating=${filterResult.isViolating}")
-            if (filterResult.isViolating) {
-                onViolation?.invoke(filterResult.level)
-                _pipelineState.value = MessagePipeline.PipelineState(
-                    stage = MessagePipeline.Stage.VALIDATE,
-                    error = "内容违规: ${filterResult.reason}"
-                )
-                _queueDepth.value = maxOf(0, _queueDepth.value - 1)
-                return false
-            }
-
-            _pipelineState.value = MessagePipeline.PipelineState(stage = MessagePipeline.Stage.CLASSIFY)
-            ChatDebugLog.log("[Pipeline] STEP2: checkVector start")
-            val vectorResult = ContentFilter.checkVector(input.rawText)
-            ChatDebugLog.log("[Pipeline] STEP2: checkVector done")
-
-            _pipelineState.value = MessagePipeline.PipelineState(stage = MessagePipeline.Stage.CLASSIFY)
-            val localModelProvider = com.lianyu.ai.domain.ServiceRegistry.get(com.lianyu.ai.domain.LocalModelProvider::class.java)
-            val useLocalModel = localModelProvider?.isAvailable() == true
-            val bayesianScore = if (useLocalModel) {
-                // 本地 GGUF 模型会占满 CPU，第三层贝叶斯检测在此模式下极易被 CPU 资源挤占而卡死，故跳过
-                ChatDebugLog.log("[Pipeline] STEP3: Bayesian skipped (local GGUF model in use)")
-                com.lianyu.ai.common.safety.SafetyScore(
-                    score = 0.0,
-                    source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
-                    explanation = "Skipped: local GGUF model mode"
-                )
-            } else {
-                ChatDebugLog.log("[Pipeline] STEP3: Bayesian start (timeout=${TimeoutBudgets.SAFETY_CLASSIFY_MS}ms)")
-                withTimeoutOrNull(TimeoutBudgets.SAFETY_CLASSIFY_MS) {
-                    ContentSafetyVerifier.verifyUserInputAsync(input.rawText, filterResult, vectorResult)
-                } ?: com.lianyu.ai.common.safety.SafetyScore(
-                    score = 1.0,
-                    source = com.lianyu.ai.common.safety.ScoreSource.USER_INPUT,
-                    explanation = "Safety check timed out, fail-closed"
-                )
-            }
-            ChatDebugLog.log("[Pipeline] STEP3: Bayesian done, dangerous=${bayesianScore.isDangerous}")
-
-            if (bayesianScore.isDangerous) {
-                onViolation?.invoke(ContentFilter.ViolationLevel.HIGH)
-                _pipelineState.value = MessagePipeline.PipelineState(
-                    stage = MessagePipeline.Stage.CLASSIFY,
-                    error = "贝叶斯判定危险: ${bayesianScore.explanation}"
-                )
-                _queueDepth.value = maxOf(0, _queueDepth.value - 1)
-                return false
-            }
-
             // 阶段 3-5 由 ChatViewModel.doStartApiCall 负责
             _pipelineState.value = MessagePipeline.PipelineState(
                 stage = MessagePipeline.Stage.SEND,
