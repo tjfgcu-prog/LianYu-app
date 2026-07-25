@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 属于 core:domain 零依赖模块，不引入任何 feature 数据类。
  */
 interface AiTool {
-    /** 工具名（全局唯一，建议用 `<模块>_<动作>` 前缀，如 `luckin_query_shops`） */
+    /** 工具名（全局唯一，建议用 `<模块>_<动作>` 前缀，如 `weather_query`） */
     val name: String
     /** 工具描述，供 AI 理解何时调用此工具 */
     val description: String
