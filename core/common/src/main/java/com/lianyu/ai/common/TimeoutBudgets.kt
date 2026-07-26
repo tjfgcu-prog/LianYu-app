@@ -40,8 +40,7 @@ object TimeoutBudgets {
     const val HTTP_WRITE_MS = 10_000L          // 写请求体
     const val HTTP_PING_MS = 30_000L           // HTTP/2 ping 间隔（保活）
 
-    // === 微信 ===
-    const val WECHAT_POLL_TIMEOUT_MS = 15_000L // 长轮询超时（统一 Service 20s 与 Worker 15s 不一致）
+    // === 后台任务 ===
     const val BROADCAST_GOASYNC_MS = 9_500L    // BroadcastReceiver goAsync() 10s 限制预留 500ms
 
     // === AI 工具调用 (MCP / JSON-RPC over Streamable HTTP) ===
