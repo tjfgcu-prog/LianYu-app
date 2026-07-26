@@ -215,31 +215,7 @@ object ChatConstants {
     /** 主动消息用户输入最大间隔（分钟，24小时） */
     const val PROACTIVE_USER_MAX_INTERVAL_MINUTES = 1440
 
-    // ── QQ Bot WebSocket ──
-    /** QQ Bot WebSocket 心跳间隔系数（相对服务端 interval 的比例） */
-    const val QQ_BOT_HEARTBEAT_FACTOR = 0.8
-
-    /** QQ Bot WebSocket 心跳最小间隔（毫秒） */
-    const val QQ_BOT_HEARTBEAT_MIN_MS = 5000L
-
-    /** QQ Bot WebSocket 重连退避基数（毫秒） */
-    const val QQ_BOT_RECONNECT_BACKOFF_BASE_MS = 2000L
-
-    /** QQ Bot WebSocket 最大重连退避（毫秒） */
-    const val QQ_BOT_RECONNECT_MAX_DELAY_MS = 30000L
-
-    // ── WeChat Polling Service ──
-    /** 微信轮询消息长轮询超时（毫秒） */
-    const val WECHAT_SERVICE_POLL_TIMEOUT_MS = 20000L
-
-    /** 微信轮询超时后的重试延迟（毫秒） */
-    const val WECHAT_SERVICE_TIMEOUT_RETRY_DELAY_MS = 3000L
-
-    /** 微信轮询连接错误后的重试延迟（毫秒） */
-    const val WECHAT_SERVICE_CONNECTION_RETRY_DELAY_MS = 5000L
-
-    /** 微信轮询通用错误后的重试延迟（毫秒） */
-    const val WECHAT_SERVICE_ERROR_RETRY_DELAY_MS = 5000L
+    
 
     // ── 群聊延迟 ──
     /** 群聊成员回复顺序第 0 位延迟范围（毫秒） */
