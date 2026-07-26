@@ -34,7 +34,7 @@ internal object ChatFollowUpTrigger {
      * @param companion The companion info for prompt building.
      * @param chatRepository Repository for fetching history and saving messages.
      * @param aiService AI service for generating the follow-up question.
-     * @param broadcastCallback Callback to broadcast the follow-up message to WeChat.
+     * @param broadcastCallback Callback invoked with the follow-up message (external bridge hook, currently no-op).
      */
     fun triggerFollowUpIfNeeded(
         scope: CoroutineScope,
