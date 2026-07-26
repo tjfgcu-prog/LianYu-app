@@ -1,7 +1,7 @@
 package com.lianyu.ai.feature.notification
 
 import android.content.Context
-import android.content.Intent
+
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -9,7 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.lianyu.ai.common.wechat.WeChatBroadcast
+
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.MessageType
@@ -141,8 +141,7 @@ class CompanionMessageWorker(
                         content = segment,
                         isFromUser = false
                     )
-                    val messageId = chatMessageDao.insertMessage(ChatMessageCrypto.encryptForStorage(message))
-                    broadcastProactiveWeChatMessage(companionItem.id, messageId)
+                    chatMessageDao.insertMessage(ChatMessageCrypto.encryptForStorage(message))
                 }
 
                 if (!AppForegroundTracker.isInForeground && segments.isNotEmpty()) {
@@ -197,22 +196,7 @@ class CompanionMessageWorker(
         }.filter { it.isNotBlank() }
     }
 
-    private fun broadcastProactiveWeChatMessage(companionId: Long, messageId: Long) {
-        val intent = Intent(WeChatBroadcast.ACTION_SEND_PROACTIVE).apply {
-            setPackage(context.packageName)
-            putExtra(WeChatBroadcast.EXTRA_COMPANION_ID, companionId)
-            putExtra(WeChatBroadcast.EXTRA_MESSAGE_ID, messageId)
-        }
-        try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                context.applicationContext.sendBroadcast(intent, null)
-            } else {
-                context.applicationContext.sendBroadcast(intent)
-            }
-        } catch (e: Exception) {
-            SecureLog.w("CompanionMessageWorker", "Failed to send broadcast: ${e.message}")
-        }
-    }
+    
 
     /**
      * 从 DataStore 读取指定伴侣的主动消息相关设置。
