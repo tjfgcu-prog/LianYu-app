@@ -26,10 +26,7 @@ import com.lianyu.ai.domain.UserProfileProvider
 
 import com.lianyu.ai.feature.notification.NotificationHelper
 import com.lianyu.ai.push.PushManager
-import com.lianyu.ai.feature.wechat.data.WeChatTokenStore
-import com.lianyu.ai.feature.wechat.service.WeChatNotificationHelper
-import com.lianyu.ai.feature.wechat.service.WeChatPollingService
-import com.lianyu.ai.feature.wechat.service.WeChatPollingWorker
+
 import com.lianyu.ai.network.AiService
 import com.lianyu.ai.network.NtpTimeProvider
 import com.lianyu.ai.security.G0
