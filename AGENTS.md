@@ -30,7 +30,7 @@ Gradle wrapper uses a Tencent mirror (`mirrors.cloud.tencent.com/gradle/gradle-9
 
 ```
 :app
-  └─→ feature:* (chat, companion, groupchat, localmodel, memory, notification, profile, settings, wechat)
+  └─→ feature:* (chat, companion, groupchat, localmodel, memory, notification, profile, settings)
         └─→ core:* (common, database, domain, network, security, ui-common)
 
 :shell  (JVM test module, isolated — not part of Android build)
