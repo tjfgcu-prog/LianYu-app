@@ -2,6 +2,7 @@ package com.lianyu.ai.feature.memory.engine
 
 import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.sqrt
 
 /**
  * 倒排索引序列化结构
@@ -24,6 +25,7 @@ class MemoryIndex {
     private val categoryToIds = ConcurrentHashMap<MemoryCategory, MutableSet<String>>()
     private val importanceSorted = ConcurrentHashMap<String, Float>()
     private val timeSorted = ConcurrentHashMap<String, Long>()
+    private val embeddings = ConcurrentHashMap<String, List<Float>>()
 
     /**
      * 添加记忆到索引
@@ -39,6 +41,7 @@ class MemoryIndex {
         item.tags.forEach { tag ->
             keywordToIds.getOrPut(tag) { ConcurrentHashMap.newKeySet() }.add(item.id)
         }
+        item.embedding?.let { embeddings[item.id] = it }
     }
 
     /**
@@ -49,6 +52,7 @@ class MemoryIndex {
         categoryToIds.values.forEach { it.remove(id) }
         importanceSorted.remove(id)
         timeSorted.remove(id)
+        embeddings.remove(id)
         keywordToIds.entries.removeAll { it.value.isEmpty() }
     }
 
@@ -66,38 +70,48 @@ class MemoryIndex {
      * @param limit 返回数量限制
      * @return 匹配的记忆ID列表（按相关度排序）
      */
-    fun search(query: String, category: MemoryCategory? = null, limit: Int = 5): List<String> {
+    fun search(query: String, queryEmbedding: List<Float>? = null, category: MemoryCategory? = null, limit: Int = 5): List<String> {
         val tokens = MemoryTokenizer.tokenize(query)
-        if (tokens.isEmpty()) {
-            // 无关键词时返回按重要度排序的top记忆
-            var result = importanceSorted.entries
-                .sortedByDescending { it.value }
-                .map { it.key }
-            if (category != null) {
-                val catIds = categoryToIds[category] ?: emptySet()
-                result = result.filter { it in catIds }
+
+        val coarseResult: List<String> = if (tokens.isEmpty()) {
+            importanceSorted.entries.sortedByDescending { it.value }.map { it.key }
+        } else {
+            val candidateScores = ConcurrentHashMap<String, Int>()
+            tokens.forEach { token ->
+                keywordToIds[token]?.forEach { id ->
+                    candidateScores.compute(id) { _, v -> (v ?: 0) + 1 }
+                }
             }
-            return result.take(limit)
+            candidateScores.entries.sortedByDescending { it.value }.map { it.key }
         }
 
-        // 关键词匹配，统计每个记忆ID匹配的词数
-        val candidateScores = ConcurrentHashMap<String, Int>()
-        tokens.forEach { token ->
-            keywordToIds[token]?.forEach { id ->
-                candidateScores.compute(id) { _, v -> (v ?: 0) + 1 }
-            }
-        }
-
-        var result = candidateScores.entries
-            .sortedByDescending { it.value }
-            .map { it.key }
-
-        if (category != null) {
+        val filtered = if (category != null) {
             val catIds = categoryToIds[category] ?: emptySet()
-            result = result.filter { it in catIds }
-        }
+            coarseResult.filter { it in catIds }
+        } else coarseResult
 
-        return result.take(limit)
+        if (queryEmbedding == null) return filtered.take(limit)
+
+        val candidates = filtered.take(50)
+
+        return candidates
+            .mapNotNull { id -> embeddings[id]?.let { id to cosineSimilarity(queryEmbedding, it) } }
+            .sortedByDescending { it.second }
+            .map { it.first }
+            .take(limit)
+            .ifEmpty { filtered.take(limit) }
+    }
+
+    private fun cosineSimilarity(a: List<Float>, b: List<Float>): Float {
+        if (a.size != b.size) return 0f
+        var dot = 0f; var normA = 0f; var normB = 0f
+        for (i in a.indices) {
+            dot += a[i] * b[i]
+            normA += a[i] * a[i]
+            normB += b[i] * b[i]
+        }
+        val denom = sqrt(normA) * sqrt(normB)
+        return if (denom > 0f) dot / denom else 0f
     }
 
     /**
@@ -141,6 +155,7 @@ class MemoryIndex {
         items.forEach { (id, item) ->
             importanceSorted[id] = item.importance
             timeSorted[id] = item.timestamp
+            item.embedding?.let { embeddings[id] = it }
         }
     }
 
@@ -152,5 +167,6 @@ class MemoryIndex {
         categoryToIds.clear()
         importanceSorted.clear()
         timeSorted.clear()
+        embeddings.clear()
     }
 }
