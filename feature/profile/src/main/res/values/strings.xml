@@ -12,10 +12,7 @@
     <string name="theme_mode_desc">切换浅色/深色主题</string>
     <string name="chat_background">聊天背景</string>
     <string name="chat_background_desc">自定义聊天页面背景</string>
-    <string name="wechat_settings">微信设置</string>
-    <string name="wechat_settings_desc">绑定微信个人号</string>
-    <string name="qqbot_settings">QQ机器人</string>
-    <string name="qqbot_settings_desc">绑定QQ官方机器人</string>
+    
 
     <!-- 总设置 -->
     <string name="general_settings">总设置</string>
