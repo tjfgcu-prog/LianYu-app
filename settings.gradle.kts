@@ -41,7 +41,6 @@ include(":feature:notification")
 include(":feature:profile")
 include(":feature:settings")
 include(":feature:localmodel")
-include(":feature:wechat")
-include(":feature:qqbot")
+
 include(":feature:backup")
 
