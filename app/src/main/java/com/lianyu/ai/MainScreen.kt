@@ -60,9 +60,7 @@ import com.lianyu.ai.feature.memory.MemoryScreen
 import com.lianyu.ai.feature.profile.*
 import com.lianyu.ai.feature.settings.ui.screen.*
 
-import com.lianyu.ai.feature.wechat.ui.WeChatBindScreen
-import com.lianyu.ai.feature.wechat.ui.WeChatSettingsScreen
-import com.lianyu.ai.feature.qqbot.ui.QQBotSettingsScreen
+
 import com.lianyu.ai.feature.backup.BackupScreen
 
 
@@ -86,7 +84,7 @@ import kotlin.math.abs
  *   S ∈ {Home, Contacts, Profile, Chat(id), ChatDetail(id), VoiceCall(id),
  *        GroupChat(id), GroupDetail(id), CreateGroup, Settings, Theme, Language,
  *        CheckUpdate, About, FrameRate, Team, Support, Memory,
- *        ContextMemory, TtsSettings, TokenUsage, WeChatSettings, WeChatBind,
+ *        ContextMemory, TtsSettings, TokenUsage,
  *        AgreementView, CreateCompanion, EditCompanion(id)}
  *   差分方程: S[k+1] = f(S[k], E[k])
  *   验证: 所有状态出度 ≥ 1 (popBackStack 保证)
@@ -312,18 +310,13 @@ fun MainScreen(mainActivity: Activity) {
                         onFrameRateClick = { navController.navigate(MainRoute.FrameRate.route) },
                         onTtsSettingsClick = { navController.navigate(MainRoute.TtsSettings.route) },
                         onTokenUsageClick = { navController.navigate(MainRoute.TokenUsage.route) },
-                        onWeChatClick = { navController.navigate(MainRoute.WeChatSettings.route) },
-                        onQQBotClick = { navController.navigate(MainRoute.QQBotSettings.route) },
+                        
                         onDataBackupClick = { navController.navigate(MainRoute.DataBackup.route) },
                         
                         onYandereModeClick = { navController.navigate(MainRoute.YandereMode.route) }
                     )
                 }
-                composable(MainRoute.WeChatSettings.route) {
-                    WeChatSettingsScreen(onNavigateBack = { navController.popBackStack() }, onBindClick = { navController.navigate(MainRoute.WeChatBind.route) })
-                }
-                composable(MainRoute.WeChatBind.route) { WeChatBindScreen(onNavigateBack = { navController.popBackStack() }) }
-                composable(MainRoute.QQBotSettings.route) { QQBotSettingsScreen(onNavigateBack = { navController.popBackStack() }) }
+                
                 composable(MainRoute.DataBackup.route) { BackupScreen(onNavigateBack = { navController.popBackStack() }) }
                 
             }
