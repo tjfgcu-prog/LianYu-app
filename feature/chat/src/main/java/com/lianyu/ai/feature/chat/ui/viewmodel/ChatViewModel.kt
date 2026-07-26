@@ -1046,7 +1046,7 @@ class ChatViewModel(
                     linkString = imagePath
                 )
                 val userMessageId = chatRepository.sendMessage(userMessage)
-                notifyExternalBridgeNoop("ChatViewModel", "Image message sent, path=$imagePath")
+                SecureLog.d("ChatViewModel", "Image message sent, path=$imagePath")
                 notifyExternalBridgeNoop(userMessageId)
 
                 // [P1 FIX] 图片理解使用用户设置的上下文条数，不再写死 50
