@@ -12,7 +12,7 @@ import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.common.wechat.WeChatBroadcastHelper
+
 import com.lianyu.ai.common.text.MessageSegmenter
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ApiProvider
@@ -958,10 +958,10 @@ class ChatViewModel(
         }
     }
 
-    private fun broadcastWeChatMessage(messageId: Long, finalContent: String? = null) {
-        WeChatBroadcastHelper.broadcast(getApplication(), companionId, messageId, finalContent)
-        SecureLog.d("ChatViewModel", "Broadcast WeChat proactive message, companionId=$companionId, messageId=$messageId, hasFinalContent=${!finalContent.isNullOrBlank()}")
-    }
+    // 微信桥接功能已移除，保留空占位以避免大范围改动调用点。
+     private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
+         // no-op
+     }
 
     /**
      * 发送表情包消息
@@ -1046,7 +1046,7 @@ class ChatViewModel(
                     linkString = imagePath
                 )
                 val userMessageId = chatRepository.sendMessage(userMessage)
-                SecureLog.d("ChatViewModel", "Image message sent, path=$imagePath")
+                notifyExternalBridgeNoop("ChatViewModel", "Image message sent, path=$imagePath")
                 broadcastWeChatMessage(userMessageId)
 
                 // [P1 FIX] 图片理解使用用户设置的上下文条数，不再写死 50
