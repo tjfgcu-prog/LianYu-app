@@ -57,7 +57,8 @@ class MemoryManager private constructor(
 
     private val store = MemoryStore(context, deviceId)
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
+    private val embeddingProvider: EmbeddingProvider by lazy { OnnxEmbeddingProvider(context) }
+    
     // 短期记忆：内存缓存，按作用域隔离
     private val shortTermCache = ConcurrentHashMap<String, MutableList<MemoryItem>>()
 
@@ -263,7 +264,7 @@ class MemoryManager private constructor(
     /**
      * 搜索记忆（分层查询：短期→中期→长期）
      */
-    private fun searchMemories(
+    private suspend fun searchMemories(
         scope: MemoryScope,
         id: Long,
         query: String,
@@ -279,12 +280,14 @@ class MemoryManager private constructor(
             queryCache[cacheKey]?.let { return it }
         }
 
+        val queryEmbedding = runCatching { embeddingProvider.embed(query) }.getOrNull()?.toList()
+
         // 1. 搜索短期记忆
         shortTermCache[key]?.let { items ->
             synchronized(items) {
                 val matched = MemoryIndex().apply {
                     items.forEach { add(it) }
-                }.search(query, limit = limit)
+                }.search(query, queryEmbedding, limit = limit)
                 items.filter { it.id in matched }.forEach {
                     if (it.id !in resultIds) {
                         result.add(it)
@@ -297,7 +300,7 @@ class MemoryManager private constructor(
         // 2. 搜索中期+长期记忆（通过索引）
         val index = indexCache[key] ?: MemoryIndex()
         if (result.size < limit) {
-            val matchedIds = index.search(query, limit = limit - result.size)
+            val matchedIds = index.search(query, queryEmbedding, limit = limit - result.size)
             // 从内存缓存加载
             midTermCache[key]?.let { cache ->
                 cache.filter { it.id in matchedIds }.forEach {
@@ -419,6 +422,7 @@ class MemoryManager private constructor(
 
                 // 创建新记忆
                 val now = System.currentTimeMillis()
+                val computedEmbedding = runCatching { embeddingProvider.embed(content) }.getOrNull()
                 val item = MemoryItem(
                     id = UUID.randomUUID().toString(),
                     content = content,
@@ -431,7 +435,8 @@ class MemoryManager private constructor(
                     scope = scope,
                     tags = MemoryTokenizer.extractKeywords(content),
                     expireAt = if (scope == MemoryScope.GLOBAL) null else now + SHORT_TERM_TTL_MS,
-                    tier = MemoryTier.SHORT
+                    tier = MemoryTier.SHORT,
+                    embedding = computedEmbedding?.toList()
                 )
 
                 // 添加到短期记忆
