@@ -78,8 +78,7 @@ import kotlinx.coroutines.launch
  * 总设置页 — 收纳次要设置项，按功能领域分为 3 组。
  *
  *   1. 外观与对话  — 语言、帧率、思考设置
- *   2. 平台集成    — 微信、QQ机器人
- *   3. 系统与维护  — TTS、Token、更新、权限
+ *   2. 系统与维护  — TTS、Token、更新、权限
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,8 +87,7 @@ fun GeneralSettingsScreen(
     onFrameRateClick: () -> Unit,
     onTtsSettingsClick: () -> Unit,
     onTokenUsageClick: () -> Unit,
-    onWeChatClick: () -> Unit,
-    onQQBotClick: () -> Unit,
+    
     onDataBackupClick: () -> Unit,
     
     onYandereModeClick: () -> Unit = {}
@@ -136,18 +134,9 @@ fun GeneralSettingsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // === 第二组：平台集成 ===
-            SolidMenuGroup(
-                items = listOf(
-                    MenuItemData(Icons.Filled.ChatBubble, stringResource(R.string.wechat_settings), stringResource(R.string.wechat_settings_desc), onWeChatClick),
-                    MenuItemData(Icons.Filled.ChatBubble, stringResource(R.string.qqbot_settings), stringResource(R.string.qqbot_settings_desc), onQQBotClick),
-                ),
-                isVisible = isVisible, delayMillis = 160
-            )
+            
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // === 第三组：系统与维护 ===
+            // === 第二组：系统与维护 ===
             SolidMenuGroup(
                 items = listOf(
                     MenuItemData(Icons.Filled.RecordVoiceOver, stringResource(R.string.tts_settings), stringResource(R.string.tts_settings_desc), onTtsSettingsClick),
@@ -160,7 +149,7 @@ fun GeneralSettingsScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // === 第四组：病娇模式（独立卡片）===
+            // === 第三组：病娇模式（独立卡片）===
             SolidMenuGroup(
                 items = listOf(
                     MenuItemData(Icons.Filled.Science, stringResource(R.string.yandere_mode), stringResource(R.string.yandere_mode_desc), onYandereModeClick)
