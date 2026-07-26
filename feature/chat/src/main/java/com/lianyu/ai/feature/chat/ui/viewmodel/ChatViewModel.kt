@@ -644,7 +644,7 @@ class ChatViewModel(
         )
         applicationApiScope.launch(Dispatchers.IO) {
             val userMessageId = chatRepository.sendMessage(userMessage)
-            broadcastWeChatMessage(userMessageId)
+            notifyExternalBridgeNoop(userMessageId)
 
             if (_availableApis.value.isEmpty()) {
                 _events.tryEmit(ChatUiEvent.Error("请先配置API：我 → API设置 → 添加密钥"))
@@ -1047,7 +1047,7 @@ class ChatViewModel(
                 )
                 val userMessageId = chatRepository.sendMessage(userMessage)
                 notifyExternalBridgeNoop("ChatViewModel", "Image message sent, path=$imagePath")
-                broadcastWeChatMessage(userMessageId)
+                notifyExternalBridgeNoop(userMessageId)
 
                 // [P1 FIX] 图片理解使用用户设置的上下文条数，不再写死 50
                 val history = contextResolver.getHistoryForAi(companionId)
