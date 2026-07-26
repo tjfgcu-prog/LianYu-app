@@ -115,7 +115,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             bgScope.launch { seedDefaultCompanion(app) }
 
             bgScope.launch { preloadBackground(app) }
-            bgScope.launch { initWeChat(app) }
+            bgScope.launch { initPush(app) }
             
             bgScope.launch { autoBackupDatabase(app) }
 
@@ -142,18 +142,14 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             DefaultCompanionSeeder.seedIfNeeded(app)
         }
 
-        private suspend fun initWeChat(app: Application) {
+        private fun initPush(app: Application) {
             // 提前创建通知渠道，避免 OPPO/vivo 首次通知被系统折叠或延迟。
             NotificationHelper.createNotificationChannel(app)
-            WeChatNotificationHelper.createChannel(app)
+            
             SecureLog.d("LianYuApplication", "ROM: ${RomUtils.getRomDisplayName()} ${RomUtils.romVersion}")
             // 初始化厂商 Push SDK，提升 OPPO / vivo / 小米 / 华为 设备的消息到达率
             runCatching { PushManager.init(app) }
-            val tokenStore = WeChatTokenStore(app)
-            if (runCatching { tokenStore.isLoggedIn() }.getOrDefault(false)) {
-                WeChatPollingService.start(app)
-                WeChatPollingWorker.schedule(app)
-            }
+            
         }
 
         
