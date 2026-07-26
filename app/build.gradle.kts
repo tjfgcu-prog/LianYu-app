@@ -111,8 +111,7 @@ dependencies {
     implementation(project(":feature:profile"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:localmodel"))
-    implementation(project(":feature:wechat"))
-    implementation(project(":feature:qqbot"))
+    
     implementation(project(":feature:backup"))
     
 
