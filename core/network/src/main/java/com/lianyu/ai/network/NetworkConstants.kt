@@ -49,41 +49,7 @@ object NetworkConstants {
     // ── TTS 服务固定 endpoint ──
     const val BAIDU_TTS_URL = "https://tsn.baidu.com/text2audio"
 
-    // ── QQ Bot 官方 API ──
-    const val QQ_BOT_AUTH_BASE_URL = "https://bots.qq.com/"
-    const val QQ_BOT_API_BASE_URL = "https://api.sgroup.qq.com/"
-
-    // ── QQ Bot 开放平台扫码绑定（Hermes 协议） ──
-    const val QQ_BOT_LITE_CREATE_TASK_URL = "https://q.qq.com/lite/create_bind_task"
-    const val QQ_BOT_LITE_POLL_RESULT_URL = "https://q.qq.com/lite/poll_bind_result"
-    const val QQ_BOT_LITE_QR_CONNECT_URL = "https://q.qq.com/qqbot/openclaw/connect.html"
-
-    // ── QQ Bot 开放平台（WebView 扫码创建机器人） ──
-    const val QQ_BOT_OPEN_PLATFORM_URL = "https://q.qq.com/qqbot/"
-
-    // ── QQ Bot API 超时（秒） ──
-    const val QQ_BOT_API_CONNECT_TIMEOUT_SECONDS = 15
-    const val QQ_BOT_API_READ_TIMEOUT_SECONDS = 15
-    const val QQ_BOT_API_WRITE_TIMEOUT_SECONDS = 15
-    const val QQ_BOT_TOKEN_REFRESH_MARGIN_MS = 60_000L
-
-    // ── QQ Bot WebSocket 超时（秒） ──
-    const val QQ_BOT_WS_CONNECT_TIMEOUT_SECONDS = 15
-    const val QQ_BOT_WS_READ_TIMEOUT_SECONDS = 0
-    const val QQ_BOT_WS_WRITE_TIMEOUT_SECONDS = 15
-    const val QQ_BOT_WS_PING_INTERVAL_SECONDS = 30
-
-    // ── WeChat iLink SDK ──
-    const val WECHAT_BASE_URL = "https://ilinkai.weixin.qq.com"
-    const val WECHAT_POLL_INTERVAL_MINUTES = 15L
-    const val WECHAT_POLL_FLEX_MINUTES = 5L
-    const val WECHAT_POLL_TIMEOUT_MS = 15_000L
-    const val WECHAT_POLL_RETRY_DELAY_MS = 5_000L
-    const val WECHAT_SDK_CONNECT_TIMEOUT_MS = 10_000L
-    const val WECHAT_SDK_READ_TIMEOUT_MS = 15_000L
-    const val WECHAT_SDK_WRITE_TIMEOUT_MS = 10_000L
-    const val WECHAT_SDK_LOGIN_TIMEOUT_MS = 5 * 60 * 1000L
-    const val WECHAT_SDK_CHANNEL_VERSION = "1.0.3"
+    
 
     // ── TTS 超时（秒） ──
     const val TTS_CONNECT_TIMEOUT_SECONDS = 15
