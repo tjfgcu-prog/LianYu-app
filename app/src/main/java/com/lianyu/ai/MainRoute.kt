@@ -44,12 +44,7 @@ sealed class MainRoute(val route: String) {
     object ContextMemory : MainRoute("context_memory")
     
     
-    // === 微信 ===
-    object WeChatSettings : MainRoute("wechat_settings")
-    object WeChatBind : MainRoute("wechat_bind")
-
-    // === QQ 机器人 ===
-    object QQBotSettings : MainRoute("qqbot_settings")
+    
 
     // === 数据备份 ===
     object DataBackup : MainRoute("data_backup")
@@ -77,9 +72,7 @@ sealed class MainRoute(val route: String) {
             route == "general_settings" -> GeneralSettings
             
             
-            route == "wechat_settings" -> WeChatSettings
-            route == "wechat_bind" -> WeChatBind
-            route == "qqbot_settings" -> QQBotSettings
+            
             route == "data_backup" -> DataBackup
             
             route?.startsWith("chat/") == true -> Chat(route.removePrefix("chat/").toLongOrNull() ?: 0L)
