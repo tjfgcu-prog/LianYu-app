@@ -7,7 +7,7 @@ import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.common.TimeoutBudgets
 import com.lianyu.ai.common.text.MessageSegmenter
-import com.lianyu.ai.common.wechat.WeChatBroadcastHelper
+
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.MemoryRepository
@@ -71,7 +71,7 @@ class AiResponseFinalizer(
 ) {
     /**
      * Process and save an AI response: reasoning display, sticker processing, DB commit,
-     * WeChat broadcast. Returns the message ID for the saved response.
+     * External bridge hook (no-op). Returns the message ID for the saved response.
      */
     suspend fun finalizeResponse(
         aiContent: String,
@@ -192,16 +192,14 @@ class AiResponseFinalizer(
 
     // ── 辅助方法（从 ChatViewModel 迁移）──
 
-    private fun broadcastAiMessage(messageId: Long, finalContent: String) {
-        if (finalContent.isNotBlank() && finalContent != "\u200B") {
-            broadcastWeChatMessage(messageId, finalContent)
-        }
-    }
-
-    private fun broadcastWeChatMessage(messageId: Long, finalContent: String? = null) {
-        WeChatBroadcastHelper.broadcast(application, companionId, messageId, finalContent)
-        SecureLog.d("ChatViewModel", "Broadcast WeChat proactive message, companionId=$companionId, messageId=$messageId, hasFinalContent=${!finalContent.isNullOrBlank()}")
-    }
+    // 微信桥接功能已移除，以下方法保留为空占位以避免大范围改动调用点。
++    private fun broadcastAiMessage(messageId: Long, finalContent: String) {
++        // no-op
++    }
++
++    private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
++        // no-op
++    }
 
     /**
      * 连续追问：AI回复后按概率触发追问，让对话继续下去。
