@@ -32,7 +32,8 @@ data class MemoryItem(
     val scope: MemoryScope,
     val tags: List<String> = emptyList(),
     val expireAt: Long? = null,
-    val tier: MemoryTier = MemoryTier.SHORT
+    val tier: MemoryTier = MemoryTier.SHORT,
+    val embedding: List<Float>? = null
 ) {
     /**
      * 判断记忆是否过期
