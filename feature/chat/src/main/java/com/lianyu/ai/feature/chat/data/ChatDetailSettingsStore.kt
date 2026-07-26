@@ -28,7 +28,7 @@ data class CompanionChatDetailSettings(
     val dndEndMinutes: Int = 8 * 60,
     val allowPriorityMessageInDnd: Boolean = false,
     val blocked: Boolean = false,
-    val wechatSyncEnabled: Boolean = true,
+    
     val stickerProbability: Int = 30, // AI发送表情包的概率 0-100
     val ttsEnabled: Boolean = false, // 是否启用AI回复转语音
     val ttsProbability: Int = 50, // AI回复转语音的概率 0-100
