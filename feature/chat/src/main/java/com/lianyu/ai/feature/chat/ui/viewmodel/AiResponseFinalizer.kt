@@ -163,7 +163,7 @@ class AiResponseFinalizer(
 
         // Broadcast stale sticker message if any
         if (turnState.lastStickerMsgId > 0) {
-            broadcastWeChatMessage(turnState.lastStickerMsgId, turnState.lastStickerContent)
+            notifyExternalBridgeNoop(turnState.lastStickerMsgId, turnState.lastStickerContent)
             turnState.lastStickerMsgId = -1
             turnState.lastStickerContent = ""
         }
@@ -193,13 +193,13 @@ class AiResponseFinalizer(
     // ── 辅助方法（从 ChatViewModel 迁移）──
 
     // 微信桥接功能已移除，以下方法保留为空占位以避免大范围改动调用点。
-+    private fun broadcastAiMessage(messageId: Long, finalContent: String) {
-+        // no-op
-+    }
-+
-+    private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
-+        // no-op
-+    }
+     private fun broadcastAiMessage(messageId: Long, finalContent: String) {
+         // no-op
+     }
+ 
+     private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
+         // no-op
+     }
 
     /**
      * 连续追问：AI回复后按概率触发追问，让对话继续下去。
@@ -238,7 +238,7 @@ class AiResponseFinalizer(
                     timestamp = System.currentTimeMillis()
                 )
                 val msgId = chatRepository.sendMessageAndGetId(followUpMsg)
-                broadcastWeChatMessage(msgId, followUp)
+                notifyExternalBridgeNoop(msgId, followUp)
                 SecureLog.d("ChatViewModel", "Follow-up question sent: $followUp")
             } catch (e: Exception) {
                 SecureLog.w("ChatViewModel", "Follow-up question failed: ${e.message}")
