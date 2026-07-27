@@ -15,6 +15,7 @@ import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.feature.chat.data.ChatContextResolver
 import com.lianyu.ai.feature.chat.data.ChatDetailSettingsStore
 import com.lianyu.ai.feature.chat.voice.ChatTtsController
+import com.lianyu.ai.database.model.MessageType
 import com.lianyu.ai.common.AppSettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +89,13 @@ class AiResponseFinalizer(
         val processedText = TextProcessor.processStickerTagsForSplit(aiContent, stickerManager, settings.stickerProbability) { sendStickerMessage(it) }
 
         // 分段发送：将AI回复拆分为多条短消息，模拟真人连续发送
-        val segments = splitIntoSegments(processedText)
+        // 语音回复模式下，每段再按 60 秒上限二次切分
+        val rawSegments = splitIntoSegments(processedText)
+        val segments = if (chatTtsController.isVoiceReplyEnabled()) {
+            rawSegments.flatMap { chunkForVoice(it) }
+        } else {
+            rawSegments
+        }
         val hasPendingSticker = turnState.pendingSticker != null
         val stickerBeforeText = hasPendingSticker && kotlin.random.Random.nextFloat() < 0.5f
 
@@ -246,9 +253,60 @@ class AiResponseFinalizer(
         }
     }
 
+    /**
+     * 语音回复模式下，单条语音气泡最长约 60 秒。
+     * 用"按字数截断"来控制时长（比合成后剪音频文件简单可靠，不同供应商都适用）：
+     * 中文正常语速约 4~5 字/秒，200 字约 45~50 秒，留出安全余量。
+     * 超过 200 字的文本会被切成多段，作为连续多条语音气泡发送（跟真人连发语音一样）。
+     */
+    private fun chunkForVoice(text: String, maxChars: Int = 200): List<String> {
+        if (text.length <= maxChars) return listOf(text)
+        val chunks = mutableListOf<String>()
+        var remaining = text
+        while (remaining.length > maxChars) {
+            // 优先在句号/感叹号/问号/换行处切，找不到就硬切
+            val window = remaining.substring(0, maxChars)
+            val cutIdx = window.lastIndexOfAny(charArrayOf('。', '！', '？', '\n', '，'))
+            val cut = if (cutIdx > maxChars / 2) cutIdx + 1 else maxChars
+            chunks.add(remaining.substring(0, cut))
+            remaining = remaining.substring(cut)
+        }
+        if (remaining.isNotBlank()) chunks.add(remaining)
+        return chunks
+    }
+
+    /**
+     * 把一段文本构建为 ChatMessage：语音回复模式下合成语音气泡消息，
+     * 合成失败时自动降级为普通文字消息（保证消息一定能发出去）。
+     */
+    private suspend fun buildAiMessage(text: String): ChatMessage {
+        if (chatTtsController.isVoiceReplyEnabled()) {
+            val result = chatTtsController.synthesizeVoiceReply(text)
+            if (result != null) {
+                val (path, duration) = result
+                return ChatMessage(
+                    companionId = companionId,
+                    content = "[语音] $duration\"",
+                    isFromUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    type = MessageType.VOICE,
+                    linkString = path
+                )
+            }
+            SecureLog.w("ChatViewModel", "voice synthesis failed, fallback to text")
+        }
+        return ChatMessage(
+            companionId = companionId,
+            content = text,
+            isFromUser = false,
+            timestamp = System.currentTimeMillis()
+        )
+    }
+
     private fun splitIntoSegments(text: String): List<String> {
         return MessageSegmenter.split(text, MessageSegmenter.SplitMode.SIMPLE)
     }
+    
 
     /**
      * Queue a sticker for this turn instead of sending it immediately.
