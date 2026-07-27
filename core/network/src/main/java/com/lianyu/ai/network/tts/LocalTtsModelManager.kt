@@ -151,15 +151,51 @@ class LocalTtsModelManager private constructor(private val context: Context) {
             )
             return@withContext
         }
+        val loadError = tryLoadAndTestSynthesis(model)
+        if (loadError != null) {
+            _state.value = LocalTtsUiState(
+                model = model,
+                modelId = model.id,
+                status = LocalTtsUiStatus.FAILED,
+                errorMessage = "模型文件存在但无法加载：$loadError"
+            )
+            SecureLog.e(TAG, "本地 TTS 模型加载校验失败: ${model.displayName} — $loadError")
+            return@withContext
+        }
         preferences.setEnabled(model.id, true)
         updateStateFromPreferences(preferences.modelState(model.id).first())
         SecureLog.i(TAG, "本地 TTS 模型已启用: ${model.displayName}")
     }
 
-    suspend fun disable() = withContext(Dispatchers.IO) {
-        preferences.setEnabled(model.id, false)
-        updateStateFromPreferences(preferences.modelState(model.id).first())
-        SecureLog.i(TAG, "本地 TTS 模型已禁用")
+    private fun tryLoadAndTestSynthesis(model: LocalTtsModel): String? {
+        var tts: com.k2fsa.sherpa.onnx.OfflineTts? = null
+        return try {
+            val modelPath = model.file(appContext, model.modelFileName).absolutePath
+            val tokensPath = model.file(appContext, model.tokensFileName).absolutePath
+            val lexiconPath = model.lexiconFileName?.let { model.file(appContext, it).absolutePath } ?: ""
+
+            val vitsConfig = com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig(
+                model = modelPath,
+                lexicon = lexiconPath,
+                tokens = tokensPath,
+                dataDir = "",
+                dictDir = "",
+                noiseScale = 0.667f,
+                noiseScaleW = 0.8f,
+                lengthScale = 1.0f
+            )
+            val ttsConfig = com.k2fsa.sherpa.onnx.OfflineTtsConfig(
+                model = com.k2fsa.sherpa.onnx.OfflineTtsModelConfig(vits = vitsConfig)
+            )
+            tts = com.k2fsa.sherpa.onnx.OfflineTts(assetManager = null, config = ttsConfig)
+            val sid = 0.coerceIn(0, (model.numSpeakers - 1).coerceAtLeast(0))
+            val audio = tts.generate("你好", sid, 1.0f)
+            if (audio.samples.isEmpty()) "测试合成返回了空音频（模型可能不完整）" else null
+        } catch (e: Throwable) {
+            e.message ?: e.javaClass.simpleName
+        } finally {
+            try { tts?.release() } catch (_: Exception) { }
+        }
     }
 
     suspend fun deleteDownloadedModel() = withContext(Dispatchers.IO) {
@@ -391,7 +427,18 @@ class LocalTtsModelManager private constructor(private val context: Context) {
 
     private fun isFileValid(file: File, modelFile: LocalTtsModelFile): Boolean {
         if (!file.exists()) return false
-        // 大小校验（expectedBytes=0 跳过）
+        if (file.length() < MIN_VALID_FILE_BYTES) return false
+        if (modelFile.role == LocalTtsFileRole.TOKENS || modelFile.role == LocalTtsFileRole.LEXICON) {
+            val head = try {
+                file.inputStream().use { it.readNBytes(64) }.toString(Charsets.UTF_8).trim().lowercase()
+            } catch (_: Exception) {
+                ""
+            }
+            if (head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<?xml")) {
+                return false
+            }
+        }
+        // 大小校验（expectedBytes=0 跳过精确窗口，但上面的绝对最小值兜底仍然生效）
         if (modelFile.expectedBytes > 0L) {
             val min = modelFile.expectedBytes - 50_000_000L
             val max = modelFile.expectedBytes + 50_000_000L
@@ -442,6 +489,7 @@ class LocalTtsModelManager private constructor(private val context: Context) {
     companion object {
         private const val TAG = "LocalTtsModelManager"
         private val ALLOWED_HOSTS = setOf("huggingface.co", "modelscope.cn", "github.com")
+        private const val MIN_VALID_FILE_BYTES = 64L
 
         @Volatile
         private var instance: LocalTtsModelManager? = null
