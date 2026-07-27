@@ -141,6 +141,9 @@ fun TtsSettingsScreen(
     var sfTtsModel by remember { mutableStateOf(config.siliconflowTtsModel) }
     var sfSpeed by remember { mutableStateOf(config.siliconflowSpeed) }
     var sfGain by remember { mutableStateOf(config.siliconflowGain) }
+    var minimaxApiKey by remember { mutableStateOf(config.minimaxApiKey) }
+    var minimaxGroupId by remember { mutableStateOf(config.minimaxGroupId) }
+    var minimaxVoiceId by remember { mutableStateOf(config.minimaxVoiceId) }
     var sfSampleRate by remember { mutableStateOf(config.siliconflowSampleRate) }
     var sfUseCustomTts by remember { mutableStateOf(config.customTtsUrl.isNotBlank()) }
     var customTtsUrl by remember { mutableStateOf(config.customTtsUrl) }
@@ -214,7 +217,10 @@ fun TtsSettingsScreen(
             customTtsModel = customTtsModel,
             customTtsVoiceId = customTtsVoiceId,
             localTtsSpeed = localTtsSpeed,
-            localTtsSid = localTtsSid
+            localTtsSid = localTtsSid,
+            minimaxApiKey = minimaxApiKey,
+            minimaxGroupId = minimaxGroupId,
+            minimaxVoiceId = minimaxVoiceId
         )
         
         TtsConfig.saveToSharedPreferences(context, newConfig)
@@ -415,6 +421,12 @@ fun TtsSettingsScreen(
                                     onVolcengineTokenChange = { volcengineToken = it },
                                     volcengineCluster = volcengineCluster,
                                     onVolcengineClusterChange = { volcengineCluster = it },
+                                    minimaxApiKey = minimaxApiKey,
+                                    onMinimaxApiKeyChange = { minimaxApiKey = it },
+                                    minimaxGroupId = minimaxGroupId,
+                                    onMinimaxGroupIdChange = { minimaxGroupId = it },
+                                    minimaxVoiceId = minimaxVoiceId,
+                                    onMinimaxVoiceIdChange = { minimaxVoiceId = it },
                                     sfApiKey = sfApiKey,
                                     onSfApiKeyChange = { sfApiKey = it },
                                     sfCustomVoiceId = sfCustomVoiceId,
@@ -825,6 +837,12 @@ private fun ApiKeyConfigCard(
     onVolcengineTokenChange: (String) -> Unit,
     volcengineCluster: String,
     onVolcengineClusterChange: (String) -> Unit,
+    minimaxApiKey: String,
+    onMinimaxApiKeyChange: (String) -> Unit,
+    minimaxGroupId: String,
+    onMinimaxGroupIdChange: (String) -> Unit,
+    minimaxVoiceId: String,
+    onMinimaxVoiceIdChange: (String) -> Unit,
     sfApiKey: String,
     onSfApiKeyChange: (String) -> Unit,
     sfCustomVoiceId: String,
@@ -908,6 +926,13 @@ private fun ApiKeyConfigCard(
                 TtsTextField(value = volcengineToken, onValueChange = onVolcengineTokenChange, label = "Token", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
                 Spacer(modifier = Modifier.height(8.dp))
                 TtsTextField(value = volcengineCluster, onValueChange = onVolcengineClusterChange, label = "Cluster (可选)", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
+            }
+            TtsProvider.MINIMAX -> {
+                TtsTextField(value = minimaxApiKey, onValueChange = onMinimaxApiKeyChange, label = "API Key", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
+                Spacer(modifier = Modifier.height(8.dp))
+                TtsTextField(value = minimaxGroupId, onValueChange = onMinimaxGroupIdChange, label = "Group ID", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
+                Spacer(modifier = Modifier.height(8.dp))
+                TtsTextField(value = minimaxVoiceId, onValueChange = onMinimaxVoiceIdChange, label = "音色 voice_id (留空默认 female-shaonv)", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
             }
             TtsProvider.SILICONFLOW -> {
                 // 提供者切换：默认 vs 自定义
