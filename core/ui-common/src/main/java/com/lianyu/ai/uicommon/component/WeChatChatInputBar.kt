@@ -64,9 +64,6 @@ fun WeChatChatInputBar(
     currentApi: ApiProviderInfo? = null,
     onSwitchApi: ((ApiProviderInfo) -> Unit)? = null,
     onPlusClick: (() -> Unit)? = null,
-    onVoiceRecordStart: (() -> Unit)? = null,
-    onVoiceRecordStop: (() -> Unit)? = null,
-    onVoiceRecordCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var text by remember { mutableStateOf("") }
@@ -145,15 +142,7 @@ fun WeChatChatInputBar(
                             textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = adaptiveSizing.fontSizeBody.sp, color = textColor)
                         )
 
-                        if (onVoiceRecordStart != null && text.isEmpty()) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            VoiceHoldButton(
-                                onRecordStart = { onVoiceRecordStart() },
-                                onRecordStop = { onVoiceRecordStop?.invoke() },
-                                onRecordCancel = { onVoiceRecordCancel?.invoke() },
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                        
                     }
                 }
 
@@ -205,40 +194,7 @@ fun WeChatChatInputBar(
     }
 }
 
-@Composable
-private fun VoiceHoldButton(
-    onRecordStart: () -> Unit,
-    onRecordStop: () -> Unit,
-    onRecordCancel: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isRecording by remember { mutableStateOf(false) }
 
-    val iconTint = when {
-        isRecording -> Color(0xFFFF3B30)
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .combinedClickable(
-                onClick = {},
-                onLongClick = {
-                    isRecording = true
-                    onRecordStart()
-                }
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Mic,
-            contentDescription = "按住录音",
-            tint = iconTint,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
