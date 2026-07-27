@@ -409,10 +409,6 @@ fun GroupChatScreen(
                 ChatInputExtensionPanel(
                     isVisible = showExtensionPanel,
                     onAlbumClick = { handleAlbumClick() },
-                    onCameraClick = { handleCameraClick() },
-                    onVideoCallClick = {},
-                    onLocationClick = {},
-                    onVoiceInputClick = {},
                     onStickerClick = {
                         showExtensionPanel = false
                         showStickerPanel = !showStickerPanel
