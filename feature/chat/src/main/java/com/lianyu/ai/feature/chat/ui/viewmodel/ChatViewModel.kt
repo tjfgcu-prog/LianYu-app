@@ -27,7 +27,7 @@ import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.feature.chat.data.ChatContextResolver
 import com.lianyu.ai.feature.chat.R
 import com.lianyu.ai.feature.chat.voice.ChatTtsController
-import com.lianyu.ai.feature.chat.voice.ChatTtsState
+
 import com.lianyu.ai.network.tts.ChatTtsConfig
 import com.lianyu.ai.network.tts.ChatTtsMode
 import com.lianyu.ai.domain.AiServiceProvider
@@ -40,7 +40,7 @@ import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.domain.UserProfileProvider
 import com.lianyu.ai.network.ChatTypingState
 import com.lianyu.ai.network.tts.TtsService
-import com.lianyu.ai.network.stt.SttService
+
 import com.lianyu.ai.network.stt.AndroidSttProvider
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.StickerInfo
@@ -109,24 +109,15 @@ class ChatViewModel(
     private val aiService = ServiceRegistry.get(AiServiceProvider::class.java)
         ?: throw IllegalStateException("AiServiceProvider not registered in ServiceRegistry")
     private val ttsService = TtsService.getInstance(application)
-    private val sttService = SttService.getInstance(application)
 
-    // ── 聊天页分段队列 TTS（流式朗读 / 语音条）──
-    // 互斥保护：callActive=true（语音通话激活）时禁用朗读，避免与 VoiceCallScreen 共用的
-    // TtsService 单例和 AudioManager / 通信设备冲突。
-    @Volatile
-    private var callActive: Boolean = false
+    // ── 聊天页语音回复（AI 消息合成为语音气泡）──
     @Volatile
     private var chatTtsConfig: ChatTtsConfig = ChatTtsConfig.fromSharedPreferences(application)
     private val chatTtsController = ChatTtsController(
         context = application.applicationContext,
         ttsService = ttsService,
-        scope = ApplicationScopeProvider.scope,
-        configProvider = { chatTtsConfig },
-        callActiveProvider = { callActive }
+        configProvider = { chatTtsConfig }
     )
-    /** 朗读状态（供 UI 显示朗读中/空闲） */
-    val ttsState: StateFlow<ChatTtsState> = chatTtsController.state
     private val chatDetailSettingsStore = com.lianyu.ai.feature.chat.data.ChatDetailSettingsStore(application)
     private val appSettingsStore = AppSettingsStore(application)
     // [P1 FIX] 统一解析上下文设置，消除 ViewModel 中的硬编码上下文条数
@@ -980,38 +971,7 @@ class ChatViewModel(
         sendMessage("[$stickerId]")
     }
 
-    /**
-     * 发送语音消息（用户录制）
-     */
-    fun sendVoiceMessage(audioPath: String, duration: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val voiceMessage = ChatMessage(
-                    companionId = companionId,
-                    content = "[语音] $duration\"",
-                    isFromUser = true,
-                    timestamp = System.currentTimeMillis(),
-                    type = MessageType.VOICE,
-                    linkString = audioPath
-                )
-                chatRepository.sendMessage(voiceMessage)
-                SecureLog.d("ChatViewModel", "Voice message sent: $audioPath, duration=$duration")
 
-                val recognizedText = withTimeoutOrNull(AndroidSttProvider.RECOGNITION_TIMEOUT_MS) {
-                    sttService.recognize(audioPath)
-                }
-
-                if (!recognizedText.isNullOrBlank()) {
-                    SecureLog.i("ChatViewModel", "STT recognition success: ${recognizedText.take(50)}...")
-                    sendMessage(recognizedText)
-                } else {
-                    SecureLog.w("ChatViewModel", "STT recognition failed or empty, voice tag sent only")
-                }
-            } catch (e: Exception) {
-                SecureLog.e("ChatViewModel", "sendVoiceMessage failed", e)
-            }
-        }
-    }
 
     /**
      * 发送图片消息并调用视觉AI模型进行识别
@@ -1111,120 +1071,21 @@ class ChatViewModel(
         }
     }
 
-    /**
-     * 语音通话专用：发送用户语音识别的文字，获取AI同步回复。
-     * 绕过消息队列和批处理，直接调用AI API，适合语音对话场景。
-     *
-     * @param text 用户语音识别出的文字
-     * @return AI回复文本，失败返回null
-     */
-    suspend fun sendVoiceCallMessage(text: String): String? {
-        val companion = _companionData.value ?: return null
-
-        // 构建聊天历史
-        val fetchedHistory = contextResolver.getHistoryForAi(companionId)
-            .filterNot { !it.isFromUser && it.content.replace("\u200B", "").isBlank() }
-
-        val historyForAi = fetchedHistory.toAiChatMessages()
-        val companionInfo = companion.toAiCompanionInfo()
-        val tools = com.lianyu.ai.domain.ToolRegistry.all()
-
-        // 保存用户消息到数据库
-        val userMessage = ChatMessage(
-            companionId = companionId,
-            content = text,
-            isFromUser = true,
-            timestamp = System.currentTimeMillis()
-        )
-        chatRepository.sendMessage(userMessage)
-
-        return try {
-            val response = withTimeoutOrNull(TimeoutBudgets.CHAT_VM_API_TIMEOUT_MS) {
-                aiService.sendMessage(companionInfo, historyForAi, 0, false, tools)
-            } ?: return null
-
-            val aiContent = response.content
-            if (aiContent.startsWith("[TOAST]")) return null
-
-            // 保存AI回复到数据库
-            val aiMessage = ChatMessage(
-                companionId = companionId,
-                content = aiContent,
-                isFromUser = false,
-                timestamp = System.currentTimeMillis()
-            )
-            chatRepository.sendMessage(aiMessage)
-
-            aiContent
-        } catch (e: Exception) {
-            SecureLog.e("ChatViewModel", "sendVoiceCallMessage failed", e)
-            null
-        }
-    }
-
-    /**
-     * 使用TTS合成AI语音回复
-     */
-    fun synthesizeAiVoice(text: String, onResult: (String?) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val audioPath = withTimeoutOrNull(TimeoutBudgets.CHAT_VM_TTS_SYNTH_MS) {
-                ttsService.synthesize(text)
-            }
-                withContext(Dispatchers.Main) {
-                    onResult(audioPath)
-                }
-            } catch (e: Exception) {
-                SecureLog.e("ChatViewModel", "synthesizeAiVoice failed", e)
-                withContext(Dispatchers.Main) {
-                    onResult(null)
-                }
-            }
-        }
-    }
+    
 
     // ── 聊天页 TTS 控制（供 UI 调用）──
 
-    /**
-     * 设置聊天页 TTS 朗读模式并持久化。
-     * 切换到 SILENT 时停止当前朗读。
-     */
-    fun setTtsMode(mode: ChatTtsMode) {
-        val newConfig = chatTtsConfig.copy(mode = mode)
+    /** 是否开启"语音回复"模式（供 UI/Finalizer 读取，实时读取最新配置） */
+    fun isVoiceReplyEnabled(): Boolean = chatTtsConfig.mode == ChatTtsMode.VOICE_BAR
+
+    /** 切换语音回复开关并持久化 */
+    fun setVoiceReplyEnabled(enabled: Boolean) {
+        val newConfig = chatTtsConfig.copy(mode = if (enabled) ChatTtsMode.VOICE_BAR else ChatTtsMode.SILENT)
         chatTtsConfig = newConfig
         ChatTtsConfig.saveToSharedPreferences(getApplication(), newConfig)
-        if (mode == ChatTtsMode.SILENT) {
-            chatTtsController.stop()
-        }
-        SecureLog.i("ChatViewModel", "Chat TTS mode set to $mode")
     }
 
-    /** 获取当前聊天页 TTS 配置（供 UI 读取） */
-    fun getTtsConfig(): ChatTtsConfig = chatTtsConfig
-
-    /** 更新聊天页 TTS 配置（朗读模式之外的子项：跳过括号/美化/去重）并持久化 */
-    fun updateTtsConfig(config: ChatTtsConfig) {
-        chatTtsConfig = config
-        ChatTtsConfig.saveToSharedPreferences(getApplication(), config)
-    }
-
-    /** 手动停止当前朗读（用户点击停止按钮） */
-    fun stopTts() {
-        chatTtsController.stop()
-    }
-
-    /**
-     * 设置语音通话激活状态（互斥保护）。
-     * VoiceCallScreen.acceptCall 调 setCallActive(true)，hangUp/cleanup 调 setCallActive(false)。
-     * 激活时 ChatTtsController.shouldAutoPlay() 返回 false，避免与通话抢 TtsService/AudioManager。
-     */
-    fun setCallActive(active: Boolean) {
-        callActive = active
-        if (active) {
-            // 进入通话时立即停止聊天页朗读
-            chatTtsController.stop()
-        }
-    }
+    
 
     /**
      * 语音条模式（VOICE_BAR）：仅合成音频返回路径，由 UI 写入 ChatMessage.linkString + type=VOICE。
@@ -1242,9 +1103,7 @@ class ChatViewModel(
         // [P0 FIX] 不要取消 turnState.sendMessageJob：AI 请求已迁移到 chatBackgroundScope（应用级作用域），
         // 退出聊天页面后应继续运行并写入数据库，重新进入聊天时即可看到回复。
         applicationApiScope.cancel()
-        // 释放聊天页 TTS 播放器（MediaPlayer + 队列），避免泄漏。
-        // 注意：controller 用的是应用级作用域，不随 ViewModel 取消，所以必须显式 stop。
-        chatTtsController.stop()
+        
         avatarUnsubscribe?.invoke()
         avatarUnsubscribe = null
         chatTypingState.stopTyping()
