@@ -32,7 +32,11 @@ data class TtsConfig(
     val customTtsVoiceId: String = "",
     // Local offline TTS (sherpa-onnx)
     val localTtsSpeed: Float = 1.0f,
-    val localTtsSid: Int = 0
+    val localTtsSid: Int = 0,
+    // MiniMax Audio
+    val minimaxApiKey: String = "",
+    val minimaxGroupId: String = "",
+    val minimaxVoiceId: String = ""
 ) {
     fun isProviderConfigured(provider: TtsProvider): Boolean {
         return when (provider) {
@@ -46,6 +50,7 @@ data class TtsConfig(
                 || siliconflowApiKey.isNotBlank()
                 || customTtsUrl.isNotBlank()
             TtsProvider.SHERPA_LOCAL -> true
+            TtsProvider.MINIMAX -> minimaxApiKey.isNotBlank() && minimaxGroupId.isNotBlank()
         }
     }
 
@@ -78,7 +83,10 @@ data class TtsConfig(
                 customTtsModel = prefs.getString("custom_tts_model", "") ?: "",
                 customTtsVoiceId = prefs.getString("custom_tts_voice_id", "") ?: "",
                 localTtsSpeed = prefs.getFloat("local_tts_speed", 1.0f),
-                localTtsSid = prefs.getInt("local_tts_sid", 0)
+                localTtsSid = prefs.getInt("local_tts_sid", 0),
+                minimaxApiKey = prefs.getString("minimax_api_key", "") ?: "",
+                minimaxGroupId = prefs.getString("minimax_group_id", "") ?: "",
+                minimaxVoiceId = prefs.getString("minimax_voice_id", "") ?: ""
             )
         }
 
@@ -111,6 +119,9 @@ data class TtsConfig(
                 putString("custom_tts_voice_id", config.customTtsVoiceId)
                 putFloat("local_tts_speed", config.localTtsSpeed)
                 putInt("local_tts_sid", config.localTtsSid)
+                putString("minimax_api_key", config.minimaxApiKey)
+                putString("minimax_group_id", config.minimaxGroupId)
+                putString("minimax_voice_id", config.minimaxVoiceId)
                 apply()
             }
             SecureLog.i("TtsConfig", "Configuration saved to SharedPreferences")
