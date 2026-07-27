@@ -41,7 +41,7 @@ import com.lianyu.ai.domain.UserProfileProvider
 import com.lianyu.ai.network.ChatTypingState
 import com.lianyu.ai.network.tts.TtsService
 
-import com.lianyu.ai.network.stt.AndroidSttProvider
+
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
@@ -1091,9 +1091,7 @@ class ChatViewModel(
      * 语音条模式（VOICE_BAR）：仅合成音频返回路径，由 UI 写入 ChatMessage.linkString + type=VOICE。
      * 复用现有 VoiceMessageBubble 渲染，无需改 UI。
      */
-    suspend fun synthesizeForVoiceBar(text: String): String? {
-        return chatTtsController.synthesizeOnly(text)
-    }
+    
 
     override fun onCleared() {
         super.onCleared()
