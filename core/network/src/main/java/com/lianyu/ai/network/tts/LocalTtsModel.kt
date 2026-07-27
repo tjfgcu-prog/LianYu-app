@@ -28,9 +28,19 @@ sealed class LocalTtsModel(
      * 但额外加 `tts/` 前缀避免与 LLM 模型文件混淆。
      */
     fun modelDir(context: Context): File {
-        val root = context.getExternalFilesDir(null) ?: context.filesDir
-        return File(File(root, "models"), "tts/$id").also { it.mkdirs() }
-    }
+    return File(File(context.filesDir, "models"), "tts/$id").also { it.mkdirs() }
+}
+
+/**
+ * 下载用的外部临时目录：DownloadManager 只能写外部存储，不能直接写 filesDir。
+ * 下载+校验通过后会被复制进 [modelDir]，再删掉临时文件。
+ */
+fun stagingDir(context: Context): File {
+    val root = context.externalCacheDir ?: context.cacheDir
+    return File(File(root, "tts_staging"), id).also { it.mkdirs() }
+}
+
+fun stagingFile(context: Context, fileName: String): File = File(stagingDir(context), fileName)
 
     /** 取模型目录下某个文件的绝对路径 */
     fun file(context: Context, fileName: String): File = File(modelDir(context), fileName)
