@@ -119,7 +119,18 @@ fun TtsSettingsScreen(
     var isTesting by remember { mutableStateOf(false) }
     var isSynthesizing by remember { mutableStateOf(false) }
     var testResult by remember { mutableStateOf<String?>(null) }
+    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var previewAudioPath by remember { mutableStateOf<String?>(null) }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer?.release()
+            mediaPlayer = null
+            // 如果用户在试听播放过程中离开这个页面，把还没播完的临时文件也清掉
+            previewAudioPath?.let { path -> runCatching { java.io.File(path).delete() } }
+            previewAudioPath = null
+        }
+    }
     val config = remember {
         TtsConfig.fromSharedPreferences(context)
     }
@@ -517,7 +528,46 @@ fun TtsSettingsScreen(
                                                 "你好，这是一个语音合成测试。"
                                             )
                                             isSynthesizing = false
-                                            testResult = if (audioPath != null) "✓ 合成成功: ${audioPath.substringAfterLast("/")}" else "✗ 合成失败"
+
+                                            when {
+                                                selectedProvider == TtsProvider.ANDROID -> {
+                                                    // 系统TTS引擎直接朗读，不产生文件
+                                                    testResult = "✓ 已播放（系统语音引擎）"
+                                                }
+                                                audioPath != null -> {
+                                                    try {
+                                                        mediaPlayer?.release()
+                                                        previewAudioPath = audioPath
+                                                        mediaPlayer = MediaPlayer().apply {
+                                                            setDataSource(audioPath)
+                                                            setOnCompletionListener { mp ->
+                                                                mp.release()
+                                                                mediaPlayer = null
+                                                                // 试听是一次性文件，播完即删，不留在缓存里
+                                                                runCatching { java.io.File(audioPath).delete() }
+                                                                previewAudioPath = null
+                                                            }
+                                                            setOnErrorListener { mp, _, _ ->
+                                                                mp.release()
+                                                                mediaPlayer = null
+                                                                runCatching { java.io.File(audioPath).delete() }
+                                                                previewAudioPath = null
+                                                                true
+                                                            }
+                                                            prepare()
+                                                            start()
+                                                        }
+                                                        testResult = "✓ 合成成功，正在播放"
+                                                    } catch (e: Exception) {
+                                                        runCatching { java.io.File(audioPath).delete() }
+                                                        previewAudioPath = null
+                                                        testResult = "✗ 播放失败: ${e.message ?: "未知错误"}"
+                                                    }
+                                                }
+                                                else -> {
+                                                    testResult = "✗ 合成失败"
+                                                }
+                                            }
                                             snackbarHostState.showSnackbar(testResult!!)
                                         }
                                     },
