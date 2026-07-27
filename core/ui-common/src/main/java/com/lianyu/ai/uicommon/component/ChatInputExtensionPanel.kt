@@ -26,11 +26,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CameraAlt
+
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Mic
+
 import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Videocam
@@ -59,10 +57,6 @@ fun ChatInputExtensionPanel(
     currentApi: ApiProviderInfo? = null,
     onSwitchApi: ((ApiProviderInfo) -> Unit)? = null,
     onAlbumClick: () -> Unit = {},
-    onCameraClick: () -> Unit = {},
-    onVideoCallClick: () -> Unit = {},
-    onLocationClick: () -> Unit = {},
-    onVoiceInputClick: () -> Unit = {},
     onStickerClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -99,11 +93,7 @@ fun ChatInputExtensionPanel(
                     currentApi = currentApi,
                     onSwitchApi = onSwitchApi,
                     onAlbumClick = onAlbumClick,
-                    onCameraClick = onCameraClick,
-                    onVideoCallClick = onVideoCallClick,
-                    onLocationClick = onLocationClick,
                     onStickerClick = onStickerClick,
-                    onVoiceInputClick = onVoiceInputClick,
                     adaptiveSizing = adaptiveSizing
                 )
             }
@@ -120,22 +110,14 @@ private fun ExtensionGridPage(
     currentApi: ApiProviderInfo?,
     onSwitchApi: ((ApiProviderInfo) -> Unit)?,
     onAlbumClick: () -> Unit,
-    onCameraClick: () -> Unit,
-    onVideoCallClick: () -> Unit,
-    onLocationClick: () -> Unit,
     onStickerClick: () -> Unit,
-    onVoiceInputClick: () -> Unit,
     adaptiveSizing: AdaptiveSizing
 ) {
     val hasMultipleApis = availableApis.size > 1 && onSwitchApi != null
 
     val items = mutableListOf<ExtensionItem>()
     items.add(ExtensionItem("相册", Icons.Filled.Image, onAlbumClick))
-    items.add(ExtensionItem("拍摄", Icons.Filled.CameraAlt, onCameraClick))
-    items.add(ExtensionItem("视频通话", Icons.Filled.Videocam, onVideoCallClick))
-    items.add(ExtensionItem("位置", Icons.Filled.LocationOn, onLocationClick))
     items.add(ExtensionItem("表情包", Icons.Filled.Mood, onStickerClick))
-    items.add(ExtensionItem("语音输入", Icons.Filled.Mic, onVoiceInputClick))
     if (hasMultipleApis) {
         items.add(ExtensionItem("切换模型", Icons.Filled.SwapHoriz) { onSwitchApi!!((currentApi?.let { c ->
             val idx = availableApis.indexOfFirst { it.name == c.name }
