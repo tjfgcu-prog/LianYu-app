@@ -113,7 +113,7 @@ class TtsService(private val context: Context) {
 
             SecureLog.i("TtsService", "Testing TTS with sample text for ${provider.displayName}")
             p.synthesize(context, text, null)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             SecureLog.e("TtsService", "Test synthesis failed", e)
             null
         }
