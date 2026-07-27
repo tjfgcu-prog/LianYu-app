@@ -14,9 +14,8 @@ import com.lianyu.ai.common.SecureLog
  * 放在 core:network 以便 feature:chat 和 feature:settings 共用（feature 模块间不能互相依赖）。
  */
 enum class ChatTtsMode(val displayName: String, val description: String) {
-    SILENT("静音", "不生成任何语音"),
-    VOICE_BAR("语音条", "合成语音气泡，点击播放"),
-    READ_ALOUD("语音朗读", "自动顺序朗读 AI 回复");
+    SILENT("文字回复", "AI 发送普通文字消息"),
+    VOICE_BAR("语音回复", "AI 发送语音气泡消息，点击播放");
 
     companion object {
         fun fromOrdinalSafe(value: Int): ChatTtsMode =
