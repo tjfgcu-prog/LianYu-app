@@ -50,7 +50,7 @@ import com.lianyu.ai.common.YandereModeManager
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.feature.chat.ui.screen.ChatDetailScreen
 import com.lianyu.ai.feature.chat.ui.screen.ChatScreen
-import com.lianyu.ai.feature.chat.ui.screen.VoiceCallScreen
+
 import com.lianyu.ai.feature.companion.ui.screen.ContactsScreen
 import com.lianyu.ai.feature.companion.ui.screen.CreateCompanionScreen
 import com.lianyu.ai.feature.groupchat.ui.CreateGroupScreen
@@ -266,16 +266,13 @@ fun MainScreen(mainActivity: Activity) {
                 // === 聊天 ===
                 composable(MainRoute.Chat(0).route.replace("0", "{companionId}"), arguments = listOf(navArgument("companionId") { type = NavType.LongType })) { backStackEntry ->
                     val companionId = backStackEntry.arguments?.getLong("companionId") ?: 0L
-                    ChatScreen(companionId = companionId, onNavigateBack = { navController.popBackStack() }, onNavigateToDetail = { navController.navigate("chat_detail/$it") }, onNavigateToVoiceCall = { navController.navigate("voice_call/$it") })
+                    ChatScreen(companionId = companionId, onNavigateBack = { navController.popBackStack() }, onNavigateToDetail = { navController.navigate("chat_detail/$it") })
                 }
                 composable(MainRoute.ChatDetail(0).route.replace("0", "{companionId}"), arguments = listOf(navArgument("companionId") { type = NavType.LongType })) { backStackEntry ->
                     val detailCompanionId = backStackEntry.arguments?.getLong("companionId") ?: 0L
                     ChatDetailScreen(companionId = detailCompanionId, onNavigateBack = { navController.popBackStack() })
                 }
-                composable(MainRoute.VoiceCall(0).route.replace("0", "{companionId}"), arguments = listOf(navArgument("companionId") { type = NavType.LongType })) { backStackEntry ->
-                    val callCompanionId = backStackEntry.arguments?.getLong("companionId") ?: 0L
-                    VoiceCallScreen(companionId = callCompanionId, onNavigateBack = { navController.popBackStack() })
-                }
+                
 
                 // === 群聊 ===
                 composable(MainRoute.GroupChat(0).route.replace("0", "{groupId}"), arguments = listOf(navArgument("groupId") { type = NavType.LongType })) { backStackEntry ->
