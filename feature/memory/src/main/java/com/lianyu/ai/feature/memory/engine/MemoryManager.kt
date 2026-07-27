@@ -713,6 +713,16 @@ class MemoryManager private constructor(
      * 基于关键词的记忆提取
      * 改进版：支持中文，覆盖更多类别
      */
+    /**
+ * 简单判断是否为疑问句，避免把"我是男生还是女生"这类提问误存为事实
+ */
+private fun isLikelyQuestion(text: String): Boolean {
+    val t = text.trim()
+    if (t.endsWith("?") || t.endsWith("？")) return true
+    if (t.endsWith("吗") || t.endsWith("呢")) return true
+    val markers = listOf("还是", "多少", "怎么样", "为什么", "什么时候")
+    return markers.any { t.contains(it) }
+}
     private fun extractMemories(text: String): List<Triple<String, MemoryCategory, Float>> {
         val result = mutableListOf<Triple<String, MemoryCategory, Float>>()
 
