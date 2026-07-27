@@ -73,7 +73,7 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
 
                 SecureLog.i(TAG, "本地 TTS 合成成功: ${outputFile.absolutePath}")
                 outputFile.absolutePath
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 SecureLog.e(TAG, "本地 TTS 合成失败", e)
                 null
             }
