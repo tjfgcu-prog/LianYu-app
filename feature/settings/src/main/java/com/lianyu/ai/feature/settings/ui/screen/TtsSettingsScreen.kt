@@ -5,6 +5,7 @@ package com.lianyu.ai.feature.settings.ui.screen
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.media.MediaPlayer          // 新增：用来实际播放音频
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -60,6 +61,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect   // 新增：页面离开时清理资源
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
