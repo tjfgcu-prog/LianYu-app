@@ -644,14 +644,7 @@ fun ChatScreen(
             }
         }
 
-        // Voice recording overlay
-        
-                    }
-                }
-            }
-        }
-
-        // Floating top bar - overlay on top of messages
+// Floating top bar - overlay on top of messages
         Box(
             modifier = Modifier
                 .fillMaxWidth()
