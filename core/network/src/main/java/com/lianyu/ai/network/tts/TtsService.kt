@@ -23,6 +23,7 @@ class TtsService(private val context: Context) {
         providers[TtsProvider.SILICONFLOW] = SiliconFlowTtsProvider()
         providers[TtsProvider.SHERPA_LOCAL] = sherpaLocalTts
         providers[TtsProvider.ANDROID] = androidTts
+        providers[TtsProvider.MINIMAX] = MinimaxTtsProvider()
     }
 
     /** 本地离线 TTS 模型管理器（下载/校验/启用），供设置页 UI 消费 */
