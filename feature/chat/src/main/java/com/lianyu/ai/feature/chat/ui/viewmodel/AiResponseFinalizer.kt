@@ -118,12 +118,7 @@ class AiResponseFinalizer(
             if (stickerBeforeText) {
                 flushPendingSticker()
             }
-            val aiMessage = ChatMessage(
-                companionId = companionId,
-                content = safeProcessed,
-                isFromUser = false,
-                timestamp = System.currentTimeMillis()
-            )
+            val aiMessage = buildAiMessage(safeProcessed)
             val id = chatRepository.sendMessageAndGetId(aiMessage)
             SecureLog.d("ChatViewModel", "$logMessage, length=${aiContent.length}, id=$id")
             reasoningText.value = ""
@@ -145,12 +140,7 @@ class AiResponseFinalizer(
                     delay(800L + kotlin.random.Random.nextLong(1200L))
                 }
                 val safeSegment = segment.ifBlank { "\u200B" }
-                val msg = ChatMessage(
-                    companionId = companionId,
-                    content = safeSegment,
-                    isFromUser = false,
-                    timestamp = System.currentTimeMillis()
-                )
+                val msg = buildAiMessage(safeSegment)
                 val id = chatRepository.sendMessageAndGetId(msg)
                 lastId = id
                 SecureLog.d("ChatViewModel", "$logMessage segment ${index + 1}/${segments.size}, length=${segment.length}, id=$id")
@@ -188,11 +178,6 @@ class AiResponseFinalizer(
 
         // 连续追问：AI回复后按概率触发追问
         triggerFollowUpIfNeeded(aiContent, settings.allowFollowUpMessage)
-
-        // 流式分段朗读：AI 回复落地后，按句子边界逐段入队朗读（仅 READ_ALOUD 模式 + 通话未激活）。
-        if (chatTtsController.shouldAutoPlay()) {
-            segments.forEach { chatTtsController.speakText(it) }
-        }
 
         return aiMessageId
     }
@@ -238,12 +223,7 @@ class AiResponseFinalizer(
                     }, aiContent
                 ) ?: return@launch
 
-                val followUpMsg = ChatMessage(
-                    companionId = companionId,
-                    content = followUp,
-                    isFromUser = false,
-                    timestamp = System.currentTimeMillis()
-                )
+                val followUpMsg = buildAiMessage(followUp)
                 val msgId = chatRepository.sendMessageAndGetId(followUpMsg)
                 notifyExternalBridgeNoop(msgId, followUp)
                 SecureLog.d("ChatViewModel", "Follow-up question sent: $followUp")
