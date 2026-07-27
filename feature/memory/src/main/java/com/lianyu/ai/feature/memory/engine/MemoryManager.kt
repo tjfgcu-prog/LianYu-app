@@ -731,7 +731,7 @@ private fun isLikelyQuestion(text: String): Boolean {
         factPatterns.forEach { pattern ->
             if (text.contains(pattern)) {
                 extractAfterPattern(text, pattern)?.let {
-                    result.add(Triple(it, MemoryCategory.FACT, 0.8f))
+                    if (!isLikelyQuestion(it)) result.add(Triple(it, MemoryCategory.FACT, 0.8f))
                 }
             }
         }
@@ -741,7 +741,7 @@ private fun isLikelyQuestion(text: String): Boolean {
         preferencePatterns.forEach { pattern ->
             if (text.contains(pattern)) {
                 extractAfterPattern(text, pattern)?.let {
-                    result.add(Triple(it, MemoryCategory.PREFERENCE, 0.75f))
+                    if (!isLikelyQuestion(it)) result.add(Triple(it, MemoryCategory.PREFERENCE, 0.75f))
                 }
             }
         }
@@ -751,7 +751,7 @@ private fun isLikelyQuestion(text: String): Boolean {
         habitPatterns.forEach { pattern ->
             if (text.contains(pattern)) {
                 extractAfterPattern(text, pattern)?.let {
-                    result.add(Triple(it, MemoryCategory.HABIT, 0.7f))
+                    if (!isLikelyQuestion(it)) result.add(Triple(it, MemoryCategory.HABIT, 0.7f))
                 }
             }
         }
@@ -761,7 +761,7 @@ private fun isLikelyQuestion(text: String): Boolean {
         relationshipPatterns.forEach { pattern ->
             if (text.contains(pattern)) {
                 extractAfterPattern(text, pattern)?.let {
-                    result.add(Triple(it, MemoryCategory.RELATIONSHIP, 0.8f))
+                    if (!isLikelyQuestion(it)) result.add(Triple(it, MemoryCategory.RELATIONSHIP, 0.8f))
                 }
             }
         }
