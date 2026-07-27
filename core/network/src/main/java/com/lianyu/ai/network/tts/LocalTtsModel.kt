@@ -88,6 +88,42 @@ sealed class LocalTtsModel(
     )
 
     /**
+     * 角色音模型（漫剧风格），794 说话人，sherpa-onnx 官方 HuggingFace 直链，可自动下载。
+     */
+    data object AnimeVoice : LocalTtsModel(
+        id = "vits_zh_hf_eula",
+        displayName = "VITS 角色音·漫剧风格 (804音色)",
+        numSpeakers = 804,
+        modelType = LocalTtsModelType.VITS,
+        files = listOf(
+            LocalTtsModelFile(
+                fileName = "eula.onnx",
+                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/eula.onnx",
+                sha256 = "",
+                expectedBytes = 116_000_000L,
+                role = LocalTtsFileRole.MAIN_MODEL,
+                isMainModel = true
+            ),
+            LocalTtsModelFile(
+                fileName = "tokens.txt",
+                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/tokens.txt",
+                sha256 = "",
+                expectedBytes = 0L,
+                role = LocalTtsFileRole.TOKENS,
+                isMainModel = false
+            ),
+            LocalTtsModelFile(
+                fileName = "lexicon.txt",
+                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/lexicon.txt",
+                sha256 = "",
+                expectedBytes = 0L,
+                role = LocalTtsFileRole.LEXICON,
+                isMainModel = false
+            )
+        )
+    )
+
+    /**
      * 自定义模型兜底：用户手动放置任意 sherpa-onnx VITS 模型文件。
      * 文件放入 `<filesDir>/models/tts/custom/` 后 refresh 即可启用。
      * 单音色。
@@ -163,8 +199,8 @@ data class LocalTtsModelFile(
 )
 
 object LocalTtsCatalog {
-    val default: LocalTtsModel = LocalTtsModel.Aishell3
-    val all: List<LocalTtsModel> = listOf(LocalTtsModel.Aishell3, LocalTtsModel.Custom)
+    val default: LocalTtsModel = LocalTtsModel.AnimeVoice
+    val all: List<LocalTtsModel> = listOf(LocalTtsModel.AnimeVoice, LocalTtsModel.Aishell3, LocalTtsModel.Custom)
 
     fun findById(modelId: String): LocalTtsModel =
         all.find { it.id == modelId } ?: default
