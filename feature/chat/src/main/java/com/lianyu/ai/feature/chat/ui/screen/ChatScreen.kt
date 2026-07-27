@@ -124,15 +124,14 @@ import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.uicommon.component.CompanionAvatar
 import com.lianyu.ai.uicommon.component.UserAvatar
-import com.lianyu.ai.uicommon.component.VoiceRecorder
+
 import com.lianyu.ai.uicommon.component.VoiceMessageBubble
 import com.lianyu.ai.uicommon.component.getChatBackground
 import com.lianyu.ai.uicommon.component.getChatBackgroundByKey
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
 import com.lianyu.ai.uicommon.component.isCustomBackground
 import com.lianyu.ai.uicommon.component.rememberBackgroundBitmap
-import com.lianyu.ai.network.tts.ChatTtsMode
-import com.lianyu.ai.feature.chat.voice.ChatTtsState
+
 import com.lianyu.ai.uicommon.theme.AdaptiveSizing
 import com.lianyu.ai.uicommon.theme.rememberAdaptiveSizing
 import com.lianyu.ai.common.ReadStatusManager
@@ -147,8 +146,7 @@ import kotlinx.coroutines.withContext
 fun ChatScreen(
     companionId: Long,
     onNavigateBack: () -> Unit,
-    onNavigateToDetail: (Long) -> Unit = {},
-    onNavigateToVoiceCall: (Long) -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -202,60 +200,7 @@ fun ChatScreen(
         }
     }
 
-    // Camera launcher for taking photos
-    var cameraPhotoUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success: Boolean ->
-        if (success) {
-            showExtensionPanel = false
-            cameraPhotoUri?.let { photoUri ->
-                scope.launch {
-                    try {
-                        val inputStream = context.contentResolver.openInputStream(photoUri)
-                        val cacheFile = java.io.File(context.cacheDir, "sent_photo_${System.currentTimeMillis()}.jpg")
-                        inputStream?.use { input ->
-                            cacheFile.outputStream().use { output ->
-                                input.copyTo(output)
-                            }
-                        }
-                        viewModel.sendImageMessage(cacheFile.absolutePath)
-                    } catch (e: Exception) {
-                        snackbarHostState.showSnackbar("拍照失败: ${e.message}")
-                    }
-                }
-            }
-        }
-    }
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted: Boolean ->
-        if (granted) {
-            val photoFile = java.io.File(context.cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
-            photoFile.parentFile?.mkdirs()
-            photoFile.createNewFile()
-            val photoUri = androidx.core.content.FileProvider.getUriForFile(
-                context, "${context.packageName}.lianyu.fileprovider", photoFile
-            )
-            cameraPhotoUri = photoUri
-            cameraLauncher.launch(photoUri)
-        } else {
-            scope.launch { snackbarHostState.showSnackbar("相机权限被拒绝") }
-        }
-    }
-
-    // Audio recording permission launcher with pending action
-    var pendingAudioAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val audioPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted: Boolean ->
-        if (granted) {
-            pendingAudioAction?.invoke()
-        } else {
-            scope.launch { snackbarHostState.showSnackbar("需要麦克风权限才能使用语音功能") }
-        }
-        pendingAudioAction = null
-    }
+    
 
     // Video picker for album
     val videoPickerLauncher = rememberLauncherForActivityResult(
@@ -295,9 +240,7 @@ fun ChatScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // 聊天页 TTS 朗读状态
-    val ttsState by viewModel.ttsState.collectAsState()
-    val ttsConfig = remember { viewModel.getTtsConfig() }
-    var ttsModeMenu by remember { mutableStateOf(false) }
+    
 
     val themeViewModel: ThemeViewModel = viewModel()
     val themeMode by themeViewModel.themeMode.collectAsState()
@@ -482,25 +425,7 @@ fun ChatScreen(
         HardwareInfo.Tier.LOW -> 0.2f
     }
 
-    // Voice recording
     var showStickerPanel by remember { mutableStateOf(false) }
-    var showVoiceRecorder by remember { mutableStateOf(false) }
-    var isRecording by remember { mutableStateOf(false) }
-    var recordingDuration by remember { mutableStateOf(0) }
-    var isCanceling by remember { mutableStateOf(false) }
-    val voiceRecorder = remember { VoiceRecorder.getInstance(context) }
-
-    // Voice recording timer & actual recording
-    LaunchedEffect(isRecording) {
-        if (isRecording) {
-            recordingDuration = 0
-            voiceRecorder.start()
-            while (isRecording) {
-                delay(1000)
-                if (isRecording) recordingDuration++
-            }
-        }
-    }
 
     // Sticker data loaded from StickerManager
     val stickers = remember { mutableStateListOf<StickerInfo>() }
@@ -629,44 +554,7 @@ fun ChatScreen(
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
-                // 聊天页 TTS 朗读状态条（朗读中显示，可停止）
-                if (ttsState == ChatTtsState.SPEAKING) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(12.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "AI 正在朗读...",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(
-                            onClick = { viewModel.stopTts() },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Stop,
-                                contentDescription = "停止朗读",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
+                
 
                 // Sticker panel
                 StickerPanel(
@@ -699,30 +587,6 @@ fun ChatScreen(
                     onSwitchApi = { provider -> viewModel.switchApi(provider) },
                     onAlbumClick = {
                         imagePickerLauncher.launch("image/*")
-                    },
-                    onCameraClick = {
-                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-                    },
-                    onVideoCallClick = {
-                        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            onNavigateToVoiceCall(companionId)
-                        } else {
-                            pendingAudioAction = { onNavigateToVoiceCall(companionId) }
-                            audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
-                        }
-                    },
-                    onLocationClick = { /* TODO: share location */ },
-                    onVoiceInputClick = {
-                        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            showExtensionPanel = false
-                            showVoiceRecorder = true
-                        } else {
-                            pendingAudioAction = {
-                                showExtensionPanel = false
-                                showVoiceRecorder = true
-                            }
-                            audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
-                        }
                     },
                     onStickerClick = {
                         showExtensionPanel = false
@@ -773,37 +637,6 @@ fun ChatScreen(
                                 showExtensionPanel = !showExtensionPanel
                                 showStickerPanel = false
                             },
-                            onVoiceRecordStart = {
-                                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                                    showExtensionPanel = false
-                                    showStickerPanel = false
-                                    isCanceling = false
-                                    isRecording = true
-                                    showVoiceRecorder = true
-                                } else {
-                                    pendingAudioAction = {
-                                        showExtensionPanel = false
-                                        showStickerPanel = false
-                                        isCanceling = false
-                                        isRecording = true
-                                        showVoiceRecorder = true
-                                    }
-                                    audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
-                                }
-                            },
-                            onVoiceRecordStop = {
-                                val audioPath = voiceRecorder.stop()
-                                isRecording = false
-                                showVoiceRecorder = false
-                                if (audioPath != null && recordingDuration >= 1) {
-                                    viewModel.sendVoiceMessage(audioPath, recordingDuration)
-                                }
-                            },
-                            onVoiceRecordCancel = {
-                                voiceRecorder.cancel()
-                                isRecording = false
-                                showVoiceRecorder = false
-                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -812,76 +645,7 @@ fun ChatScreen(
         }
 
         // Voice recording overlay
-        if (showVoiceRecorder) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
-                    .clickable { },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "录音中...",
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "${recordingDuration}s",
-                        fontSize = 48.sp,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "点击按钮操作",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.6f)
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(24.dp),
-                        modifier = Modifier.padding(top = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable {
-                                    val audioPath = voiceRecorder.stop()
-                                    isRecording = false
-                                    showVoiceRecorder = false
-                                    if (audioPath != null && recordingDuration >= 1) {
-                                        viewModel.sendVoiceMessage(audioPath, recordingDuration)
-                                    }
-                                }
-                                .padding(horizontal = 20.dp, vertical = 10.dp)
-                        ) {
-                            Text(
-                                text = "发送",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 14.sp
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.error)
-                                .clickable {
-                                    voiceRecorder.cancel()
-                                    isRecording = false
-                                    showVoiceRecorder = false
-                                }
-                                .padding(horizontal = 20.dp, vertical = 10.dp)
-                        ) {
-                            Text(
-                                text = "取消",
-                                color = MaterialTheme.colorScheme.onError,
-                                fontSize = 14.sp
-                            )
-                        }
+        
                     }
                 }
             }
@@ -983,80 +747,7 @@ fun ChatScreen(
                     }
                 }
 
-                // 聊天页 TTS 朗读模式切换按钮（静音/语音条/语音朗读）
-                Box {
-                    IconButton(
-                        onClick = { ttsModeMenu = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (ttsConfig.mode == ChatTtsMode.SILENT)
-                                Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-                            contentDescription = "朗读模式",
-                            tint = if (ttsConfig.mode == ChatTtsMode.SILENT)
-                                MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = ttsModeMenu,
-                        onDismissRequest = { ttsModeMenu = false },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-                    ) {
-                        ChatTtsMode.entries.forEach { mode ->
-                            DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text(
-                                            text = mode.displayName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = mode.description,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    viewModel.setTtsMode(mode)
-                                    ttsModeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (mode == ChatTtsMode.SILENT)
-                                            Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-                                        contentDescription = null,
-                                        tint = if (mode == ttsConfig.mode) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Voice call button
-                IconButton(
-                    onClick = {
-                        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            onNavigateToVoiceCall(companionId)
-                        } else {
-                            pendingAudioAction = { onNavigateToVoiceCall(companionId) }
-                            audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
-                        }
-                    },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Call,
-                        contentDescription = "语音通话",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                
             }
         }
     }
