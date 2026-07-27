@@ -8,5 +8,6 @@ enum class TtsProvider(val displayName: String, val description: String) {
     MICROSOFT("微软Azure", "Azure TTS - 多语言神经语音"),
     VOLCENGINE("火山引擎", "豆包语音合成大模型 - 高拟真音色"),
     SILICONFLOW("硅基流动", "CosyVoice2 高拟真语音合成，支持自定义音色"),
-    SHERPA_LOCAL("本地离线", "sherpa-onnx 端上 TTS，无需联网，首次需下载模型")
+    SHERPA_LOCAL("本地离线", "sherpa-onnx 端上 TTS，无需联网，首次需下载模型"),
+    MINIMAX("MiniMax Audio", "Speech-02 大模型 - AI漫剧级情感语音，支持声音克隆")
 }
