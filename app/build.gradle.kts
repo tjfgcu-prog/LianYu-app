@@ -115,8 +115,10 @@ dependencies {
     implementation(project(":feature:backup"))
     
 
-    // sherpa-onnx: 离线流式语音识别，运行时由 app 模块提供
-    implementation(files("../core/network/libs/sherpa-onnx-1.13.3.aar"))
+    // sherpa-onnx: 离线流式语音识别/合成，运行时由 app 模块提供
+    // 注意：不直接引用原始 aar，而是引用下面 repackSherpaOnnxAar 任务生成的"剥离版"aar
+    // （剔除了内置的 libonnxruntime.so，避免与 feature:memory 的官方 onnxruntime-android 冲突）
+    implementation(files(repackSherpaOnnxAar.flatMap { it.archiveFile }))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -164,4 +166,40 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+
+// ── 剥离 sherpa-onnx aar 内置的 libonnxruntime.so ──
+// 原因：core:network / feature:chat 里的 sherpa-onnx aar 自带一份 libonnxruntime.so，
+// 跟 feature:memory 直接依赖的官方 onnxruntime-android 里的 libonnxruntime.so 路径完全相同
+// （lib/<abi>/libonnxruntime.so），打包时 mergeDebugNativeLibs 会因为两个不同文件同名而报错。
+// sherpa 的 Java 层不暴露 onnxruntime API，它的 libonnxruntime.so 只给它自己的
+// libsherpa-onnx-jni.so 内部调用；剔除后 APK 里只保留官方 onnxruntime-android 那一份，
+// sherpa 运行时会动态链接到这唯一一份（ONNX Runtime C API 向后兼容，可跨版本调用）。
+val sherpaOnnxRawAar = file("../core/network/libs/sherpa-onnx-1.13.3.aar")
+
+val extractSherpaOnnxAar = tasks.register<Copy>("extractSherpaOnnxAar") {
+    from(zipTree(sherpaOnnxRawAar))
+    into(layout.buildDirectory.dir("sherpaAarExtract"))
+}
+
+val stripSherpaOnnxRuntime = tasks.register("stripSherpaOnnxRuntime") {
+    dependsOn(extractSherpaOnnxAar)
+    doLast {
+        val dir = layout.buildDirectory.dir("sherpaAarExtract").get().asFile
+        listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").forEach { abi ->
+            val so = file("$dir/jni/$abi/libonnxruntime.so")
+            if (so.exists()) {
+                so.delete()
+                println("Stripped libonnxruntime.so from sherpa-onnx aar ($abi)")
+            }
+        }
+    }
+}
+
+val repackSherpaOnnxAar = tasks.register<Zip>("repackSherpaOnnxAar") {
+    dependsOn(stripSherpaOnnxRuntime)
+    from(layout.buildDirectory.dir("sherpaAarExtract"))
+    archiveFileName.set("sherpa-onnx-1.13.3-stripped.aar")
+    destinationDirectory.set(layout.buildDirectory.dir("sherpaAarOutput"))
 }
