@@ -123,9 +123,10 @@ class LocalTtsModelManager private constructor(private val context: Context) {
         pollingJobs.remove(model.id)?.cancel()
         // 删除部分下载的文件
         model.files.forEach { mf ->
-            model.file(appContext, mf.fileName).takeIf { it.exists() }?.let {
-                if (!isFileValid(it, mf)) it.delete()
-            }
+        model.stagingFile(appContext, mf.fileName).takeIf { it.exists() }?.delete()
+        model.file(appContext, mf.fileName).takeIf { it.exists() }?.let {
+        if (!isFileValid(it, mf)) it.delete()
+    }
         }
         updateStateFromPreferences(preferences.modelState(model.id).first())
     }
@@ -162,10 +163,11 @@ class LocalTtsModelManager private constructor(private val context: Context) {
     }
 
     suspend fun deleteDownloadedModel() = withContext(Dispatchers.IO) {
-        cancelDownload()
-        model.modelDir(appContext).deleteRecursively()
-        updateStateFromPreferences(preferences.modelState(model.id).first())
-        SecureLog.i(TAG, "已删除本地 TTS 模型文件: ${model.displayName}")
+    cancelDownload()
+    model.modelDir(appContext).deleteRecursively()
+    model.stagingDir(appContext).deleteRecursively()
+    updateStateFromPreferences(preferences.modelState(model.id).first())
+    SecureLog.i(TAG, "已删除本地 TTS 模型文件: ${model.displayName}")
     }
 
     fun close() {
@@ -190,9 +192,9 @@ class LocalTtsModelManager private constructor(private val context: Context) {
             return
         }
         val modelFile = downloadModel.files[fileIndex]
-        val targetFile = downloadModel.file(appContext, modelFile.fileName)
-        targetFile.parentFile?.mkdirs()
-        if (targetFile.exists()) targetFile.delete()
+        val stagingFile = downloadModel.stagingFile(appContext, modelFile.fileName)
+        stagingFile.parentFile?.mkdirs()
+        if (stagingFile.exists()) stagingFile.delete()
 
         val downloadUri = validatedDownloadUri(modelFile.downloadUrl)
         if (downloadUri == null) {
@@ -212,7 +214,7 @@ class LocalTtsModelManager private constructor(private val context: Context) {
         val request = DownloadManager.Request(downloadUri)
             .setTitle("${downloadModel.displayName} (${fileIndex + 1}/${downloadModel.files.size})")
             .setDescription("Downloading ${modelFile.fileName}")
-            .setDestinationUri(targetFile.toUri())
+            .setDestinationUri(stagingFile.toUri())
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -289,29 +291,35 @@ class LocalTtsModelManager private constructor(private val context: Context) {
         }
     }
 
-    private suspend fun handleFileDownloadComplete(
-        downloadId: Long,
-        downloadModel: LocalTtsModel,
-        fileIndex: Int
-    ) {
-        val modelFile = downloadModel.files[fileIndex]
-        val file = downloadModel.file(appContext, modelFile.fileName)
-        try {
-            if (!isFileValid(file, modelFile)) {
-                file.delete()
-                preferences.setDownloadId(downloadModel.id, null)
-                preferences.setPendingAutoEnable(downloadModel.id, false)
-                preferences.setEnabled(downloadModel.id, false)
-                _state.value = LocalTtsUiState(
-                    model = downloadModel,
-                    modelId = downloadModel.id,
-                    status = LocalTtsUiStatus.FAILED,
-                    currentFileIndex = fileIndex,
-                    totalFiles = downloadModel.files.size,
-                    errorMessage = "${modelFile.fileName} 校验失败"
-                )
-                return
-            }
+            private suspend fun handleFileDownloadComplete(
+    downloadId: Long,
+    downloadModel: LocalTtsModel,
+    fileIndex: Int
+) {
+    val modelFile = downloadModel.files[fileIndex]
+    val stagingFile = downloadModel.stagingFile(appContext, modelFile.fileName)
+    try {
+        if (!isFileValid(stagingFile, modelFile)) {
+            stagingFile.delete()
+            preferences.setDownloadId(downloadModel.id, null)
+            preferences.setPendingAutoEnable(downloadModel.id, false)
+            preferences.setEnabled(downloadModel.id, false)
+            _state.value = LocalTtsUiState(
+                model = downloadModel,
+                modelId = downloadModel.id,
+                status = LocalTtsUiStatus.FAILED,
+                currentFileIndex = fileIndex,
+                totalFiles = downloadModel.files.size,
+                errorMessage = "${modelFile.fileName} 校验失败"
+            )
+            return
+        }
+        // [NEW] 校验通过后复制进 App 内部存储，删除外部临时文件
+        val targetFile = downloadModel.file(appContext, modelFile.fileName)
+        targetFile.parentFile?.mkdirs()
+        stagingFile.copyTo(targetFile, overwrite = true)
+        stagingFile.delete()
+    
             // 当前文件 OK，继续下一个
             preferences.setDownloadId(downloadModel.id, null)
             val nextIndex = fileIndex + 1
