@@ -164,9 +164,6 @@ fun TtsSettingsScreen(
     val chatTtsCfg = remember { ChatTtsConfig.fromSharedPreferences(context) }
     var chatTtsMode by remember { mutableStateOf(chatTtsCfg.mode) }
     var skipParentheses by remember { mutableStateOf(chatTtsCfg.skipParentheses) }
-    var chatTtsAutoDedup by remember { mutableStateOf(chatTtsCfg.autoDedup) }
-    var chatTtsBeautify by remember { mutableStateOf(chatTtsCfg.beautify) }
-    var showChatTtsModeDropdown by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("tts_settings", Context.MODE_PRIVATE)
@@ -239,9 +236,7 @@ fun TtsSettingsScreen(
     fun saveChatTtsSettings() {
         val cfg = ChatTtsConfig(
             mode = chatTtsMode,
-            skipParentheses = skipParentheses,
-            autoDedup = chatTtsAutoDedup,
-            beautify = chatTtsBeautify
+            skipParentheses = skipParentheses
         )
         ChatTtsConfig.saveToSharedPreferences(context, cfg)
     }
@@ -563,14 +558,8 @@ fun TtsSettingsScreen(
                             ChatReadAloudSettingsCard(
                                 chatTtsMode = chatTtsMode,
                                 onModeSelect = { chatTtsMode = it; saveChatTtsSettings() },
-                                showModeDropdown = showChatTtsModeDropdown,
-                                onModeDropdownToggle = { showChatTtsModeDropdown = it },
                                 skipParentheses = skipParentheses,
                                 onSkipParenthesesChange = { skipParentheses = it; saveChatTtsSettings() },
-                                autoDedup = chatTtsAutoDedup,
-                                onAutoDedupChange = { chatTtsAutoDedup = it; saveChatTtsSettings() },
-                                beautify = chatTtsBeautify,
-                                onBeautifyChange = { chatTtsBeautify = it; saveChatTtsSettings() },
                                 isDarkTheme = isDarkTheme,
                                 cardBg = cardBg,
                                 textPrimaryColor = textPrimaryColor,
@@ -1323,14 +1312,8 @@ private fun TtsTextField(
 private fun ChatReadAloudSettingsCard(
     chatTtsMode: ChatTtsMode,
     onModeSelect: (ChatTtsMode) -> Unit,
-    showModeDropdown: Boolean,
-    onModeDropdownToggle: (Boolean) -> Unit,
     skipParentheses: Boolean,
     onSkipParenthesesChange: (Boolean) -> Unit,
-    autoDedup: Boolean,
-    onAutoDedupChange: (Boolean) -> Unit,
-    beautify: Boolean,
-    onBeautifyChange: (Boolean) -> Unit,
     isDarkTheme: Boolean,
     cardBg: Color,
     textPrimaryColor: Color,
@@ -1344,75 +1327,34 @@ private fun ChatReadAloudSettingsCard(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "聊天页朗读",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = textPrimaryColor
-        )
-        Text(
-            text = "AI 回复落地后按句子边界分段朗读，边合成边播，支持防重复与音频美化",
-            fontSize = 12.sp,
-            color = textSecondaryColor
-        )
-
-        // 朗读模式选择
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable { onModeDropdownToggle(!showModeDropdown) }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "朗读模式",
-                        fontSize = 14.sp,
-                        color = textPrimaryColor
-                    )
-                    Text(
-                        text = chatTtsMode.displayName + " · " + chatTtsMode.description,
-                        fontSize = 12.sp,
-                        color = textSecondaryColor
-                    )
-                }
-                Icon(
-                    imageVector = if (showModeDropdown) Icons.Filled.KeyboardArrowUp
-                    else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = textSecondaryColor,
-                    modifier = Modifier.size(20.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("语音回复", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
+                Text(
+                    "开启后 AI 发送的每一条消息都会合成为语音气泡（最长60秒），关闭则发送普通文字消息",
+                    fontSize = 12.sp,
+                    color = textSecondaryColor
                 )
             }
-            DropdownMenu(
-                expanded = showModeDropdown,
-                onDismissRequest = { onModeDropdownToggle(false) },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-            ) {
-                ChatTtsMode.entries.forEach { mode ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Text(mode.displayName, fontSize = 14.sp, color = textPrimaryColor)
-                                Text(mode.description, fontSize = 12.sp, color = textSecondaryColor)
-                            }
-                        },
-                        onClick = { onModeSelect(mode) },
-                        leadingIcon = {
-                            if (mode == chatTtsMode) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = PetalGreen, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                    )
-                }
-            }
+            Switch(
+                checked = chatTtsMode == ChatTtsMode.VOICE_BAR,
+                onCheckedChange = { checked ->
+                    onModeSelect(if (checked) ChatTtsMode.VOICE_BAR else ChatTtsMode.SILENT)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
         }
 
-        // 跳过括号内心戏
+        // 跳过括号内心戏（语音回复时同样适用：不把 <...> (...) 内的内心戏合成进语音里）
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -1433,6 +1375,8 @@ private fun ChatReadAloudSettingsCard(
                 )
             )
         }
+    }
+}
 
         // 自动去重
         Row(
