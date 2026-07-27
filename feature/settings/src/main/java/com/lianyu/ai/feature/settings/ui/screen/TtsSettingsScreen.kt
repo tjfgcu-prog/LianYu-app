@@ -531,8 +531,13 @@ fun TtsSettingsScreen(
 
                                             when {
                                                 selectedProvider == TtsProvider.ANDROID -> {
-                                                    // 系统TTS引擎直接朗读，不产生文件
-                                                    testResult = "✓ 已播放（系统语音引擎）"
+                                                    val diagnostic = com.lianyu.ai.network.tts.AndroidTtsProvider.lastDiagnostic
+                                                    testResult = when {
+                                                        audioPath != null && diagnostic != null ->
+                                                            "⚠ 已播放，但可能听不到声音：$diagnostic"
+                                                        audioPath != null -> "✓ 已播放（系统语音引擎）"
+                                                        else -> "✗ 合成失败${diagnostic?.let { "：$it" } ?: ""}"
+                                                    }
                                                 }
                                                 audioPath != null -> {
                                                     try {
