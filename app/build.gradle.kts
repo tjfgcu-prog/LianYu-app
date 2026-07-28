@@ -129,7 +129,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:domain"))
     implementation(project(":core:network"))
-    implementation(project(":core:security"))
+    
     implementation(project(":core:ui-common"))
 
     // Feature modules
