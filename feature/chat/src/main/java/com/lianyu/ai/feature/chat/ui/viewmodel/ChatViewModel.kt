@@ -232,8 +232,7 @@ class ChatViewModel(
     private val _queueDepth = MutableStateFlow(0)
     val queueDepth: StateFlow<Int> = _queueDepth.asStateFlow()
 
-    /** 消息处理流水线 — 5 阶段: VALIDATE → CLASSIFY → ENCRYPT → SEND → CONFIRM */
-    val pipeline = MessagePipelineRunner()
+    
 
     // 打包状态: 合并所有 StateFlow 为单一 observable
     val state: StateFlow<ChatState> = combine(
@@ -241,8 +240,7 @@ class ChatViewModel(
             _companionData, messages, _isLoading, chatTypingState.isTyping,
             chatTypingState.typingText, _isRegenerating, _reasoningText, _isReasoning,
             _currentApi, _availableApis, _userName, _userAvatar,
-            _queueDepth, _hasMoreMessages, _isLoadingMore, _languageWarning,
-            pipeline.pipelineState
+            _queueDepth, _hasMoreMessages, _isLoadingMore, _languageWarning
         )
     ) { values ->
         @Suppress("UNCHECKED_CAST")
@@ -263,9 +261,7 @@ class ChatViewModel(
             queueDepth = values[12] as Int,
             hasMoreMessages = values[13] as Boolean,
             isLoadingMore = values[14] as Boolean,
-            languageWarning = values[15] as String?,
-            pipelineStage = (values[16] as MessagePipeline.PipelineState).stage.name,
-            pipelineError = (values[16] as MessagePipeline.PipelineState).error
+            languageWarning = values[15] as String?
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ChatState())
 
