@@ -15,15 +15,9 @@ class TtsService(private val context: Context) {
     private var currentConfig: TtsConfig = TtsConfig.fromSharedPreferences(context)
 
     init {
-        providers[TtsProvider.ALIYUN] = AliyunTtsProvider()
-        providers[TtsProvider.BAIDU] = BaiduTtsProvider()
-        providers[TtsProvider.XUNFEI] = XunfeiTtsProvider()
-        providers[TtsProvider.MICROSOFT] = MicrosoftTtsProvider()
-        providers[TtsProvider.VOLCENGINE] = VolcengineTtsProvider()
-        providers[TtsProvider.SILICONFLOW] = SiliconFlowTtsProvider()
-        providers[TtsProvider.SHERPA_LOCAL] = sherpaLocalTts
         providers[TtsProvider.ANDROID] = androidTts
-        providers[TtsProvider.MINIMAX] = MinimaxTtsProvider()
+        providers[TtsProvider.LOCAL] = sherpaLocalTts
+        providers[TtsProvider.CLOUD] = MinimaxTtsProvider()
     }
 
     /** 本地离线 TTS 模型管理器（下载/校验/启用），供设置页 UI 消费 */
