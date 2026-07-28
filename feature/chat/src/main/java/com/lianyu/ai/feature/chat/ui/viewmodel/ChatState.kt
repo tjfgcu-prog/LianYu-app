@@ -28,9 +28,6 @@ data class ChatState(
     val queueDepth: Int = 0,
     val hasMoreMessages: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val languageWarning: String? = null,
-    /** 流水线阶段: IDLE → VALIDATE → CLASSIFY → ENCRYPT → SEND → CONFIRM → DONE */
-    val pipelineStage: String = "IDLE",
-    /** 流水线错误信息 */
-    val pipelineError: String? = null
+    val languageWarning: String? = null
+    
 )
