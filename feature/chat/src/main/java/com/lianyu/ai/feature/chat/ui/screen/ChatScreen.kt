@@ -269,10 +269,7 @@ fun ChatScreen(
                     message = event.message,
                     duration = SnackbarDuration.Long
                 )
-                is ChatUiEvent.ContentBlocked -> snackbarHostState.showSnackbar(
-                    message = "内容已拦截: ${event.reason}",
-                    duration = SnackbarDuration.Long
-                )
+                
                 is ChatUiEvent.Info -> snackbarHostState.showSnackbar(event.message)
                 is ChatUiEvent.StreamCompleted -> { /* 流式完成，不需要用户感知 */ }
             }
