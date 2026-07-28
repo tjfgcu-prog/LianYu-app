@@ -29,8 +29,7 @@ import com.lianyu.ai.feature.notification.NotificationHelper
 
 import com.lianyu.ai.network.AiService
 import com.lianyu.ai.network.NtpTimeProvider
-import com.lianyu.ai.security.G0
-import com.lianyu.ai.security.SecurityState
+
 import com.lianyu.ai.uicommon.component.ChatBackgroundCache
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
 import coil.ImageLoader
