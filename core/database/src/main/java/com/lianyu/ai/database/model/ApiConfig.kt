@@ -2,7 +2,7 @@ package com.lianyu.ai.database.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.lianyu.ai.common.SuFlowApi
+
 import kotlinx.serialization.Serializable
 
 @Entity(tableName = "api_configs")
