@@ -198,6 +198,12 @@ class LocalTtsModelManager private constructor(private val context: Context) {
         }
     }
 
+    suspend fun disable() = withContext(Dispatchers.IO) {
+        preferences.setEnabled(model.id, false)
+        updateStateFromPreferences(preferences.modelState(model.id).first())
+        SecureLog.i(TAG, "本地 TTS 模型已禁用")
+    }
+    
     suspend fun deleteDownloadedModel() = withContext(Dispatchers.IO) {
     cancelDownload()
     model.modelDir(appContext).deleteRecursively()
