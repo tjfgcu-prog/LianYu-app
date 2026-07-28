@@ -15,7 +15,7 @@ import com.lianyu.ai.database.dao.ChatMessageDao
 import com.lianyu.ai.database.dao.CompanionDao
 import com.lianyu.ai.database.dao.GroupMessageDao
 
-import com.lianyu.ai.database.dao.MemoryDao
+
 
 import com.lianyu.ai.database.dao.TokenUsageDao
 import com.lianyu.ai.database.model.ApiConfig
@@ -26,11 +26,11 @@ import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.model.FileFormat
 import com.lianyu.ai.database.model.GroupMessage
 
-import com.lianyu.ai.database.model.MemoryCategory
-import com.lianyu.ai.database.model.MemoryEntry
+
+
 import com.lianyu.ai.database.model.MessageType
 
-import com.lianyu.ai.database.model.TempMemory
+
 import com.lianyu.ai.database.model.TokenUsage
 import java.io.File
 
@@ -39,14 +39,14 @@ import java.io.File
         CompanionEntity::class,
         ChatMessage::class,
         ApiConfig::class,
-        MemoryEntry::class,
-        TempMemory::class,
+
+        
         ChatGroup::class,
         GroupMessage::class,
         
         TokenUsage::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -54,7 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun companionDao(): CompanionDao
     abstract fun chatMessageDao(): ChatMessageDao
     abstract fun apiConfigDao(): ApiConfigDao
-    abstract fun memoryDao(): MemoryDao
+    
     abstract fun chatGroupDao(): ChatGroupDao
     abstract fun groupMessageDao(): GroupMessageDao
     
@@ -704,6 +704,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_20_21 = object : Migration(20, 21) {    
+            override fun migrate(db: SupportSQLiteDatabase) {        
+                db.execSQL("DROP TABLE IF EXISTS memory_entries")        
+                db.execSQL("DROP TABLE IF EXISTS temp_memory")    
+            }
+        }
+        
         val MIGRATIONS = arrayOf(
             MIGRATION_1_6,
             MIGRATION_2_6,
@@ -723,7 +730,8 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_16_17,
             MIGRATION_17_18,
             MIGRATION_18_19,
-            MIGRATION_19_20
+            MIGRATION_19_20,
+            MIGRATION_20_21
         )
 
         private var lastBackupTime: Long = 0L
