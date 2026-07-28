@@ -25,7 +25,7 @@ import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.domain.UserProfileProvider
 
 import com.lianyu.ai.feature.notification.NotificationHelper
-import com.lianyu.ai.push.PushManager
+
 
 import com.lianyu.ai.network.AiService
 import com.lianyu.ai.network.NtpTimeProvider
@@ -143,13 +143,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
         }
 
         private fun initPush(app: Application) {
-            // 提前创建通知渠道，避免 OPPO/vivo 首次通知被系统折叠或延迟。
-            NotificationHelper.createNotificationChannel(app)
-            
-            SecureLog.d("LianYuApplication", "ROM: ${RomUtils.getRomDisplayName()} ${RomUtils.romVersion}")
-            // 初始化厂商 Push SDK，提升 OPPO / vivo / 小米 / 华为 设备的消息到达率
-            runCatching { PushManager.init(app) }
-            
+    NotificationHelper.createNotificationChannel(app)
         }
 
         
