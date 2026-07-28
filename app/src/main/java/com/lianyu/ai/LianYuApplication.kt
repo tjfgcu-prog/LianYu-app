@@ -105,7 +105,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             AiService.initialize(app)
             NtpTimeProvider.initialize(app)
             registerServiceProviders(app)
-            clearUpdateIgnore(app)
+            
 
             // 注入应用级后台作用域，供跨越 ViewModel 生命周期的任务使用
             com.lianyu.ai.common.ApplicationScopeProvider.init(bgScope)
@@ -197,10 +197,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             ServiceRegistry.markInitialized()
         }
 
-        private fun clearUpdateIgnore(app: Application) {
-            app.getSharedPreferences("update_config", android.content.Context.MODE_PRIVATE)
-                .edit().remove("ignored_version").apply()
-        }
+        
 
         private fun applyStoredLanguage(app: Application) {
             Locale.setDefault(
