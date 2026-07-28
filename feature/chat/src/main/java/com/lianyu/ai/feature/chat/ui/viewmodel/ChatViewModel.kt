@@ -682,25 +682,7 @@ class ChatViewModel(
             return@doSendMessage
         }
 
-        // 安全检查（对合并后的内容做pipeline检查）
-        val pipelineOk = try {
-            withTimeoutOrNull(TimeoutBudgets.PIPELINE_EXECUTE_MS) {
-                pipeline.execute(MessagePipeline.PipelineInput(rawText = content, companionId = companionId))
-            }
-        } catch (_: Exception) { null }
-
-        if (pipelineOk == false) {
-            // 明确违规 → 阻止发送
-            val err = pipeline.pipelineState.value.error ?: "内容可能违规"
-            ChatDebugLog.log("[ChatVM] doSendMessage BLOCKED by pipeline: $err")
-            _events.tryEmit(ChatUiEvent.ContentBlocked(err))
-            return@doSendMessage
-        }
-        // pipelineOk == null（超时）→ fail-open，允许继续发送
-        // pipelineOk == true → 正常通过
-        if (pipelineOk == null) {
-            ChatDebugLog.log("[ChatVM] doSendMessage: pipeline TIMEOUT, proceeding anyway (fail-open)")
-        }
+        
 
         // cancel已由消费者端统一处理（新批次开始时取消旧批次的AI Job），此处不再重复cancel
 
