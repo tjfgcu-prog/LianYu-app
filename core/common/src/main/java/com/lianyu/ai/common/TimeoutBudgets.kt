@@ -32,7 +32,7 @@ object TimeoutBudgets {
     // [P1 FIX] 散落在 ChatViewModel 的硬编码超时归一至此
     const val MODEL_OUTPUT_VERIFY_MS = 5_000L  // 贝叶斯模型输出校验（语义不同于 MEMORY_EXTRACT）
     const val API_CONFIG_WAIT_MS = 1_500L      // 冷启动等待 API 配置加载（竞态窗口）
-    const val PIPELINE_EXECUTE_MS = 8_000L     // 内容安全管道执行总预算
+    
 
     // === HTTP 客户端通用超时（OkHttp connectTimeout/readTimeout/writeTimeout/pingInterval） ===
     const val HTTP_CONNECT_MS = 10_000L        // TCP 连接建立
