@@ -3,9 +3,8 @@
 package com.lianyu.ai.feature.settings.ui.screen
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.media.MediaPlayer          // 新增：用来实际播放音频
+import android.media.MediaPlayer
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -15,60 +14,20 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.CloudQueue
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect   // 新增：页面离开时清理资源
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.SdStorage
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,25 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lianyu.ai.network.tts.TtsConfig
-import com.lianyu.ai.network.tts.TtsProvider
-import com.lianyu.ai.network.tts.TtsService
-import com.lianyu.ai.network.tts.TtsVoice
-import com.lianyu.ai.network.tts.ChatTtsConfig
-import com.lianyu.ai.network.tts.ChatTtsMode
-import com.lianyu.ai.network.tts.LocalTtsCatalog
-import com.lianyu.ai.network.tts.LocalTtsModel
-import com.lianyu.ai.network.tts.LocalTtsModelManager
-import com.lianyu.ai.network.tts.LocalTtsUiState
-import com.lianyu.ai.network.tts.LocalTtsUiStatus
-import com.lianyu.ai.uicommon.theme.PetalPrimary
-import com.lianyu.ai.uicommon.theme.PetalPrimaryContainer
-import com.lianyu.ai.uicommon.theme.PetalOnPrimaryContainer
-import com.lianyu.ai.uicommon.theme.PetalOnSurfaceVariant
-import com.lianyu.ai.uicommon.theme.PetalSurface
-import com.lianyu.ai.uicommon.theme.PetalSurfaceContainer
-import com.lianyu.ai.uicommon.theme.PetalGreen
-import com.lianyu.ai.uicommon.theme.PetalError
+import com.lianyu.ai.network.tts.*
+import com.lianyu.ai.uicommon.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -113,9 +55,6 @@ fun TtsSettingsScreen(
     var isVisible by remember { mutableStateOf(false) }
     var ttsEnabled by remember { mutableStateOf(false) }
     var selectedProvider by remember { mutableStateOf(TtsProvider.ANDROID) }
-    var selectedVoiceId by remember { mutableStateOf("") }
-    var showProviderDropdown by remember { mutableStateOf(false) }
-    var showVoiceDropdown by remember { mutableStateOf(false) }
     var isTesting by remember { mutableStateOf(false) }
     var isSynthesizing by remember { mutableStateOf(false) }
     var testResult by remember { mutableStateOf<String?>(null) }
@@ -126,54 +65,21 @@ fun TtsSettingsScreen(
         onDispose {
             mediaPlayer?.release()
             mediaPlayer = null
-            // 如果用户在试听播放过程中离开这个页面，把还没播完的临时文件也清掉
             previewAudioPath?.let { path -> runCatching { java.io.File(path).delete() } }
             previewAudioPath = null
         }
     }
-    val config = remember {
-        TtsConfig.fromSharedPreferences(context)
-    }
 
-    var aliyunKey by remember { mutableStateOf(config.aliyunKeyId) }
-    var aliyunSecret by remember { mutableStateOf(config.aliyunKeySecret) }
-    var aliyunAppKey by remember { mutableStateOf(config.aliyunAppKey) }
-    var baiduKey by remember { mutableStateOf(config.baiduApiKey) }
-    var baiduSecret by remember { mutableStateOf(config.baiduSecretKey) }
-    var xunfeiAppId by remember { mutableStateOf(config.xunfeiAppId) }
-    var xunfeiKey by remember { mutableStateOf(config.xunfeiApiKey) }
-    var xunfeiSecret by remember { mutableStateOf(config.xunfeiApiSecret) }
-    var azureKey by remember { mutableStateOf(config.azureSubscriptionKey) }
-    var azureRegion by remember { mutableStateOf(config.azureRegion) }
-    var volcengineAppId by remember { mutableStateOf(config.volcengineAppId) }
-    var volcengineToken by remember { mutableStateOf(config.volcengineToken) }
-    var volcengineCluster by remember { mutableStateOf(config.volcengineCluster) }
-    var sfApiKey by remember { mutableStateOf(config.siliconflowApiKey) }
-    var sfCustomVoiceId by remember { mutableStateOf(config.siliconflowCustomVoiceId) }
-    var sfUseGlobalKey by remember { mutableStateOf(config.siliconflowUseGlobalKey) }
-    var sfTtsModel by remember { mutableStateOf(config.siliconflowTtsModel) }
-    var sfSpeed by remember { mutableStateOf(config.siliconflowSpeed) }
-    var sfGain by remember { mutableStateOf(config.siliconflowGain) }
+    val config = remember { TtsConfig.fromSharedPreferences(context) }
     var minimaxApiKey by remember { mutableStateOf(config.minimaxApiKey) }
     var minimaxGroupId by remember { mutableStateOf(config.minimaxGroupId) }
     var minimaxVoiceId by remember { mutableStateOf(config.minimaxVoiceId) }
-    var sfSampleRate by remember { mutableStateOf(config.siliconflowSampleRate) }
-    var sfUseCustomTts by remember { mutableStateOf(config.customTtsUrl.isNotBlank()) }
-    var customTtsUrl by remember { mutableStateOf(config.customTtsUrl) }
-    var customTtsApiKey by remember { mutableStateOf(config.customTtsApiKey) }
-    var customTtsModel by remember { mutableStateOf(config.customTtsModel) }
-    var customTtsVoiceId by remember { mutableStateOf(config.customTtsVoiceId) }
-    var showSfModelDropdown by remember { mutableStateOf(false) }
-    var showSfRateDropdown by remember { mutableStateOf(false) }
-
-    // 本地离线 TTS 状态
     var localTtsSpeed by remember { mutableStateOf(config.localTtsSpeed) }
     var localTtsSid by remember { mutableStateOf(config.localTtsSid) }
+
     val localTtsManager = remember { ttsService.localTtsManager }
     val localTtsState by localTtsManager.state.collectAsState()
-    var showLocalTtsModelDropdown by remember { mutableStateOf(false) }
 
-    // 聊天页分段队列 TTS 配置（朗读模式 / 跳过括号 / 美化 / 去重）
     val chatTtsCfg = remember { ChatTtsConfig.fromSharedPreferences(context) }
     var chatTtsMode by remember { mutableStateOf(chatTtsCfg.mode) }
     var skipParentheses by remember { mutableStateOf(chatTtsCfg.skipParentheses) }
@@ -183,75 +89,89 @@ fun TtsSettingsScreen(
         ttsEnabled = prefs.getBoolean("tts_enabled", false)
         val providerName = prefs.getString("tts_provider", TtsProvider.ANDROID.name)
         selectedProvider = TtsProvider.entries.find { it.name == providerName } ?: TtsProvider.ANDROID
-        selectedVoiceId = prefs.getString("tts_voice_${selectedProvider.name}", "") ?: ""
-
         delay(30)
         isVisible = true
-    }
-
-    val voices = remember(selectedProvider) {
-        ttsService.getVoices(selectedProvider)
     }
 
     val colorScheme = MaterialTheme.colorScheme
     val backgroundColor = colorScheme.background
     val textPrimaryColor = colorScheme.onSurface
     val textSecondaryColor = colorScheme.onSurfaceVariant
-    val textTertiaryColor = colorScheme.outlineVariant
     val cardBg = colorScheme.surfaceVariant
 
     fun saveSettings() {
         val newConfig = TtsConfig(
-            aliyunKeyId = aliyunKey,
-            aliyunKeySecret = aliyunSecret,
-            aliyunAppKey = aliyunAppKey,
-            baiduApiKey = baiduKey,
-            baiduSecretKey = baiduSecret,
-            xunfeiAppId = xunfeiAppId,
-            xunfeiApiKey = xunfeiKey,
-            xunfeiApiSecret = xunfeiSecret,
-            azureSubscriptionKey = azureKey,
-            azureRegion = azureRegion,
-            volcengineAppId = volcengineAppId,
-            volcengineToken = volcengineToken,
-            volcengineCluster = volcengineCluster,
-            siliconflowApiKey = sfApiKey,
-            siliconflowCustomVoiceId = sfCustomVoiceId,
-            siliconflowUseGlobalKey = sfUseGlobalKey,
-            siliconflowTtsModel = sfTtsModel,
-            siliconflowSpeed = sfSpeed,
-            siliconflowGain = sfGain,
-            siliconflowSampleRate = sfSampleRate,
-            customTtsUrl = if (sfUseCustomTts) customTtsUrl else "",
-            customTtsApiKey = customTtsApiKey,
-            customTtsModel = customTtsModel,
-            customTtsVoiceId = customTtsVoiceId,
             localTtsSpeed = localTtsSpeed,
             localTtsSid = localTtsSid,
             minimaxApiKey = minimaxApiKey,
             minimaxGroupId = minimaxGroupId,
             minimaxVoiceId = minimaxVoiceId
         )
-        
         TtsConfig.saveToSharedPreferences(context, newConfig)
         ttsService.updateConfig(newConfig)
-        
         val prefs = context.getSharedPreferences("tts_settings", Context.MODE_PRIVATE)
         prefs.edit().apply {
             putBoolean("tts_enabled", ttsEnabled)
             putString("tts_provider", selectedProvider.name)
-            putString("tts_voice_${selectedProvider.name}", selectedVoiceId)
             apply()
         }
         ttsService.setProvider(selectedProvider)
     }
 
     fun saveChatTtsSettings() {
-        val cfg = ChatTtsConfig(
-            mode = chatTtsMode,
-            skipParentheses = skipParentheses
+        ChatTtsConfig.saveToSharedPreferences(
+            context,
+            ChatTtsConfig(mode = chatTtsMode, skipParentheses = skipParentheses)
         )
-        ChatTtsConfig.saveToSharedPreferences(context, cfg)
+    }
+
+    fun runTest() {
+        scope.launch {
+            isSynthesizing = true
+            testResult = null
+            saveSettings()
+            if (selectedProvider == TtsProvider.ANDROID) ttsService.setProvider(TtsProvider.ANDROID)
+            val audioPath = ttsService.testWithSampleText(selectedProvider, "你好，这是一个语音合成测试。")
+            isSynthesizing = false
+            when {
+                selectedProvider == TtsProvider.ANDROID -> {
+                    val diagnostic = AndroidTtsProvider.lastDiagnostic
+                    testResult = when {
+                        audioPath != null && diagnostic != null -> "⚠ 已播放，但可能听不到声音：$diagnostic"
+                        audioPath != null -> "✓ 已播放（系统语音引擎）"
+                        else -> "✗ 合成失败${diagnostic?.let { "：$it" } ?: ""}"
+                    }
+                }
+                audioPath != null -> {
+                    try {
+                        mediaPlayer?.release()
+                        previewAudioPath = audioPath
+                        mediaPlayer = MediaPlayer().apply {
+                            setDataSource(audioPath)
+                            setOnCompletionListener { mp ->
+                                mp.release(); mediaPlayer = null
+                                runCatching { java.io.File(audioPath).delete() }
+                                previewAudioPath = null
+                            }
+                            setOnErrorListener { mp, _, _ ->
+                                mp.release(); mediaPlayer = null
+                                runCatching { java.io.File(audioPath).delete() }
+                                previewAudioPath = null
+                                true
+                            }
+                            prepare(); start()
+                        }
+                        testResult = "✓ 合成成功，正在播放"
+                    } catch (e: Exception) {
+                        runCatching { java.io.File(audioPath).delete() }
+                        previewAudioPath = null
+                        testResult = "✗ 播放失败: ${e.message ?: "未知错误"}"
+                    }
+                }
+                else -> testResult = "✗ 合成失败"
+            }
+            snackbarHostState.showSnackbar(testResult!!)
+        }
     }
 
     Scaffold(
@@ -265,6 +185,7 @@ fun TtsSettingsScreen(
                 .padding(top = paddingValues.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
         ) {
+            // ── 顶部栏 ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -277,19 +198,9 @@ fun TtsSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
-                        tint = PetalPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = PetalPrimary, modifier = Modifier.size(24.dp))
                 }
-                Text(
-                    text = "TTS 语音设置",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textPrimaryColor
-                )
+                Text("TTS 语音设置", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
                 Box(modifier = Modifier.size(40.dp))
             }
 
@@ -301,16 +212,11 @@ fun TtsSettingsScreen(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // ── ① 总开关 ──
                     TtsToggleCard(
                         enabled = ttsEnabled,
-                        onToggle = {
-                            ttsEnabled = it
-                            saveSettings()
-                        },
-                        isDarkTheme = isDarkTheme,
-                        cardBg = cardBg,
-                        textPrimaryColor = textPrimaryColor,
-                        textSecondaryColor = textSecondaryColor
+                        onToggle = { ttsEnabled = it; saveSettings() },
+                        cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor
                     )
 
                     AnimatedVisibility(
@@ -319,308 +225,93 @@ fun TtsSettingsScreen(
                         exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            ProviderSelectionCard(
-                                selectedProvider = selectedProvider,
-                                onProviderSelect = {
-                                    selectedProvider = it
-                                    selectedVoiceId = ""
-                                    saveSettings()
-                                },
-                                showDropdown = showProviderDropdown,
-                                onDropdownToggle = { showProviderDropdown = it },
-                                isDarkTheme = isDarkTheme,
-                                cardBg = cardBg,
-                                textPrimaryColor = textPrimaryColor,
-                                textSecondaryColor = textSecondaryColor
+                            // ── ② 三段模式选择 ──
+                            ModeSegmentedControl(
+                                selected = selectedProvider,
+                                onSelect = { selectedProvider = it; saveSettings() },
+                                cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor
                             )
 
-                            VoiceSelectionCard(
-                                voices = voices,
-                                selectedVoiceId = selectedVoiceId,
-                                onVoiceSelect = {
-                                    selectedVoiceId = it
-                                    saveSettings()
-                                },
-                                showDropdown = showVoiceDropdown,
-                                onDropdownToggle = { showVoiceDropdown = it },
-                                isDarkTheme = isDarkTheme,
-                                cardBg = cardBg,
-                                textPrimaryColor = textPrimaryColor,
-                                textSecondaryColor = textSecondaryColor
-                            )
-
-                            if (selectedProvider == TtsProvider.SHERPA_LOCAL) {
-                                // 本地离线 TTS 卡片（独立于 ApiKeyConfigCard，直接访问 screen 作用域）
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(cardBg)
-                                        .padding(20.dp)
-                                ) {
-                                    Text(
-                                        text = "${selectedProvider.displayName} 配置",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = textPrimaryColor
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    LocalTtsConfigContent(
+                            // ── ③ 对应模式的配置区（带切换动画）──
+                            AnimatedContent(targetState = selectedProvider, label = "tts_mode_config") { provider ->
+                                when (provider) {
+                                    TtsProvider.ANDROID -> Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp)
+                                    ) {
+                                        Text(
+                                            "使用手机自带的语音引擎，无需任何配置。\n建议在系统设置里安装一个质量更好的语音包以获得更好效果。",
+                                            fontSize = 13.sp, color = textSecondaryColor
+                                        )
+                                    }
+                                    TtsProvider.LOCAL -> LocalModeCard(
                                         localTtsState = localTtsState,
                                         localTtsSpeed = localTtsSpeed,
-                                        onLocalTtsSpeedChange = { localTtsSpeed = it; saveSettings() },
+                                        onSpeedChange = { localTtsSpeed = it; saveSettings() },
                                         localTtsSid = localTtsSid,
-                                        onLocalTtsSidChange = { localTtsSid = it; saveSettings() },
-                                        showModelDropdown = showLocalTtsModelDropdown,
-                                        onShowModelDropdown = { showLocalTtsModelDropdown = it },
-                                        onSelectModel = {
-                                            scope.launch { localTtsManager.selectModel(it) }
-                                        },
-                                        onDownload = {
-                                            scope.launch {
-                                                localTtsManager.startDownload(localTtsState.modelId)
-                                            }
-                                        },
-                                        onCancelDownload = {
-                                            scope.launch { localTtsManager.cancelDownload() }
-                                        },
-                                        onEnable = {
-                                            scope.launch { localTtsManager.enable() }
-                                        },
-                                        onDisable = {
-                                            scope.launch { localTtsManager.disable() }
-                                        },
-                                        onDelete = {
-                                            scope.launch { localTtsManager.deleteDownloadedModel() }
-                                        },
-                                        isDarkTheme = isDarkTheme,
-                                        cardBg = cardBg,
-                                        textPrimaryColor = textPrimaryColor,
-                                        textSecondaryColor = textSecondaryColor,
+                                        onSidChange = { localTtsSid = it; saveSettings() },
+                                        onDownload = { scope.launch { localTtsManager.startDownload(localTtsState.modelId) } },
+                                        onCancelDownload = { scope.launch { localTtsManager.cancelDownload() } },
+                                        onEnable = { scope.launch { localTtsManager.enable() } },
+                                        onDisable = { scope.launch { localTtsManager.disable() } },
+                                        onDelete = { scope.launch { localTtsManager.deleteDownloadedModel() } },
+                                        cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor,
                                         context = context
                                     )
+                                    TtsProvider.CLOUD -> CloudModeCard(
+                                        apiKey = minimaxApiKey, onApiKeyChange = { minimaxApiKey = it },
+                                        groupId = minimaxGroupId, onGroupIdChange = { minimaxGroupId = it },
+                                        voiceId = minimaxVoiceId, onVoiceIdChange = { minimaxVoiceId = it; saveSettings() },
+                                        cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor
+                                    )
                                 }
-                            } else {
-                                ApiKeyConfigCard(
-                                    provider = selectedProvider,
-                                    aliyunKey = aliyunKey,
-                                    onAliyunKeyChange = { aliyunKey = it },
-                                    aliyunSecret = aliyunSecret,
-                                    onAliyunSecretChange = { aliyunSecret = it },
-                                    aliyunAppKey = aliyunAppKey,
-                                    onAliyunAppKeyChange = { aliyunAppKey = it },
-                                    baiduKey = baiduKey,
-                                    onBaiduKeyChange = { baiduKey = it },
-                                    baiduSecret = baiduSecret,
-                                    onBaiduSecretChange = { baiduSecret = it },
-                                    xunfeiAppId = xunfeiAppId,
-                                    onXunfeiAppIdChange = { xunfeiAppId = it },
-                                    xunfeiKey = xunfeiKey,
-                                    onXunfeiKeyChange = { xunfeiKey = it },
-                                    xunfeiSecret = xunfeiSecret,
-                                    onXunfeiSecretChange = { xunfeiSecret = it },
-                                    azureKey = azureKey,
-                                    onAzureKeyChange = { azureKey = it },
-                                    azureRegion = azureRegion,
-                                    onAzureRegionChange = { azureRegion = it },
-                                    volcengineAppId = volcengineAppId,
-                                    onVolcengineAppIdChange = { volcengineAppId = it },
-                                    volcengineToken = volcengineToken,
-                                    onVolcengineTokenChange = { volcengineToken = it },
-                                    volcengineCluster = volcengineCluster,
-                                    onVolcengineClusterChange = { volcengineCluster = it },
-                                    minimaxApiKey = minimaxApiKey,
-                                    onMinimaxApiKeyChange = { minimaxApiKey = it },
-                                    minimaxGroupId = minimaxGroupId,
-                                    onMinimaxGroupIdChange = { minimaxGroupId = it },
-                                    minimaxVoiceId = minimaxVoiceId,
-                                    onMinimaxVoiceIdChange = { minimaxVoiceId = it },
-                                    sfApiKey = sfApiKey,
-                                    onSfApiKeyChange = { sfApiKey = it },
-                                    sfCustomVoiceId = sfCustomVoiceId,
-                                    onSfCustomVoiceIdChange = { sfCustomVoiceId = it },
-                                    sfUseGlobalKey = sfUseGlobalKey,
-                                    onSfUseGlobalKeyChange = { sfUseGlobalKey = it },
-                                    sfTtsModel = sfTtsModel,
-                                    onSfTtsModelChange = { sfTtsModel = it },
-                                    sfSpeed = sfSpeed,
-                                    onSfSpeedChange = { sfSpeed = it },
-                                    sfGain = sfGain,
-                                    onSfGainChange = { sfGain = it },
-                                    sfSampleRate = sfSampleRate,
-                                    onSfSampleRateChange = { sfSampleRate = it },
-                                    sfUseCustomTts = sfUseCustomTts,
-                                    onSfUseCustomTtsChange = { sfUseCustomTts = it },
-                                    customTtsUrl = customTtsUrl,
-                                    onCustomTtsUrlChange = { customTtsUrl = it },
-                                    customTtsApiKey = customTtsApiKey,
-                                    onCustomTtsApiKeyChange = { customTtsApiKey = it },
-                                    customTtsModel = customTtsModel,
-                                    onCustomTtsModelChange = { customTtsModel = it },
-                                    customTtsVoiceId = customTtsVoiceId,
-                                    onCustomTtsVoiceIdChange = { customTtsVoiceId = it },
-                                    showSfModelDropdown = showSfModelDropdown,
-                                    onShowSfModelDropdown = { showSfModelDropdown = it },
-                                    showSfRateDropdown = showSfRateDropdown,
-                                    onShowSfRateDropdown = { showSfRateDropdown = it },
-                                    isDarkTheme = isDarkTheme,
-                                    cardBg = cardBg,
-                                    textPrimaryColor = textPrimaryColor,
-                                    textSecondaryColor = textSecondaryColor,
-                                    textTertiaryColor = textTertiaryColor
-                                )
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Button(
-                                    onClick = {
-                                        scope.launch {
-                                            isTesting = true
-                                            testResult = null
-                                            saveSettings()
-                                            val result = ttsService.testProvider(selectedProvider)
-                                            isTesting = false
-                                            testResult = if (result) "✓ 连接成功" else "✗ 连接失败，请检查配置"
-                                            snackbarHostState.showSnackbar(testResult!!)
-                                        }
-                                    },
-                                    enabled = !isTesting,
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = PetalGreen.copy(alpha = 0.15f),
-                                        contentColor = PetalGreen
-                                    )
-                                ) {
-                                    if (isTesting) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            color = PetalGreen,
-                                            strokeWidth = 2.dp
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.Refresh,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("测试连接", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            // ── ④ 常驻底部操作条：测试连接（仅云端） + 试听 ──
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                if (selectedProvider == TtsProvider.CLOUD) {
+                                    Button(
+                                        onClick = {
+                                            scope.launch {
+                                                isTesting = true; testResult = null; saveSettings()
+                                                val ok = ttsService.testProvider(selectedProvider)
+                                                isTesting = false
+                                                testResult = if (ok) "✓ 连接成功" else "✗ 连接失败，请检查配置"
+                                                snackbarHostState.showSnackbar(testResult!!)
+                                            }
+                                        },
+                                        enabled = !isTesting,
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = PetalGreen.copy(alpha = 0.15f), contentColor = PetalGreen)
+                                    ) {
+                                        if (isTesting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PetalGreen, strokeWidth = 2.dp)
+                                        else { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("测试连接", fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
                                     }
                                 }
-
                                 Button(
-                                    onClick = {
-                                        scope.launch {
-                                            isSynthesizing = true
-                                            testResult = null
-                                            saveSettings()
-                                            
-                                            if (selectedProvider == TtsProvider.ANDROID) {
-                                                ttsService.setProvider(TtsProvider.ANDROID)
-                                            }
-                                            
-                                            val audioPath = ttsService.testWithSampleText(
-                                                selectedProvider,
-                                                "你好，这是一个语音合成测试。"
-                                            )
-                                            isSynthesizing = false
-
-                                            when {
-                                                selectedProvider == TtsProvider.ANDROID -> {
-                                                    val diagnostic = com.lianyu.ai.network.tts.AndroidTtsProvider.lastDiagnostic
-                                                    testResult = when {
-                                                        audioPath != null && diagnostic != null ->
-                                                            "⚠ 已播放，但可能听不到声音：$diagnostic"
-                                                        audioPath != null -> "✓ 已播放（系统语音引擎）"
-                                                        else -> "✗ 合成失败${diagnostic?.let { "：$it" } ?: ""}"
-                                                    }
-                                                }
-                                                audioPath != null -> {
-                                                    try {
-                                                        mediaPlayer?.release()
-                                                        previewAudioPath = audioPath
-                                                        mediaPlayer = MediaPlayer().apply {
-                                                            setDataSource(audioPath)
-                                                            setOnCompletionListener { mp ->
-                                                                mp.release()
-                                                                mediaPlayer = null
-                                                                // 试听是一次性文件，播完即删，不留在缓存里
-                                                                runCatching { java.io.File(audioPath).delete() }
-                                                                previewAudioPath = null
-                                                            }
-                                                            setOnErrorListener { mp, _, _ ->
-                                                                mp.release()
-                                                                mediaPlayer = null
-                                                                runCatching { java.io.File(audioPath).delete() }
-                                                                previewAudioPath = null
-                                                                true
-                                                            }
-                                                            prepare()
-                                                            start()
-                                                        }
-                                                        testResult = "✓ 合成成功，正在播放"
-                                                    } catch (e: Exception) {
-                                                        runCatching { java.io.File(audioPath).delete() }
-                                                        previewAudioPath = null
-                                                        testResult = "✗ 播放失败: ${e.message ?: "未知错误"}"
-                                                    }
-                                                }
-                                                else -> {
-                                                    testResult = "✗ 合成失败"
-                                                }
-                                            }
-                                            snackbarHostState.showSnackbar(testResult!!)
-                                        }
-                                    },
+                                    onClick = { runTest() },
                                     enabled = !isSynthesizing && !isTesting,
                                     modifier = Modifier.weight(1f).height(48.dp),
                                     shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = PetalPrimaryContainer,
-                                        contentColor = PetalOnPrimaryContainer
-                                    )
+                                    colors = ButtonDefaults.buttonColors(containerColor = PetalPrimaryContainer, contentColor = PetalOnPrimaryContainer)
                                 ) {
-                                    if (isSynthesizing) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            color = PetalOnPrimaryContainer,
-                                            strokeWidth = 2.dp
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.PlayArrow,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("试听", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    }
+                                    if (isSynthesizing) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PetalOnPrimaryContainer, strokeWidth = 2.dp)
+                                    else { Icon(Icons.Filled.PlayArrow, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("试听", fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
                                 }
                             }
 
                             testResult?.let {
-                                Text(
-                                    text = it,
-                                    fontSize = 13.sp,
-                                    color = if (it.contains("成功")) PetalGreen else PetalError,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Text(it, fontSize = 13.sp, color = if (it.contains("成功")) PetalGreen else PetalError, fontWeight = FontWeight.Medium)
                             }
 
-                            // ── 聊天页分段队列 TTS 设置卡片 ──
+                            // ── ⑤ 回复行为分组 ──
                             ChatReadAloudSettingsCard(
                                 chatTtsMode = chatTtsMode,
                                 onModeSelect = { chatTtsMode = it; saveChatTtsSettings() },
                                 skipParentheses = skipParentheses,
                                 onSkipParenthesesChange = { skipParentheses = it; saveChatTtsSettings() },
-                                isDarkTheme = isDarkTheme,
-                                cardBg = cardBg,
-                                textPrimaryColor = textPrimaryColor,
-                                textSecondaryColor = textSecondaryColor
+                                cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor
                             )
                         }
                     }
@@ -632,805 +323,210 @@ fun TtsSettingsScreen(
 
 @Composable
 private fun TtsToggleCard(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color
+    enabled: Boolean,onToggle: (Boolean) -> Unit,
+    cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBg)
-            .padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
-            Text(
-                text = "启用 TTS 语音",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = textPrimaryColor
-            )
-            Text(
-                text = "开启后 AI 回复将使用语音播放",
-                fontSize = 12.sp,
-                color = textSecondaryColor
-            )
+            Text("启用 TTS 语音", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
+            Text("开启后 AI 回复将使用语音播放", fontSize = 12.sp, color = textSecondaryColor)
         }
-        Switch(
-            checked = enabled,
-            onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        )
+        Switch(checked = enabled, onCheckedChange = onToggle)
     }
 }
 
+/** 三段式模式选择：系统 / 本地 / 云端 */
 @Composable
-private fun ProviderSelectionCard(
-    selectedProvider: TtsProvider,
-    onProviderSelect: (TtsProvider) -> Unit,
-    showDropdown: Boolean,
-    onDropdownToggle: (Boolean) -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color
+private fun ModeSegmentedControl(
+    selected: TtsProvider, onSelect: (TtsProvider) -> Unit,
+    cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBg)
-            .padding(20.dp)
+    val options = listOf(
+        Triple(TtsProvider.ANDROID, "系统", Icons.Filled.PhoneAndroid),
+        Triple(TtsProvider.LOCAL, "本地漫剧", Icons.Filled.SdStorage),
+        Triple(TtsProvider.CLOUD, "云端漫剧", Icons.Filled.CloudQueue)
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(cardBg).padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = "语音提供商",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = textPrimaryColor
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
+        options.forEach { (provider, label, icon) ->
+            val isSelected = provider == selected
+            Column(
+                modifier = Modifier.weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable { onDropdownToggle(!showDropdown) }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .background(if (isSelected) PetalPrimaryContainer else Color.Transparent)
+                    .clickable { onSelect(provider) }
+                    .padding(vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = selectedProvider.displayName,
-                    fontSize = 14.sp,
-                    color = textPrimaryColor
-                )
-                Icon(
-                    imageVector = if (showDropdown) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = textSecondaryColor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            DropdownMenu(
-                expanded = showDropdown,
-                onDismissRequest = { onDropdownToggle(false) },
-                modifier = Modifier.fillMaxWidth(0.8f)
-            ) {
-                TtsProvider.entries.forEach { provider ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = provider.displayName,
-                                    color = textPrimaryColor,
-                                    fontSize = 14.sp
-                                )
-                                if (provider == selectedProvider) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = PetalPrimary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        },
-                        onClick = {
-                            onProviderSelect(provider)
-                            onDropdownToggle(false)
-                        }
-                    )
-                }
+                Icon(icon, null, tint = if (isSelected) PetalOnPrimaryContainer else textSecondaryColor, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.height(4.dp))
+                Text(label, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (isSelected) PetalOnPrimaryContainer else textSecondaryColor)
             }
         }
     }
 }
 
+/** 本地模式卡片：状态优先，按钮只显示当前能点的那个 */
 @Composable
-private fun VoiceSelectionCard(
-    voices: List<TtsVoice>,
-    selectedVoiceId: String,
-    onVoiceSelect: (String) -> Unit,
-    showDropdown: Boolean,
-    onDropdownToggle: (Boolean) -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color
-) {
-    val selectedVoice = voices.find { it.id == selectedVoiceId }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBg)
-            .padding(20.dp)
-    ) {
-        Text(
-            text = "选择音色",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = textPrimaryColor
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable { onDropdownToggle(!showDropdown) }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = selectedVoice?.let { "${it.name} (${it.gender})" } ?: "请选择音色",
-                    fontSize = 14.sp,
-                    color = if (selectedVoice != null) textPrimaryColor else textSecondaryColor
-                )
-                Icon(
-                    imageVector = if (showDropdown) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = textSecondaryColor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            DropdownMenu(
-                expanded = showDropdown,
-                onDismissRequest = { onDropdownToggle(false) },
-                modifier = Modifier.fillMaxWidth(0.8f)
-            ) {
-                voices.forEach { voice ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column {
-                                    Text(
-                                        text = "${voice.name} (${voice.gender})",
-                                        color = textPrimaryColor,
-                                        fontSize = 14.sp
-                                    )
-                                    if (voice.description.isNotEmpty()) {
-                                        Text(
-                                            text = voice.description,
-                                            color = textSecondaryColor,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-                                if (voice.id == selectedVoiceId) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = PetalPrimary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        },
-                        onClick = {
-                            onVoiceSelect(voice.id)
-                            onDropdownToggle(false)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ApiKeyConfigCard(
-    provider: TtsProvider,
-    aliyunKey: String,
-    onAliyunKeyChange: (String) -> Unit,
-    aliyunSecret: String,
-    onAliyunSecretChange: (String) -> Unit,
-    aliyunAppKey: String,
-    onAliyunAppKeyChange: (String) -> Unit,
-    baiduKey: String,
-    onBaiduKeyChange: (String) -> Unit,
-    baiduSecret: String,
-    onBaiduSecretChange: (String) -> Unit,
-    xunfeiAppId: String,
-    onXunfeiAppIdChange: (String) -> Unit,
-    xunfeiKey: String,
-    onXunfeiKeyChange: (String) -> Unit,
-    xunfeiSecret: String,
-    onXunfeiSecretChange: (String) -> Unit,
-    azureKey: String,
-    onAzureKeyChange: (String) -> Unit,
-    azureRegion: String,
-    onAzureRegionChange: (String) -> Unit,
-    volcengineAppId: String,
-    onVolcengineAppIdChange: (String) -> Unit,
-    volcengineToken: String,
-    onVolcengineTokenChange: (String) -> Unit,
-    volcengineCluster: String,
-    onVolcengineClusterChange: (String) -> Unit,
-    minimaxApiKey: String,
-    onMinimaxApiKeyChange: (String) -> Unit,
-    minimaxGroupId: String,
-    onMinimaxGroupIdChange: (String) -> Unit,
-    minimaxVoiceId: String,
-    onMinimaxVoiceIdChange: (String) -> Unit,
-    sfApiKey: String,
-    onSfApiKeyChange: (String) -> Unit,
-    sfCustomVoiceId: String,
-    onSfCustomVoiceIdChange: (String) -> Unit,
-    sfUseGlobalKey: Boolean,
-    onSfUseGlobalKeyChange: (Boolean) -> Unit,
-    sfTtsModel: String,
-    onSfTtsModelChange: (String) -> Unit,
-    sfSpeed: String,
-    onSfSpeedChange: (String) -> Unit,
-    sfGain: String,
-    onSfGainChange: (String) -> Unit,
-    sfSampleRate: Int,
-    onSfSampleRateChange: (Int) -> Unit,
-    sfUseCustomTts: Boolean,
-    onSfUseCustomTtsChange: (Boolean) -> Unit,
-    customTtsUrl: String,
-    onCustomTtsUrlChange: (String) -> Unit,
-    customTtsApiKey: String,
-    onCustomTtsApiKeyChange: (String) -> Unit,
-    customTtsModel: String,
-    onCustomTtsModelChange: (String) -> Unit,
-    customTtsVoiceId: String,
-    onCustomTtsVoiceIdChange: (String) -> Unit,
-    showSfModelDropdown: Boolean,
-    onShowSfModelDropdown: (Boolean) -> Unit,
-    showSfRateDropdown: Boolean,
-    onShowSfRateDropdown: (Boolean) -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color,
-    textTertiaryColor: Color
-) {
-    val dividerColor = MaterialTheme.colorScheme.outline
-    val context = LocalContext.current
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBg)
-            .padding(20.dp)
-    ) {
-        Text(
-            text = "${provider.displayName} 配置",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = textPrimaryColor
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        when (provider) {
-            TtsProvider.ALIYUN -> {
-                TtsTextField(value = aliyunKey, onValueChange = onAliyunKeyChange, label = "Access Key ID", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = aliyunSecret, onValueChange = onAliyunSecretChange, label = "Access Key Secret", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = aliyunAppKey, onValueChange = onAliyunAppKeyChange, label = "App Key", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.BAIDU -> {
-                TtsTextField(value = baiduKey, onValueChange = onBaiduKeyChange, label = "API Key", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = baiduSecret, onValueChange = onBaiduSecretChange, label = "Secret Key", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.XUNFEI -> {
-                TtsTextField(value = xunfeiAppId, onValueChange = onXunfeiAppIdChange, label = "App ID", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = xunfeiKey, onValueChange = onXunfeiKeyChange, label = "API Key", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = xunfeiSecret, onValueChange = onXunfeiSecretChange, label = "API Secret", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.MICROSOFT -> {
-                TtsTextField(value = azureKey, onValueChange = onAzureKeyChange, label = "Subscription Key", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = azureRegion, onValueChange = onAzureRegionChange, label = "Region (如: eastasia)", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.VOLCENGINE -> {
-                TtsTextField(value = volcengineAppId, onValueChange = onVolcengineAppIdChange, label = "App ID", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = volcengineToken, onValueChange = onVolcengineTokenChange, label = "Token", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = volcengineCluster, onValueChange = onVolcengineClusterChange, label = "Cluster (可选)", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.MINIMAX -> {
-                TtsTextField(value = minimaxApiKey, onValueChange = onMinimaxApiKeyChange, label = "API Key", isPassword = true, isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = minimaxGroupId, onValueChange = onMinimaxGroupIdChange, label = "Group ID", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = minimaxVoiceId, onValueChange = onMinimaxVoiceIdChange, label = "音色 voice_id (留空默认 female-shaonv)", isDarkTheme = isDarkTheme, dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-            }
-            TtsProvider.SILICONFLOW -> {
-                // 提供者切换：默认 vs 自定义
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("使用自定义 TTS 端点", fontSize = 13.sp, color = textPrimaryColor)
-                    Switch(checked = sfUseCustomTts, onCheckedChange = onSfUseCustomTtsChange,
-                        colors = SwitchDefaults.colors(checkedTrackColor = PetalPrimary))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (sfUseCustomTts) {
-                    // ── 自定义 TTS ──
-                    TtsTextField(value = customTtsUrl, onValueChange = onCustomTtsUrlChange,
-                        label = "自定义 TTS URL", isDarkTheme = isDarkTheme, dividerColor = dividerColor,
-                        textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TtsTextField(value = customTtsApiKey, onValueChange = onCustomTtsApiKeyChange,
-                        label = "自定义 API Key", isPassword = true, isDarkTheme = isDarkTheme,
-                        dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TtsTextField(value = customTtsModel, onValueChange = onCustomTtsModelChange,
-                        label = "自定义模型名称", isDarkTheme = isDarkTheme, dividerColor = dividerColor,
-                        textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TtsTextField(value = customTtsVoiceId, onValueChange = onCustomTtsVoiceIdChange,
-                        label = "自定义音色 voice_id", isDarkTheme = isDarkTheme, dividerColor = dividerColor,
-                        textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                } else {
-                    // ── 硅基流动 ──
-                    // 复用全局 Key 开关
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("复用全局 SiliconFlow API Key", fontSize = 13.sp, color = textPrimaryColor)
-                        Switch(checked = sfUseGlobalKey, onCheckedChange = onSfUseGlobalKeyChange,
-                            colors = SwitchDefaults.colors(checkedTrackColor = PetalPrimary))
-                    }
-                    if (!sfUseGlobalKey) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TtsTextField(value = sfApiKey, onValueChange = onSfApiKeyChange,
-                            label = "API Key", isPassword = true, isDarkTheme = isDarkTheme,
-                            dividerColor = dividerColor, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-                    }
-
-                    // 模型选择下拉
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("TTS 模型", fontSize = 13.sp, color = textSecondaryColor)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Box {
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .clickable { onShowSfModelDropdown(!showSfModelDropdown) }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(sfTtsModel.ifBlank { "未选择" }, fontSize = 14.sp, color = textPrimaryColor)
-                            Icon(
-                                if (showSfModelDropdown) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null, tint = textSecondaryColor, modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        DropdownMenu(expanded = showSfModelDropdown, onDismissRequest = { onShowSfModelDropdown(false) }) {
-                            listOf(
-                                "FunAudioLLM/CosyVoice2-0.5B" to "CosyVoice2 (推荐)",
-                                "fnlp/MOSS-TTSD-v0.5" to "MOSS-TTSD"
-                            ).forEach { (value, label) ->
-                                DropdownMenuItem(text = { Text(label) }, onClick = {
-                                    onSfTtsModelChange(value); onShowSfModelDropdown(false)
-                                })
-                            }
-                        }
-                    }
-
-                    // 采样率选择
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("采样率", fontSize = 13.sp, color = textSecondaryColor)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Box {
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .clickable { onShowSfRateDropdown(!showSfRateDropdown) }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("${sfSampleRate} Hz", fontSize = 14.sp, color = textPrimaryColor)
-                            Icon(
-                                if (showSfRateDropdown) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null, tint = textSecondaryColor, modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        DropdownMenu(expanded = showSfRateDropdown, onDismissRequest = { onShowSfRateDropdown(false) }) {
-                            listOf(8000, 16000, 22050, 44100).forEach { rate ->
-                                DropdownMenuItem(text = { Text("$rate Hz") }, onClick = {
-                                    onSfSampleRateChange(rate); onShowSfRateDropdown(false)
-                                })
-                            }
-                        }
-                    }
-
-                    // 速度
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("语速: ${sfSpeed}", fontSize = 13.sp, color = textSecondaryColor)
-                    Slider(
-                        value = sfSpeed.toFloatOrNull() ?: 1.0f,
-                        onValueChange = { onSfSpeedChange(String.format("%.1f", it)) },
-                        valueRange = 0.5f..2.0f,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
-                    )
-
-                    // 增益
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("增益: ${sfGain} dB", fontSize = 13.sp, color = textSecondaryColor)
-                    Slider(
-                        value = sfGain.toFloatOrNull() ?: 0f,
-                        onValueChange = { onSfGainChange(String.format("%.0f", it)) },
-                        valueRange = -10f..10f,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                TtsTextField(value = sfCustomVoiceId, onValueChange = onSfCustomVoiceIdChange,
-                    label = "自定义音色 voice_id (可选)", isDarkTheme = isDarkTheme, dividerColor = dividerColor,
-                    textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor)
-
-                // 音色定制平台链接
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text("没有自定义音色？", fontSize = 12.sp, color = textSecondaryColor)
-                    Text("前往添加>>", fontSize = 12.sp, color = PetalPrimary,
-                        modifier = Modifier.clickable {
-                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                            intent.data = android.net.Uri.parse("https://voice.gbkgov.cn/")
-                            context.startActivity(intent)
-                        })
-                }
-            }
-            TtsProvider.ANDROID -> {
-                Text(
-                    text = "使用系统内置 TTS 引擎，无需配置 API Key\n建议在系统设置中安装高质量TTS引擎以获得更好效果",
-                    fontSize = 13.sp,
-                    color = textSecondaryColor
-                )
-            }
-            TtsProvider.SHERPA_LOCAL -> {
-                // 本地离线 TTS 配置在 ApiKeyConfigCard 外部独立渲染（见 TtsSettingsScreen 主体）
-                // 此分支不会到达，但 when 穷尽性要求覆盖
-            }
-        }
-    }
-}
-
-/**
- * 本地离线 TTS 配置卡片（sherpa-onnx）。
- *
- * UI 结构：
- * - 模型选择下拉（LocalTtsCatalog.all）
- * - 状态行：未下载/下载中 X% (i/N)/就绪/已启用/失败
- * - 按钮组：下载/取消/启用/禁用/删除（按状态显示）
- * - sid 滑动条（多音色模型才显示）
- * - 速度滑动条
- * - 手动放置路径提示
- */
-@Composable
-private fun LocalTtsConfigContent(
+private fun LocalModeCard(
     localTtsState: LocalTtsUiState,
-    localTtsSpeed: Float,
-    onLocalTtsSpeedChange: (Float) -> Unit,
-    localTtsSid: Int,
-    onLocalTtsSidChange: (Int) -> Unit,
-    showModelDropdown: Boolean,
-    onShowModelDropdown: (Boolean) -> Unit,
-    onSelectModel: (String) -> Unit,
-    onDownload: () -> Unit,
-    onCancelDownload: () -> Unit,
-    onEnable: () -> Unit,
-    onDisable: () -> Unit,
-    onDelete: () -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color,
-    context: Context
+    localTtsSpeed: Float, onSpeedChange: (Float) -> Unit,
+    localTtsSid: Int, onSidChange: (Int) -> Unit,
+    onDownload: () -> Unit, onCancelDownload: () -> Unit,
+    onEnable: () -> Unit, onDisable: () -> Unit, onDelete: () -> Unit,
+    cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color, context: Context
 ) {
     val model = localTtsState.model
     val status = localTtsState.status
     val isDownloading = status == LocalTtsUiStatus.DOWNLOADING
     val isReady = status == LocalTtsUiStatus.READY
     val isEnabled = status == LocalTtsUiStatus.ENABLED
-    val canDownload = model.files.any { it.downloadUrl.isNotBlank() } && !isDownloading && !isEnabled
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 模型选择
-        Text("本地模型", fontSize = 13.sp, color = textSecondaryColor)
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // 状态卡：颜色区分三种状态
+        val (statusText, statusColor, statusBg) = when (status) {
+            LocalTtsUiStatus.NOT_DOWNLOADED -> Triple("尚未下载 · ${model.displayName}", textSecondaryColor, textSecondaryColor.copy(alpha = 0.08f))
+            LocalTtsUiStatus.DOWNLOADING -> Triple("下载中 ${localTtsState.progressPercent}% (${localTtsState.currentFileIndex + 1}/${localTtsState.totalFiles})", PetalPrimary, PetalPrimaryContainer.copy(alpha = 0.4f))
+            LocalTtsUiStatus.READY -> Triple("已下载 · 点击启用", PetalPrimary, PetalPrimaryContainer.copy(alpha = 0.4f))
+            LocalTtsUiStatus.ENABLED -> Triple("已启用 · ${model.displayName}", PetalGreen, PetalGreen.copy(alpha = 0.12f))
+            LocalTtsUiStatus.FAILED -> Triple("失败: ${localTtsState.errorMessage ?: "未知"}", PetalError, PetalError.copy(alpha = 0.1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(statusBg).padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isDownloading) {
+                CircularProgressIndicator(
+                    progress = { localTtsState.progressPercent / 100f },
+                    modifier = Modifier.size(20.dp), color = statusColor, strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(10.dp))
+            }
+            Text(statusText, fontSize = 14.sp, color = statusColor, fontWeight = FontWeight.Medium)
+        }
+
+        // 只显示当前能点的那一个主按钮
+        when {
+            status == LocalTtsUiStatus.NOT_DOWNLOADED && model.files.any { it.downloadUrl.isNotBlank() } ->
+                Button(onClick = onDownload, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PetalPrimaryContainer, contentColor = PetalOnPrimaryContainer)) {
+                    Icon(Icons.Filled.Download, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("下载漫剧女声模型（约110MB）")
+                }
+            isDownloading ->
+                Button(onClick = onCancelDownload, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PetalError.copy(alpha = 0.15f), contentColor = PetalError)) { Text("取消下载") }
+            isReady ->
+                Button(onClick = onEnable, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PetalGreen.copy(alpha = 0.15f), contentColor = PetalGreen)) { Text("启用") }
+            isEnabled ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = onDisable, modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp)) { Text("禁用", fontSize = 13.sp) }
+                    OutlinedButton(onClick = onDelete, modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)) { Text("删除模型", fontSize = 13.sp) }
+                }
+        }
+
+        if (isEnabled || isReady) {
+            Divider(color = textSecondaryColor.copy(alpha = 0.15f))
+            Text("音色: ${localTtsSid} / ${model.numSpeakers - 1}", fontSize = 13.sp, color = textSecondaryColor)
+            Slider(value = localTtsSid.toFloat(), onValueChange = { onSidChange(it.toInt()) },
+                valueRange = 0f..(model.numSpeakers - 1).toFloat(), modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary))
+            Text("语速: ${String.format("%.1f", localTtsSpeed)}", fontSize = 13.sp, color = textSecondaryColor)
+            Slider(value = localTtsSpeed, onValueChange = { onSpeedChange(String.format("%.1f", it).toFloat()) },
+                valueRange = 0.5f..2.0f, modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary))
+        }
+
+        Text("离线端上推理，无需联网，隐私更好。", fontSize = 12.sp, color = textSecondaryColor)
+    }
+}
+
+/** 云端模式卡片：只有 MiniMax，不再暴露"选供应商"这一层 */
+@Composable
+private fun CloudModeCard(
+    apiKey: String, onApiKeyChange: (String) -> Unit,
+    groupId: String, onGroupIdChange: (String) -> Unit,
+    voiceId: String, onVoiceIdChange: (String) -> Unit,
+    cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color
+) {
+    val voices = listOf(
+        "female-shaonv" to "少女音（漫剧女主，推荐）",
+        "female-tianmei" to "甜美女声",
+        "female-yujie" to "御姐音",
+        "male-qn-qingse" to "青涩青年音"
+    )
+    var showVoiceDropdown by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("MiniMax Speech-02", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
+        Text("情感表现力最强，需要自行申请密钥", fontSize = 12.sp, color = textSecondaryColor)
+        OutlinedTextField(
+            value = apiKey, onValueChange = onApiKeyChange, label = { Text("API Key") },
+            visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = groupId, onValueChange = onGroupIdChange, label = { Text("Group ID") },
+            singleLine = true, modifier = Modifier.fillMaxWidth()
+        )
+        Text("音色", fontSize = 13.sp, color = textSecondaryColor)
         Box {
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .clickable { onShowModelDropdown(!showModelDropdown) }
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .clickable { showVoiceDropdown = true }.padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(model.displayName, fontSize = 14.sp, color = textPrimaryColor)
-                Icon(
-                    if (showModelDropdown) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null, tint = textSecondaryColor, modifier = Modifier.size(20.dp)
-                )
+                Text(voices.find { it.first == voiceId }?.second ?: voiceId, fontSize = 14.sp, color = textPrimaryColor)
             }
-            DropdownMenu(expanded = showModelDropdown, onDismissRequest = { onShowModelDropdown(false) }) {
-                LocalTtsCatalog.all.forEach { m ->
-                    DropdownMenuItem(
-                        text = { Text(m.displayName, fontSize = 14.sp) },
-                        onClick = { onSelectModel(m.id); onShowModelDropdown(false) },
-                        leadingIcon = if (m.id == model.id) {
-                            { Icon(Icons.Filled.Check, null, tint = PetalGreen, modifier = Modifier.size(18.dp)) }
-                        } else null
-                    )
+            DropdownMenu(expanded = showVoiceDropdown, onDismissRequest = { showVoiceDropdown = false }) {
+                voices.forEach { (id, label) ->
+                    DropdownMenuItem(text = { Text(label, fontSize = 14.sp) }, onClick = { onVoiceIdChange(id); showVoiceDropdown = false })
                 }
             }
         }
-
-        // 状态行
-        val statusText = when (status) {
-            LocalTtsUiStatus.NOT_DOWNLOADED -> "未下载"
-            LocalTtsUiStatus.DOWNLOADING -> {
-                val pct = localTtsState.progressPercent
-                val fi = localTtsState.currentFileIndex + 1
-                val tot = localTtsState.totalFiles
-                "下载中 $pct% ($fi/$tot)"
-            }
-            LocalTtsUiStatus.READY -> "就绪（点击启用）"
-            LocalTtsUiStatus.ENABLED -> "已启用"
-            LocalTtsUiStatus.FAILED -> "失败: ${localTtsState.errorMessage ?: "未知"}"
-        }
-        val statusColor = when (status) {
-            LocalTtsUiStatus.ENABLED -> PetalGreen
-            LocalTtsUiStatus.READY -> PetalPrimary
-            LocalTtsUiStatus.FAILED -> PetalError
-            LocalTtsUiStatus.DOWNLOADING -> textSecondaryColor
-            LocalTtsUiStatus.NOT_DOWNLOADED -> textSecondaryColor
-        }
-        Text(statusText, fontSize = 13.sp, color = statusColor, fontWeight = FontWeight.Medium)
-
-        // 按钮组
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (canDownload) {
-                Button(
-                    onClick = onDownload,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalPrimaryContainer, contentColor = PetalOnPrimaryContainer)
-                ) { Text("下载", fontSize = 13.sp) }
-            }
-            if (isDownloading) {
-                Button(
-                    onClick = onCancelDownload,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalError.copy(alpha = 0.15f), contentColor = PetalError)
-                ) { Text("取消", fontSize = 13.sp) }
-            }
-            if (isReady) {
-                Button(
-                    onClick = onEnable,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalGreen.copy(alpha = 0.15f), contentColor = PetalGreen)
-                ) { Text("启用", fontSize = 13.sp) }
-            }
-            if (isEnabled) {
-                Button(
-                    onClick = onDisable,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = textPrimaryColor)
-                ) { Text("禁用", fontSize = 13.sp) }
-            }
-            if (status != LocalTtsUiStatus.NOT_DOWNLOADED && !isDownloading) {
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalError.copy(alpha = 0.1f), contentColor = PetalError)
-                ) { Text("删除", fontSize = 13.sp) }
-            }
-        }
-
-        // 无下载源提示
-        if (status == LocalTtsUiStatus.NOT_DOWNLOADED && model.files.all { it.downloadUrl.isBlank() }) {
-            Text(
-                text = "未配置下载源。请手动将模型文件放入：\n${model.modelDir(context).absolutePath}",
-                fontSize = 12.sp, color = textSecondaryColor
-            )
-        }
-
-        // sid 滑动条（仅多音色模型显示）
-        if (model.numSpeakers > 1) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("音色 sid: $localTtsSid / ${model.numSpeakers - 1}", fontSize = 13.sp, color = textSecondaryColor)
-            Slider(
-                value = localTtsSid.toFloat(),
-                onValueChange = { onLocalTtsSidChange(it.toInt()) },
-                valueRange = 0f..(model.numSpeakers - 1).toFloat(),
-                modifier = Modifier.fillMaxWidth(),
-                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
-            )
-        }
-
-        // 速度滑动条
-        Spacer(modifier = Modifier.height(4.dp))
-        Text("语速: ${String.format("%.1f", localTtsSpeed)}", fontSize = 13.sp, color = textSecondaryColor)
-        Slider(
-            value = localTtsSpeed,
-            onValueChange = { onLocalTtsSpeedChange(String.format("%.1f", it).toFloat()) },
-            valueRange = 0.5f..2.0f,
-            modifier = Modifier.fillMaxWidth(),
-            colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
-        )
-
-        // 说明
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "sherpa-onnx 端上推理，无需联网。\n模型文件需放入上述目录后点击「启用」。",
-            fontSize = 12.sp, color = textSecondaryColor
-        )
     }
 }
 
 @Composable
-private fun TtsTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    isPassword: Boolean = false,
-    isDarkTheme: Boolean,
-    dividerColor: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label, color = textSecondaryColor) },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = PetalPrimary,
-            unfocusedBorderColor = dividerColor,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedTextColor = textPrimaryColor,
-            unfocusedTextColor = textPrimaryColor
-        ),
-        visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-        singleLine = true
-    )
-}
-
-/**
- * 聊天页分段队列 TTS 设置卡片。
- *
- * 参考反编译代码的 SettingsActivity：
- * - KEY_VOICE_MODE（静音/语音条/朗读）
- * - key_skip_parentheses（跳过括号内心戏）
- * - KEY_VOICE_AUTO_DEDUP（自动去重）
- * - KEY_VOICE_BEAUTIFY（音频美化）
- */
-@Composable
 private fun ChatReadAloudSettingsCard(
-    chatTtsMode: ChatTtsMode,
-    onModeSelect: (ChatTtsMode) -> Unit,
-    skipParentheses: Boolean,
-    onSkipParenthesesChange: (Boolean) -> Unit,
-    isDarkTheme: Boolean,
-    cardBg: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color
+    chatTtsMode: ChatTtsMode, onModeSelect: (ChatTtsMode) -> Unit,
+    skipParentheses: Boolean, onSkipParenthesesChange: (Boolean) -> Unit,
+    cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBg)
-            .padding(20.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Text("回复行为", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = textSecondaryColor)
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("语音回复", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
-                Text(
-                    "开启后 AI 发送的每一条消息都会合成为语音气泡（最长60秒），关闭则发送普通文字消息",
-                    fontSize = 12.sp,
-                    color = textSecondaryColor
-                )
+                Text("开启后 AI 发送的每一条消息都会合成为语音气泡（最长60秒）", fontSize = 12.sp, color = textSecondaryColor)
             }
             Switch(
                 checked = chatTtsMode == ChatTtsMode.VOICE_BAR,
-                onCheckedChange = { checked ->
-                    onModeSelect(if (checked) ChatTtsMode.VOICE_BAR else ChatTtsMode.SILENT)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                onCheckedChange = { onModeSelect(if (it) ChatTtsMode.VOICE_BAR else ChatTtsMode.SILENT) }
             )
         }
-
-        // 跳过括号内心戏（语音回复时同样适用：不把 <...> (...) 内的内心戏合成进语音里）
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("跳过括号内心戏", fontSize = 14.sp, color = textPrimaryColor)
-                Text("不朗读 <...> (...) （...） 内的内容", fontSize = 12.sp, color = textSecondaryColor)
+                Text("不朗读 <...> (...) 内的内容", fontSize = 12.sp, color = textSecondaryColor)
             }
-            Switch(
-                checked = skipParentheses,
-                onCheckedChange = onSkipParenthesesChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
+            Switch(checked = skipParentheses, onCheckedChange = onSkipParenthesesChange)
         }
     }
 }
