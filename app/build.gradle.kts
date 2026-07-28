@@ -169,7 +169,7 @@ dependencies {
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.animation.graphics)
     implementation(libs.lottie.compose)
-    implementation(libs.androidx.app.update.ktx)
+    
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.tracing)
 
