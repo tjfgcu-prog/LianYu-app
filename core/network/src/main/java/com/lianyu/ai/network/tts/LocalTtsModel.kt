@@ -58,44 +58,8 @@ fun stagingFile(context: Context, fileName: String): File = File(stagingDir(cont
     /** lexicon.txt 文件名（可能不存在，如 Kokoro 用 dictDir） */
     val lexiconFileName: String? get() = files.firstOrNull { it.role == LocalTtsFileRole.LEXICON }?.fileName
 
-    /**
-     * VITS 中文多音色模型（aishell3, 174 speakers）。
-     *
-     * 占位条目：downloadUrl / sha256 留空，用户需手动放置文件或后续填入下载源。
-     * 文件放入 `<filesDir>/models/tts/vits_zh_aishell3/` 后 refresh 即可启用。
-     */
-    data object Aishell3 : LocalTtsModel(
-        id = "vits_zh_aishell3",
-        displayName = "VITS 中文 aishell3 (174音色)",
-        numSpeakers = 174,
-        modelType = LocalTtsModelType.VITS,
-        files = listOf(
-            LocalTtsModelFile(
-                fileName = "model.onnx",
-                downloadUrl = "",  // 占位：待填下载源
-                sha256 = "",       // 占位：待填 SHA-256
-                expectedBytes = 1_200_000_000L,
-                role = LocalTtsFileRole.MAIN_MODEL,
-                isMainModel = true
-            ),
-            LocalTtsModelFile(
-                fileName = "tokens.txt",
-                downloadUrl = "",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.TOKENS,
-                isMainModel = false
-            ),
-            LocalTtsModelFile(
-                fileName = "lexicon.txt",
-                downloadUrl = "",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.LEXICON,
-                isMainModel = false
-            )
-        )
-    )
+    
+    
 
     /**
      * 角色音模型（漫剧风格），794 说话人，sherpa-onnx 官方 HuggingFace 直链，可自动下载。
@@ -210,7 +174,7 @@ data class LocalTtsModelFile(
 
 object LocalTtsCatalog {
     val default: LocalTtsModel = LocalTtsModel.AnimeVoice
-    val all: List<LocalTtsModel> = listOf(LocalTtsModel.AnimeVoice, LocalTtsModel.Aishell3, LocalTtsModel.Custom)
+    val all: List<LocalTtsModel> = listOf(LocalTtsModel.AnimeVoice, LocalTtsModel.Custom)
 
     fun findById(modelId: String): LocalTtsModel =
         all.find { it.id == modelId } ?: default
