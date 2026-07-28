@@ -31,7 +31,7 @@ include(":core:domain")
 include(":core:common")
 include(":core:database")
 include(":core:network")
-include(":core:security")
+
 include(":core:ui-common")
 include(":feature:companion")
 include(":feature:chat")
