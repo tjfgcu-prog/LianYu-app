@@ -22,10 +22,7 @@ android {
         multiDexEnabled = true
 
 
-        manifestPlaceholders[
-            "VIVO_PUSH_API_KEY"] = project.findProperty("VIVO_PUSH_API_KEY")?.toString() ?: ""
-        manifestPlaceholders[
-            "VIVO_PUSH_APP_ID"] = project.findProperty("VIVO_PUSH_APP_ID")?.toString() ?: ""
+        
 
         buildConfigField("String", "HARDENING_LEVEL", "\"OPEN_SOURCE\"")
 
@@ -176,21 +173,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.tracing)
 
-    // 厂商 Push SDK
-    // OPPO / vivo 使用本地 aar，请从各厂商开放平台下载后放置到 app/libs
-    val oppoAar = file("libs/oppo-push-3.0.0.aar")
-    if (oppoAar.exists()) {
-        implementation(files(oppoAar))
-    }
-    val vivoAar = file("libs/vivo-push-4.1.5.0.aar")
-    if (vivoAar.exists()) {
-        implementation(files(vivoAar))
-    }
-    
 
-    // 小米推送：请从 https://dev.mi.com/ 下载 aar 放到 app/libs/xiaomi-push-x.x.x.aar，
-    // 然后取消下面注释并同步 Gradle。
-    // implementation(files("libs/xiaomi-push-6.0.1.aar"))
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
