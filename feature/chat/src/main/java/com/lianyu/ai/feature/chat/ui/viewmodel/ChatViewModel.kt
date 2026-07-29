@@ -22,7 +22,7 @@ import com.lianyu.ai.database.model.MessageType
 import com.lianyu.ai.database.repository.ApiConfigRepository
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.CompanionRepository
-import com.lianyu.ai.database.repository.MemoryRepository
+import com.lianyu.ai.domain.MemoryProvider
 import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.feature.chat.data.ChatContextResolver
 import com.lianyu.ai.feature.chat.R
@@ -103,7 +103,7 @@ class ChatViewModel(
     private val chatRepository = ChatRepository(database.chatMessageDao())
     private val companionRepository = CompanionRepository(database.companionDao())
     private val apiConfigRepository = ApiConfigRepository(database.apiConfigDao())
-    private val memoryRepository = MemoryRepository(database.memoryDao(), deviceId)
+    private val memoryProvider = ServiceRegistry.getOrThrow(MemoryProvider::class.java)
     private val userRepository = ServiceRegistry.get(UserRepository::class.java)
     private val stickerManager = StickerManager.getInstance(application)
     private val aiService = ServiceRegistry.get(AiServiceProvider::class.java)
@@ -552,7 +552,7 @@ class ChatViewModel(
         val speakingStyle = companion.speakingStyle?.take(100) ?: ""
         val backstory = companion.backstory?.take(200) ?: ""
 
-        val memoryContext = memoryRepository.getEnrichedContext(companion.id, lastUserMessage, 3).take(500)
+        val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, 3).take(500)
 
         val role = userRepository?.selectedRole?.value ?: CompanionRole.GIRLFRIEND
         val systemPrompt = buildString {
@@ -831,7 +831,7 @@ class ChatViewModel(
     private val responseFinalizer = AiResponseFinalizer(
         companionId = companionId,
         chatRepository = chatRepository,
-        memoryRepository = memoryRepository,
+        memoryProvider = memoryProvider,
         stickerManager = stickerManager,
         chatDetailSettingsStore = chatDetailSettingsStore,
         appSettingsStore = appSettingsStore,
