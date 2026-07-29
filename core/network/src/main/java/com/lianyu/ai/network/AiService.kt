@@ -27,7 +27,7 @@ import com.lianyu.ai.domain.ProactiveMessageSettings
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.database.repository.ApiConfigRepository
 import com.lianyu.ai.database.repository.CompanionRepository
-import com.lianyu.ai.database.repository.MemoryRepository
+
 import com.lianyu.ai.database.repository.TokenUsageRepository
 import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.network.provider.AiProvider
@@ -59,7 +59,7 @@ class AiService(context: Context) : AiServiceProvider {
     private val appContext = context.applicationContext
     private val apiConfigRepository: ApiConfigRepository
     private val companionRepository: CompanionRepository
-    private val memoryRepository: MemoryRepository
+    
     private val memoryProvider: com.lianyu.ai.domain.MemoryProvider
     private val tokenUsageRepository: TokenUsageRepository
     private val userRepository: UserRepository
@@ -80,7 +80,7 @@ class AiService(context: Context) : AiServiceProvider {
         val deviceId = DeviceIdProvider.getDeviceId(appContext)
         apiConfigRepository = ApiConfigRepository(database.apiConfigDao())
         companionRepository = ServiceRegistry.getOrThrow(CompanionRepository::class.java)
-        memoryRepository = MemoryRepository(database.memoryDao(), deviceId)
+        
         memoryProvider = com.lianyu.ai.domain.ServiceRegistry.getOrThrow(com.lianyu.ai.domain.MemoryProvider::class.java)
         memoryProvider.initialize()
         tokenUsageRepository = TokenUsageRepository(appContext)
