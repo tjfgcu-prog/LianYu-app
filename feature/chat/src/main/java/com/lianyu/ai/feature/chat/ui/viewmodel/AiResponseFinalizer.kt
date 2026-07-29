@@ -10,7 +10,7 @@ import com.lianyu.ai.common.text.MessageSegmenter
 
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.repository.ChatRepository
-import com.lianyu.ai.database.repository.MemoryRepository
+import com.lianyu.ai.domain.MemoryProvider
 import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.feature.chat.data.ChatContextResolver
 import com.lianyu.ai.feature.chat.data.ChatDetailSettingsStore
@@ -56,7 +56,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 class AiResponseFinalizer(
     private val companionId: Long,
     private val chatRepository: ChatRepository,
-    private val memoryRepository: MemoryRepository,
+    private val memoryProvider: MemoryProvider,
     private val stickerManager: StickerManager,
     private val chatDetailSettingsStore: ChatDetailSettingsStore,
     private val appSettingsStore: AppSettingsStore,
@@ -169,7 +169,7 @@ class AiResponseFinalizer(
         if (userContentForMemory != null && aiContent.isNotBlank()) {
             runCatching {
                 withTimeoutOrNull(TimeoutBudgets.CHAT_VM_MEMORY_EXTRACT_MS) {
-                    memoryRepository.extractAndSaveMemories(companionId, userContentForMemory, aiContent)
+                    memoryProvider.extractAndSaveFromConversation(userContentForMemory, aiContent, companionId, groupId = null)
                 }
             }.onFailure {
                 SecureLog.e("ChatViewModel", "Memory save failed: ${it.message}")
