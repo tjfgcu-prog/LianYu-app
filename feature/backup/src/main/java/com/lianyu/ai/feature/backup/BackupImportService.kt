@@ -6,7 +6,7 @@ import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.*
 import com.lianyu.ai.database.repository.ChatMessageCrypto
-import com.lianyu.ai.database.repository.MemoryCrypto
+
 import com.lianyu.ai.feature.backup.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,8 +15,8 @@ import kotlinx.coroutines.withContext
  * 数据导入服务 — 清空现有数据，将 [BackupData] 写入数据库并重新加密。
  *
  * 导入策略：替换模式 — 先清空所有相关表，再按序插入。
- * 清空顺序（满足 FK 约束）：group_messages → chat_messages → memory_entries → temp_memory → token_usage → chat_groups → companions
- * 插入顺序（满足 FK 约束）：companions → chat_groups → chat_messages → group_messages → memory_entries → temp_memory → token_usage
+
+ 
  */
 class BackupImportService(private val context: Context) {
 
@@ -36,8 +36,8 @@ class BackupImportService(private val context: Context) {
                     data.companions.forEach { dao.deleteMessagesForCompanion(it.id) }
                 }
                 // 兜底清空（处理不在导入数据中的残留记录）
-                db.memoryDao().deleteAllMemories(deviceId)
-                db.memoryDao().deleteAllTempMemories(deviceId)
+
+                
                 db.tokenUsageDao().deleteAll(deviceId)
                 db.groupMessageDao().let { dao ->
                     db.chatGroupDao().getAllGroupsSync().forEach { dao.deleteMessagesForGroup(it.id) }
@@ -95,30 +95,7 @@ class BackupImportService(private val context: Context) {
                     db.groupMessageDao().insertMessage(ChatMessageCrypto.encryptForStorage(msg))
                 }
 
-                data.memoryEntries.forEach { s ->
-                    val encryptedContext = if (s.context.isNotBlank()) {
-                        try { MemoryCrypto.encrypt(s.context) } catch (_: Exception) { s.context }
-                    } else ""
-                    db.memoryDao().insertMemory(
-                        MemoryEntry(
-                            id = s.id, companionId = s.companionId, content = s.content,
-                            category = safeEnum<MemoryCategory>(s.category),
-                            importance = s.importance, context = encryptedContext,
-                            accessCount = s.accessCount, timestamp = s.timestamp,
-                            lastAccessed = s.lastAccessed, deviceId = deviceId
-                        )
-                    )
-                }
-
-                data.tempMemories.forEach { s ->
-                    db.memoryDao().insertTempMemory(
-                        TempMemory(
-                            id = s.id, companionId = s.companionId,
-                            userInput = s.userInput, botResponse = s.botResponse,
-                            timestamp = s.timestamp, deviceId = deviceId
-                        )
-                    )
-                }
+                
 
                 data.tokenUsages.forEach { s ->
                     db.tokenUsageDao().insert(
