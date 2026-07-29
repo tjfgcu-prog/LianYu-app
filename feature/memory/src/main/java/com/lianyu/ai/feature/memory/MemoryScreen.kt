@@ -513,15 +513,7 @@ fun MemoryItemCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
             )
 
-            if (memory.context.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.context, memory.context),
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    maxLines = 2
-                )
-            }
+            
 
             Spacer(modifier = Modifier.height(6.dp))
             Text(
