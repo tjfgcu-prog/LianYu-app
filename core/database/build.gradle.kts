@@ -25,7 +25,7 @@ android {
 
 dependencies {
     api(project(":core:common"))
-    api(project(":core:security"))
+    
     api(libs.androidx.room.runtime)
     api(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
