@@ -168,7 +168,10 @@ fun TtsSettingsScreen(
                         testResult = "✗ 播放失败: ${e.message ?: "未知错误"}"
                     }
                 }
-                else -> testResult = "✗ 合成失败"
+                else -> {
+    val diagnostic = if (selectedProvider == TtsProvider.LOCAL) SherpaLocalTtsProvider.lastError else null
+    testResult = "✗ 合成失败${diagnostic?.let { "：$it" } ?: ""}"
+                }
             }
             snackbarHostState.showSnackbar(testResult!!)
         }
