@@ -29,7 +29,7 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun getMemoriesForCompanion(companionId: Long): Flow<List<MemoryItem>> {
-        return memoryManager.memoriesChanged
+        return MemoryManager.memoriesChanged
             .onStart { emit("") }
             .map { memoryManager.getMemories(MemoryScope.COMPANION, companionId) }
     }
