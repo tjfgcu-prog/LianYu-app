@@ -29,7 +29,7 @@ dependencies {
     api(project(":core:domain"))
     implementation(project(":core:database"))
     implementation(project(":core:common"))
-    implementation(project(":core:security"))
+    
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
