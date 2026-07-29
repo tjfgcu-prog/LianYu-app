@@ -16,7 +16,7 @@ import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.MessageType
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.CompanionRepository
-import com.lianyu.ai.database.repository.MemoryRepository
+import com.lianyu.ai.domain.MemoryProvider
 import com.lianyu.ai.database.repository.ChatMessageCrypto
 import com.lianyu.ai.database.repository.filterDecrypted
 import com.lianyu.ai.domain.AiChatMessage
@@ -49,7 +49,7 @@ class AiReplyWorker(
             val database = AppDatabase.getDatabase(applicationContext)
             val companionRepository = CompanionRepository(database.companionDao())
             val chatRepository = ChatRepository(database.chatMessageDao())
-            val memoryRepository = MemoryRepository(database.memoryDao(), DeviceIdProvider.getDeviceId(applicationContext))
+            val memoryProvider = ServiceRegistry.getOrThrow(MemoryProvider::class.java)
 
             try {
                 val companionModel = companionRepository.getCompanionById(companionId)
@@ -79,7 +79,7 @@ class AiReplyWorker(
                     companionRepository.updateTimestamp(companionId)
                     companionRepository.increaseIntimacy(companionId, 2)
 
-                    memoryRepository.extractAndSaveMemories(companionId, userMessageContent, safeResponse)
+                    memoryProvider.extractAndSaveFromConversation(userMessageContent, safeResponse, companionId, groupId = null)
 
                     if (!AppForegroundTracker.isInForeground) {
                         val notificationPreview = if (safeResponse.length > 50) {
