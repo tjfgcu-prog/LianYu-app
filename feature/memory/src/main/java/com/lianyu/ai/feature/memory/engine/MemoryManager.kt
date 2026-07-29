@@ -639,11 +639,13 @@ class MemoryManager private constructor(
     /**
      * 删除记忆
      */
-    suspend fun deleteMemory(scope: MemoryScope, sourceId: Long, id: String) {    
-        deleteMemoryFromScope(scope, sourceId, id)}suspend 
-    fun updateMemory(scope: MemoryScope, sourceId: Long, oldId: String, newContent: String, newCategory: MemoryCategory, newImportance: Float): String? {    
-        deleteMemoryFromScope(scope, sourceId, oldId)    
-        return saveMemory(newContent, newCategory, newImportance, MemorySource.MANUAL, sourceId, scope)}
+    suspend fun deleteMemory(scope: MemoryScope, sourceId: Long, id: String) {
+        deleteMemoryFromScope(scope, sourceId, id)
+    }
+
+    suspend fun updateMemory(scope: MemoryScope, sourceId: Long, oldId: String, newContent: String, newCategory: MemoryCategory, newImportance: Float): String? {
+        deleteMemoryFromScope(scope, sourceId, oldId)
+        return saveMemory(newContent, newCategory, newImportance, MemorySource.MANUAL, sourceId, scope)
     }
 
     /**
