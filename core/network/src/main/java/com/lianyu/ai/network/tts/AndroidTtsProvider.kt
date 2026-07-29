@@ -130,6 +130,9 @@ class AndroidTtsProvider : TtsProviderInterface {
                 ready = true
                 true
             } else {
+                lastDiagnostic = "系统语音引擎初始化失败：设备上可能没有安装可用的文字转语音(TTS)引擎，" +
+                    "请到系统设置 → 更多设置/语言与输入法 → 文字转语音(TTS)输出 中安装/选择一个引擎（如\"Google文字转语音\"）后重试。"
+                SecureLog.w("AndroidTTS", lastDiagnostic ?: "")
                 tts?.shutdown()
                 tts = null
                 ready = false
