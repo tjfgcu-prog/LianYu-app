@@ -6,7 +6,7 @@ import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.GroupMessage
 import com.lianyu.ai.database.repository.ChatMessageCrypto
-import com.lianyu.ai.database.repository.MemoryCrypto
+
 import com.lianyu.ai.feature.backup.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,8 +24,8 @@ class BackupExportService(private val context: Context) {
         val chatMessages = mutableListOf<ChatMessageSnapshot>()
         val chatGroups = db.chatGroupDao().getAllGroupsSync().map { it.toSnapshot() }
         val groupMessages = mutableListOf<GroupMessageSnapshot>()
-        val memoryEntries = db.memoryDao().getAllMemoriesSync(deviceId).map { it.toDecryptedSnapshot() }
-        val tempMemories = db.memoryDao().getAllTempMemoriesSync(deviceId).map { it.toSnapshot() }
+
+        
         val tokenUsages = db.tokenUsageDao().getAllUsageSync(deviceId).map { it.toSnapshot() }
 
         // 读取每条 companion 的聊天消息（已解密）
@@ -48,7 +48,7 @@ class BackupExportService(private val context: Context) {
             chatMessages = chatMessages,
             chatGroups = chatGroups,
             groupMessages = groupMessages,
-            memoryEntries = memoryEntries,
+            
             tempMemories = tempMemories,
             tokenUsages = tokenUsages
         )
@@ -81,23 +81,9 @@ private fun GroupMessage.toSnapshot() = GroupMessageSnapshot(
     fileFormat = fileFormat.name, linkString = linkString
 )
 
-private fun com.lianyu.ai.database.model.MemoryEntry.toDecryptedSnapshot(): MemoryEntrySnapshot {
-    val decryptedContext = try {
-        MemoryCrypto.decrypt(context)
-    } catch (_: Exception) {
-        context
-    }
-    return MemoryEntrySnapshot(
-        id = id, companionId = companionId, content = content, category = category.name,
-        importance = importance, context = decryptedContext, accessCount = accessCount,
-        timestamp = timestamp, lastAccessed = lastAccessed, deviceId = deviceId
-    )
-}
 
-private fun com.lianyu.ai.database.model.TempMemory.toSnapshot() = TempMemorySnapshot(
-    id = id, companionId = companionId, userInput = userInput, botResponse = botResponse,
-    timestamp = timestamp, deviceId = deviceId
-)
+
+
 
 private fun com.lianyu.ai.database.model.TokenUsage.toSnapshot() = TokenUsageSnapshot(
     id = id, companionId = companionId, date = date, inputTokens = inputTokens,
