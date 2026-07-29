@@ -12,7 +12,7 @@ import com.lianyu.ai.database.DefaultCompanionSeeder
 
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.CompanionRepository
-import com.lianyu.ai.database.repository.MemoryRepository
+
 import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.YandereModeManager
@@ -163,9 +163,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
             ServiceRegistry.registerSingleton(ChatRepository::class.java) {
                 ChatRepository(AppDatabase.getDatabase(app).chatMessageDao())
             }
-            ServiceRegistry.registerSingleton(MemoryRepository::class.java) {
-                MemoryRepository(AppDatabase.getDatabase(app).memoryDao(), DeviceIdProvider.getDeviceId(app))
-            }
+            
             ServiceRegistry.registerSingleton(UserRepository::class.java) {
                 UserRepository(app)
             }
