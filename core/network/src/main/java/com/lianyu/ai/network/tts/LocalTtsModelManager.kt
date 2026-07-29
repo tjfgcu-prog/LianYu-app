@@ -64,7 +64,7 @@ class LocalTtsModelManager private constructor(private val context: Context) {
     private val _state = MutableStateFlow(LocalTtsUiState(model = model))
     val state: StateFlow<LocalTtsUiState> = _state.asStateFlow()
 
-    private val pollingJobs = ConcurrentHashMap<String, Job>()
+    private val pollingJobs = ConcurrentHashMap<Long, Job>()
 
     init {
         scope.launch {
@@ -114,13 +114,13 @@ class LocalTtsModelManager private constructor(private val context: Context) {
     }
 
     suspend fun cancelDownload() = withContext(Dispatchers.IO) {
-        val prefs = preferences.modelState(model.id).first()
-        prefs.downloadId?.let { downloadManager.remove(it) }
-        preferences.setDownloadId(model.id, null)
-        preferences.setPendingAutoEnable(model.id, false)
-        preferences.setEnabled(model.id, false)
-        preferences.setDownloadFileIndex(model.id, 0)
-        pollingJobs.remove(model.id)?.cancel()
+    val prefs = preferences.modelState(model.id).first()
+    prefs.downloadId?.let { downloadManager.remove(it) }
+    preferences.setDownloadId(model.id, null)
+    preferences.setPendingAutoEnable(model.id, false)
+    preferences.setEnabled(model.id, false)
+    preferences.setDownloadFileIndex(model.id, 0)
+    prefs.downloadId?.let { pollingJobs.remove(it)?.cancel() }
         // 删除部分下载的文件
         model.files.forEach { mf ->
         model.stagingFile(appContext, mf.fileName).takeIf { it.exists() }?.delete()
@@ -275,18 +275,18 @@ class LocalTtsModelManager private constructor(private val context: Context) {
     }
 
     private fun startPolling(downloadId: Long, downloadModel: LocalTtsModel, fileIndex: Int) {
-        if (pollingJobs[downloadModel.id]?.isActive == true) return
-        pollingJobs[downloadModel.id] = scope.launch {
-            try {
-                while (true) {
-                    val shouldContinue = pollDownload(downloadId, downloadModel, fileIndex)
-                    if (!shouldContinue) break
-                    delay(1_000)
-                }
-            } finally {
-                pollingJobs.remove(downloadModel.id)
+    if (pollingJobs[downloadId]?.isActive == true) return
+    pollingJobs[downloadId] = scope.launch {
+        try {
+            while (true) {
+                val shouldContinue = pollDownload(downloadId, downloadModel, fileIndex)
+                if (!shouldContinue) break
+                delay(1_000)
             }
+        } finally {
+            pollingJobs.remove(downloadId)
         }
+    }
     }
 
     private suspend fun pollDownload(
