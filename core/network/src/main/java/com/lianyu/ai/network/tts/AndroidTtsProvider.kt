@@ -19,11 +19,8 @@ class AndroidTtsProvider : TtsProviderInterface {
     @Volatile private var ready: Boolean = false
 
     override suspend fun synthesize(context: Context, text: String, voiceId: String?): String? {
-        // 系统 TTS 是"边合成边播放"，没有落盘文件，因此无法像其它 provider 一样返回文件路径。
-        // 用 SYSTEM_TTS_PLAYED 哨兵值表示"确实在本机播放成功了"；超时/异常/引擎报错才返回 null。
-        // 这样设置页"试听"才能反映真实结果，而不是无脑显示"已播放"。
-        return withTimeoutOrNull(TimeoutBudgets.TTS_SYNTH_MS) {
-            val t = tts ?: return@withTimeoutOrNull null
+        val result = withTimeoutOrNull(TimeoutBudgets.TTS_SYNTH_MS) {
+            val t = tts ?: run { lastDiagnostic = "系统语音引擎尚未初始化"; return@withTimeoutOrNull null }
             val deferred = CompletableDeferred<Unit>()
             val succeeded = AtomicBoolean(false)
 
@@ -35,8 +32,12 @@ class AndroidTtsProvider : TtsProviderInterface {
                         deferred.complete(Unit)
                     }
                     @Deprecated("Deprecated in Java")
-                    override fun onError(utteranceId: String?) { deferred.complete(Unit) }
+                    override fun onError(utteranceId: String?) {
+                        lastDiagnostic = "系统语音引擎播放失败"
+                        deferred.complete(Unit)
+                    }
                     override fun onError(utteranceId: String?, errorCode: Int) {
+                        lastDiagnostic = "系统语音引擎播放失败（错误码=$errorCode）"
                         SecureLog.w("AndroidTTS", "speak onError code=$errorCode")
                         deferred.complete(Unit)
                     }
@@ -50,16 +51,27 @@ class AndroidTtsProvider : TtsProviderInterface {
                 t.setPitch(1.0f)
                 val queueResult = t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_${System.currentTimeMillis()}")
                 if (queueResult != TextToSpeech.SUCCESS) {
+                    lastDiagnostic = "系统语音引擎拒绝播放请求（结果码=$queueResult），请检查系统 TTS 设置或换一个语音引擎"
                     SecureLog.w("AndroidTTS", "speak() queue failed, result=$queueResult")
                     return@withTimeoutOrNull null
                 }
                 deferred.await()
             } catch (e: Exception) {
+                lastDiagnostic = "系统语音引擎异常：${e.message ?: e.javaClass.simpleName}"
                 SecureLog.e("AndroidTTS", "speak error", e)
                 return@withTimeoutOrNull null
             }
-            if (succeeded.get()) SYSTEM_TTS_PLAYED else null
+            if (succeeded.get()) {
+                lastDiagnostic = null
+                SYSTEM_TTS_PLAYED
+            } else {
+                null
+            }
         }
+        if (result == null && lastDiagnostic == null) {
+            lastDiagnostic = "系统语音引擎合成超时（超过 ${TimeoutBudgets.TTS_SYNTH_MS / 1000}秒未响应），请检查是否安装了可用的语音引擎"
+        }
+        return result
     }
 
     override fun getVoices(): List<TtsVoice> = listOf(
