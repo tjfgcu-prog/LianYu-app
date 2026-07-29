@@ -51,11 +51,13 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
                 val modelId = preferences.selectedModelId.first()
                 val modelState = preferences.modelState(modelId).first()
                 if (!modelState.isEnabled) {
+                    lastError = "本地 TTS 模型未启用"
                     SecureLog.w(TAG, "本地 TTS 未启用 (model=$modelId)")
                     return@withContext null
                 }
                 val model = LocalTtsCatalog.findById(modelId)
                 if (!model.isAllFilesPresent(context)) {
+                    lastError = "模型文件缺失，请重新下载"
                     SecureLog.w(TAG, "模型文件缺失: ${model.id}")
                     return@withContext null
                 }
@@ -72,8 +74,10 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
                 LocalTtsWavWriter.writePcmToWav(audio.samples, audio.sampleRate, outputFile)
 
                 SecureLog.i(TAG, "本地 TTS 合成成功: ${outputFile.absolutePath}")
+                lastError = null
                 outputFile.absolutePath
             } catch (e: Throwable) {
+                lastError = e.message ?: e.javaClass.simpleName
                 SecureLog.e(TAG, "本地 TTS 合成失败", e)
                 null
             }
@@ -174,6 +178,13 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
 
     companion object {
         private const val TAG = "SherpaLocalTts"
+
+        /**
+         * 最近一次合成失败的原因，供设置页"试听"展示诊断信息。
+         */
+        @Volatile
+        var lastError: String? = null
+            private set
 
         /**
          * 释放引擎（供 LocalTtsModelManager.disable() 调用）。
