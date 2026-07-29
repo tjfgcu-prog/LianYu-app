@@ -20,7 +20,7 @@ class AndroidTtsProvider : TtsProviderInterface {
 
     override suspend fun synthesize(context: Context, text: String, voiceId: String?): String? {
         val result = withTimeoutOrNull(TimeoutBudgets.TTS_SYNTH_MS) {
-            val t = tts ?: run { lastDiagnostic = "系统语音引擎尚未初始化"; return@withTimeoutOrNull null }
+            val t = tts ?: run { if (lastDiagnostic == null) lastDiagnostic = "系统语音引擎尚未初始化"; return@withTimeoutOrNull null }
             val deferred = CompletableDeferred<Unit>()
             val succeeded = AtomicBoolean(false)
 
