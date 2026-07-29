@@ -882,13 +882,6 @@ class Converters {
         return runCatching { FileFormat.valueOf(value.trim().uppercase()) }.getOrDefault(FileFormat.UNKNOWN)
     }
 
-    @TypeConverter
-    fun fromMemoryCategory(value: MemoryCategory): String = value.name
-
-    @TypeConverter
-    fun toMemoryCategory(value: String?): MemoryCategory {
-        if (value.isNullOrBlank()) return MemoryCategory.FACT
-        return runCatching { MemoryCategory.valueOf(value.trim().uppercase()) }.getOrDefault(MemoryCategory.FACT)
-    }
+    
 
 }
