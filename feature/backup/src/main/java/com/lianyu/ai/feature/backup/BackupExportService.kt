@@ -49,7 +49,7 @@ class BackupExportService(private val context: Context) {
             chatGroups = chatGroups,
             groupMessages = groupMessages,
             
-            tempMemories = tempMemories,
+            
             tokenUsages = tokenUsages
         )
     }
