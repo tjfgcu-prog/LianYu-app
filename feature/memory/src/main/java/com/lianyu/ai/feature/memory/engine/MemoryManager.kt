@@ -53,6 +53,8 @@ class MemoryManager private constructor(
                 }
             }
         }
+        private val _memoriesChanged = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 8)
+        val memoriesChanged: kotlinx.coroutines.flow.SharedFlow<String> = _memoriesChanged.asSharedFlow()
     }
 
     private val store = MemoryStore(context, deviceId)
@@ -417,6 +419,7 @@ class MemoryManager private constructor(
                         lastAccessed = System.currentTimeMillis()
                     )
                     updateMemoryInternal(scope, sourceId, merged)
+                    _memoriesChanged.tryEmit(key)
                     return@runCatching existing.id
                 }
 
@@ -569,6 +572,7 @@ class MemoryManager private constructor(
      * 更新记忆（内部）
      */
     private fun updateMemoryInternal(scope: MemoryScope, sourceId: Long, item: MemoryItem) {
+        _memoriesChanged.tryEmit(scopeKey(scope, sourceId))
         val key = scopeKey(scope, sourceId)
 
         // 更新短期记忆
@@ -635,11 +639,11 @@ class MemoryManager private constructor(
     /**
      * 删除记忆
      */
-    suspend fun deleteMemory(id: String) {
-        // 在所有作用域中查找并删除
-        listOf(MemoryScope.GLOBAL to 0L).forEach { (scope, sid) ->
-            deleteMemoryFromScope(scope, sid, id)
-        }
+    suspend fun deleteMemory(scope: MemoryScope, sourceId: Long, id: String) {    
+        deleteMemoryFromScope(scope, sourceId, id)}suspend 
+    fun updateMemory(scope: MemoryScope, sourceId: Long, oldId: String, newContent: String, newCategory: MemoryCategory, newImportance: Float): String? {    
+        deleteMemoryFromScope(scope, sourceId, oldId)    
+        return saveMemory(newContent, newCategory, newImportance, MemorySource.MANUAL, sourceId, scope)}
     }
 
     /**
@@ -658,6 +662,7 @@ class MemoryManager private constructor(
         indexCache[key]?.remove(id)
 
         if (deleted) {
+            _memoriesChanged.tryEmit(key)
             schedulePersist(scope, sourceId)
             // [R9 FIX] 删除后也清除查询缓存
             invalidateQueryCache()
