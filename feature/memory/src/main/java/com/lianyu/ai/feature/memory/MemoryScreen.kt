@@ -62,9 +62,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
-import com.lianyu.ai.database.model.MemoryCategory
-import com.lianyu.ai.database.model.MemoryEntry
-import com.lianyu.ai.database.model.TempMemory
+import com.lianyu.ai.feature.memory.engine.MemoryCategory
+import com.lianyu.ai.feature.memory.engine.MemoryItem
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -176,25 +175,12 @@ fun MemoryScreen(
                         )
                             }
                         )
-                        Tab(
-                            selected = selectedTab == 1,
-                            onClick = { selectedTab = 1 },
-                            text = {
-                                Text(
-                            stringResource(R.string.temp_memory),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 13.sp,
-                                fontWeight = if (selectedTab == 1) FontWeight.Medium else FontWeight.Normal
-                            ),
-                            color = if (selectedTab == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                            }
-                        )
+                        
                     }
 
                     when (selectedTab) {
                         0 -> CoreMemoryTab(companionId = companion.id, viewModel = viewModel)
-                        1 -> TempMemoryTab(companionId = companion.id, viewModel = viewModel)
+                        
                     }
                 } ?: run {
                     Box(
@@ -295,7 +281,7 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
     val categories = MemoryCategory.values()
     var selectedCategory by remember { mutableStateOf<MemoryCategory?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
-    var editingMemory by remember { mutableStateOf<MemoryEntry?>(null) }
+    var editingMemory by remember { mutableStateOf<MemoryItem?>(null) }
 
     val filteredMemories = selectedCategory?.let { category ->
         memories.filter { it.category == category }
@@ -375,7 +361,7 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
                 items(filteredMemories, key = { it.id }) { memory ->
                     MemoryItemCard(
                         memory = memory,
-                        onDelete = { viewModel.deleteMemory(memory) },
+                        onDelete = { viewModel.deleteMemory(companionId, memory) },
                         onEdit = { editingMemory = it }
                     )
                 }
@@ -392,23 +378,22 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
                 showAddDialog = false
                 editingMemory = null
             },
-            onSave = { memory ->
+            onSave = { content, category, importance ->
                 if (editingMemory != null) {
-                    viewModel.updateMemory(memory)
+                    viewModel.updateMemory(companionId, editingMemory!!, content, category, importance)
                 } else {
                     viewModel.addManualMemory(
                         companionId = companionId,
-                        content = memory.content,
-                        category = memory.category,
-                        importance = memory.importance,
-                        context = memory.context
+                        content = content,
+                        category = category,
+                        importance = importance
                     )
                 }
                 showAddDialog = false
                 editingMemory = null
             },
             onDelete = if (editingMemory != null) ({
-                viewModel.deleteMemory(editingMemory!!)
+                viewModel.deleteMemory(companionId, editingMemory!!)
                 editingMemory = null
             }) else null
         )
@@ -472,9 +457,9 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun MemoryItemCard(
-    memory: MemoryEntry,
+    memory: MemoryItem,
     onDelete: () -> Unit,
-    onEdit: (MemoryEntry) -> Unit = {}
+    onEdit: (MemoryItem) -> Unit = {}
 ) {
     val dateFormat = remember { SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()) }
 
@@ -683,16 +668,15 @@ fun MemoryCategory.getIcon(): ImageVector = when (this) {
 @Composable
 fun MemoryEditDialog(
     companionId: Long,
-    existingMemory: MemoryEntry?,
+    existingMemory: MemoryItem?,
     categories: List<MemoryCategory>,
     onDismiss: () -> Unit,
-    onSave: (MemoryEntry) -> Unit,
+    onSave: (content: String, category: MemoryCategory, importance: Float) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
     var content by remember { mutableStateOf(existingMemory?.content ?: "") }
     var selectedCategory by remember { mutableStateOf(existingMemory?.category ?: MemoryCategory.FACT) }
     var importance by remember { mutableStateOf(existingMemory?.importance ?: 0.7f) }
-    var context by remember { mutableStateOf(existingMemory?.context ?: "") }
 
     val isEditing = existingMemory != null
 
@@ -766,34 +750,14 @@ fun MemoryEditDialog(
                     Text("高", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
-                OutlinedTextField(
-                    value = context,
-                    onValueChange = { context = it },
-                    label = { Text("补充说明（可选）") },
-                    placeholder = { Text("记录该记忆的来源或背景信息") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     if (content.isNotBlank()) {
-                        onSave(
-                            existingMemory?.copy(
-                                content = content.trim(),
-                                category = selectedCategory,
-                                importance = importance,
-                                context = context.trim()
-                            ) ?: MemoryEntry(
-                                companionId = companionId,
-                                content = content.trim(),
-                                category = selectedCategory,
-                                importance = importance,
-                                context = context.trim()
-                            )
-                        )
+                        onSave(content.trim(), selectedCategory, importance)
                     }
                 },
                 enabled = content.isNotBlank()
