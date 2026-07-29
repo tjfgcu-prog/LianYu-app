@@ -1,7 +1,7 @@
 package com.lianyu.ai.feature.backup.model
 
 import com.lianyu.ai.database.model.FileFormat
-import com.lianyu.ai.database.model.MemoryCategory
+
 import com.lianyu.ai.database.model.MessageType
 import kotlinx.serialization.Serializable
 
@@ -17,8 +17,8 @@ import kotlinx.serialization.Serializable
  * @param chatMessages 一对一聊天消息（已解密）
  * @param chatGroups 群聊定义
  * @param groupMessages 群聊消息（已解密）
- * @param memoryEntries 长期记忆（已解密）
- * @param tempMemories 短期记忆
+
+
  * @param tokenUsages Token 使用统计
  */
 @Serializable
@@ -30,8 +30,8 @@ data class BackupData(
     val chatMessages: List<ChatMessageSnapshot>,
     val chatGroups: List<ChatGroupSnapshot>,
     val groupMessages: List<GroupMessageSnapshot>,
-    val memoryEntries: List<MemoryEntrySnapshot>,
-    val tempMemories: List<TempMemorySnapshot>,
+
+    
     val tokenUsages: List<TokenUsageSnapshot>
 )
 
@@ -87,29 +87,9 @@ data class GroupMessageSnapshot(
     val linkString: String = ""
 )
 
-@Serializable
-data class MemoryEntrySnapshot(
-    val id: Long,
-    val companionId: Long,
-    val content: String,
-    val category: String = "FACT",
-    val importance: Float = 0.5f,
-    val context: String = "",
-    val accessCount: Int = 1,
-    val timestamp: Long,
-    val lastAccessed: Long,
-    val deviceId: String = ""
-)
 
-@Serializable
-data class TempMemorySnapshot(
-    val id: Long,
-    val companionId: Long,
-    val userInput: String,
-    val botResponse: String,
-    val timestamp: Long,
-    val deviceId: String = ""
-)
+
+
 
 @Serializable
 data class TokenUsageSnapshot(
