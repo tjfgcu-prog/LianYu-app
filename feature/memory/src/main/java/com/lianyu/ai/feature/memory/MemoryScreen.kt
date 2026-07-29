@@ -400,34 +400,7 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
     }
 }
 
-@Composable
-fun TempMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
-    val tempMemories by viewModel.getTempMemoriesForCompanion(companionId).collectAsState(initial = emptyList())
 
-    if (tempMemories.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                stringResource(R.string.no_temp_memory),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(tempMemories, key = { it.id }) { tempMemory ->
-                TempMemoryItemCard(tempMemory = tempMemory)
-            }
-        }
-    }
-}
 
 @Composable
 fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
@@ -560,60 +533,7 @@ fun MemoryItemCard(
     }
 }
 
-@Composable
-fun TempMemoryItemCard(tempMemory: TempMemory) {
-    val dateFormat = remember { SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.History,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = dateFormat.format(Date(tempMemory.timestamp)),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.you, tempMemory.userInput),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "TA: ${tempMemory.botResponse}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-            )
-        }
-    }
-}
 
 @Composable
 fun EmptyMemoryState() {
