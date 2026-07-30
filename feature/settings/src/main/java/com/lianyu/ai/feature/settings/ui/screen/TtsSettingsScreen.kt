@@ -203,7 +203,7 @@ fun TtsSettingsScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = PetalPrimary, modifier = Modifier.size(24.dp))
                 }
-                Text("TTS 语音设置", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                Text("语音", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
                 Box(modifier = Modifier.size(40.dp))
             }
 
