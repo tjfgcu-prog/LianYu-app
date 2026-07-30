@@ -94,4 +94,17 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         // searchContent 保持明文以支持 LIKE 查询（与 encryptForStorage 中 searchContent 的处理一致）。
         chatMessageDao.updateMessageContent(messageId, ChatMessageCrypto.encrypt(content), content)
     }
+
+    /**
+     * 把一条已发送的文字消息原地升级为语音消息（TTS 异步合成完成后调用）。
+     * content 同样需要加密存储，跟 updateMessageContent 保持一致。
+     */
+    suspend fun updateMessageAsVoice(messageId: Long, displayContent: String, linkString: String) {
+        chatMessageDao.updateMessageAsVoice(
+            messageId,
+            ChatMessageCrypto.encrypt(displayContent),
+            com.lianyu.ai.database.model.MessageType.VOICE,
+            linkString
+        )
+    }
 }
