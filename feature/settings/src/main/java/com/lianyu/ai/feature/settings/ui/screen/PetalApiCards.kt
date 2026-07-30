@@ -861,7 +861,7 @@ fun PetalApiCard(
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     TextButton(onClick = onSelectActive) {
-                        Text("设为活跃", color = PetalPrimary, fontSize = 13.sp)
+                        Text("启用", color = PetalPrimary, fontSize = 13.sp)
                     }
                 }
             }
@@ -970,7 +970,7 @@ fun PetalSavedApiCard(
                     if (isActive) {
                         PetalStatChip(
                             icon = "\u2713",
-                            text = "活跃",
+                            text = "启用中",
                             color = PetalGreen,
                             isDarkTheme = isDarkTheme
                         )
