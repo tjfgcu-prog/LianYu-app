@@ -16,13 +16,8 @@ android {
         versionCode = 13
         versionName = "9.9.9"
 
-        
-
         // Force multi-DEX output
         multiDexEnabled = true
-
-
-        
 
         buildConfigField("String", "HARDENING_LEVEL", "\"OPEN_SOURCE\"")
 
@@ -85,13 +80,19 @@ android {
 
 
 
-// ── 剥离 sherpa-onnx aar 内置的 libonnxruntime.so ──
+// ── 让 sherpa-onnx 自带的 libonnxruntime.so 与官方 onnxruntime-android 共存 ──
 // 原因：core:network / feature:chat 里的 sherpa-onnx aar 自带一份 libonnxruntime.so，
 // 跟 feature:memory 直接依赖的官方 onnxruntime-android 里的 libonnxruntime.so 路径完全相同
 // （lib/<abi>/libonnxruntime.so），打包时 mergeDebugNativeLibs 会因为两个不同文件同名而报错。
-// sherpa 的 Java 层不暴露 onnxruntime API，它的 libonnxruntime.so 只给它自己的
-// libsherpa-onnx-jni.so 内部调用；剔除后 APK 里只保留官方 onnxruntime-android 那一份，
-// sherpa 运行时会动态链接到这唯一一份（ONNX Runtime C API 向后兼容，可跨版本调用）。
+//
+// 做法：不再"二选一剥离"，而是用 patchelf 把 sherpa 相关的三个 so
+// （libsherpa-onnx-jni.so / libsherpa-onnx-c-api.so / libsherpa-onnx-cxx-api.so）
+// 对 libonnxruntime.so 的动态链接引用，改写指向一个改名后的新文件 libonnxruntime_sherpa.so，
+// 同时把 sherpa 自带的那份 so 本身也改名 + 改内部 SONAME。
+// 这样 APK 里两份 onnxruntime 动态库完全独立共存：
+//   libonnxruntime.so         → 官方版本，给 feature:memory 的 Java API 用
+//   libonnxruntime_sherpa.so  → sherpa 自带、与其 JNI 完全匹配的版本，只给 sherpa 自己用
+// 两边各用各的版本，不存在互相兼容风险。
 val sherpaOnnxRawAar = file("../core/network/libs/sherpa-onnx-1.13.3.aar")
 
 val extractSherpaOnnxAar = tasks.register<Copy>("extractSherpaOnnxAar") {
@@ -99,24 +100,38 @@ val extractSherpaOnnxAar = tasks.register<Copy>("extractSherpaOnnxAar") {
     into(layout.buildDirectory.dir("sherpaAarExtract"))
 }
 
-val stripSherpaOnnxRuntime = tasks.register("stripSherpaOnnxRuntime") {
+val patchSherpaOnnxRuntime = tasks.register("patchSherpaOnnxRuntime") {
     dependsOn(extractSherpaOnnxAar)
     doLast {
         val dir = layout.buildDirectory.dir("sherpaAarExtract").get().asFile
         listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").forEach { abi ->
-            val so = file("$dir/jni/$abi/libonnxruntime.so")
-            if (so.exists()) {
-                so.delete()
-                println("Stripped libonnxruntime.so from sherpa-onnx aar ($abi)")
+            val jniDir = file("$dir/jni/$abi")
+            val originalOnnx = file("$jniDir/libonnxruntime.so")
+            val renamedOnnx = file("$jniDir/libonnxruntime_sherpa.so")
+            if (!originalOnnx.exists()) return@forEach
+
+            originalOnnx.renameTo(renamedOnnx)
+            exec {
+                commandLine("patchelf", "--set-soname", "libonnxruntime_sherpa.so", renamedOnnx.absolutePath)
             }
+
+            listOf("libsherpa-onnx-jni.so", "libsherpa-onnx-c-api.so", "libsherpa-onnx-cxx-api.so").forEach { lib ->
+                val target = file("$jniDir/$lib")
+                if (target.exists()) {
+                    exec {
+                        commandLine("patchelf", "--replace-needed", "libonnxruntime.so", "libonnxruntime_sherpa.so", target.absolutePath)
+                    }
+                }
+            }
+            println("Patched sherpa-onnx so for $abi: libonnxruntime.so -> libonnxruntime_sherpa.so")
         }
     }
 }
 
 val repackSherpaOnnxAar = tasks.register<Zip>("repackSherpaOnnxAar") {
-    dependsOn(stripSherpaOnnxRuntime)
+    dependsOn(patchSherpaOnnxRuntime)
     from(layout.buildDirectory.dir("sherpaAarExtract"))
-    archiveFileName.set("sherpa-onnx-1.13.3-stripped.aar")
+    archiveFileName.set("sherpa-onnx-1.13.3-patched.aar")
     destinationDirectory.set(layout.buildDirectory.dir("sherpaAarOutput"))
 }
 
@@ -146,8 +161,8 @@ dependencies {
     
 
     // sherpa-onnx: 离线流式语音识别/合成，运行时由 app 模块提供
-    // 注意：不直接引用原始 aar，而是引用下面 repackSherpaOnnxAar 任务生成的"剥离版"aar
-    // （剔除了内置的 libonnxruntime.so，避免与 feature:memory 的官方 onnxruntime-android 冲突）
+    // 使用下面 repackSherpaOnnxAar 任务生成的"改名版"aar
+    // （sherpa 自带的 libonnxruntime.so 已改名为 libonnxruntime_sherpa.so，与官方版共存不冲突）
     implementation(files(repackSherpaOnnxAar.flatMap { it.archiveFile }))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -183,4 +198,3 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
-
