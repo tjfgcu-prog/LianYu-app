@@ -616,7 +616,6 @@ private fun ApiCardsSection(
                     onDelete = { viewModel.deleteConfig(config) },
                     onTest = { viewModel.testConnection(config) },
                     onToggleEnabled = { viewModel.toggleConfigEnabled(config) },
-                    onSelectActive = { viewModel.selectActiveConfig(config) },
                     onFetchModels = { baseUrl: String, apiKey: String, provider: String, skipCertVerify: Boolean ->
                         viewModel.fetchModels(baseUrl, apiKey, provider, skipCertVerify)
                     },
