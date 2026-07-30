@@ -367,25 +367,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun selectActiveConfig(config: ApiConfig) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val oldKey = connectionKey(config)
-                val actualConfig = resolveConfig(config)
-                val newKey = connectionKey(actualConfig)
-                // Migrate connection status if key changed (new config got an id)
-                if (oldKey != newKey) {
-                    _connectionStatus.value[oldKey]?.let { updateConnectionStatus(newKey, it) }
-                }
-                repository.disableOtherConfigs(actualConfig.id)
-                val updated = actualConfig.copy(isEnabled = true)
-                repository.updateConfig(updated)
-                _saveResult.emit(SaveResult.Success("已切换到 ${actualConfig.provider.displayName}"))
-            } catch (e: Exception) {
-                _saveResult.emit(SaveResult.Error("切换失败"))
-            }
-        }
-    }
+    
 
     private suspend fun resolveConfig(config: ApiConfig): ApiConfig {
         if (config.id > 0) return config
