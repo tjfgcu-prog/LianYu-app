@@ -120,6 +120,7 @@ class AiResponseFinalizer(
             }
             val aiMessage = buildAiMessage(safeProcessed)
             val id = chatRepository.sendMessageAndGetId(aiMessage)
+            scheduleVoiceUpgrade(id, safeProcessed)
             SecureLog.d("ChatViewModel", "$logMessage, length=${aiContent.length}, id=$id")
             reasoningText.value = ""
             isReasoning.value = false
@@ -142,6 +143,7 @@ class AiResponseFinalizer(
                 val safeSegment = segment.ifBlank { "\u200B" }
                 val msg = buildAiMessage(safeSegment)
                 val id = chatRepository.sendMessageAndGetId(msg)
+                scheduleVoiceUpgrade(id, safeSegment)
                 lastId = id
                 SecureLog.d("ChatViewModel", "$logMessage segment ${index + 1}/${segments.size}, length=${segment.length}, id=$id")
             }
@@ -225,6 +227,7 @@ class AiResponseFinalizer(
 
                 val followUpMsg = buildAiMessage(followUp)
                 val msgId = chatRepository.sendMessageAndGetId(followUpMsg)
+                scheduleVoiceUpgrade(msgId, followUp)
                 notifyExternalBridgeNoop(msgId, followUp)
                 SecureLog.d("ChatViewModel", "Follow-up question sent: $followUp")
             } catch (e: Exception) {
@@ -256,31 +259,40 @@ class AiResponseFinalizer(
     }
 
     /**
-     * 把一段文本构建为 ChatMessage：语音回复模式下合成语音气泡消息，
-     * 合成失败时自动降级为普通文字消息（保证消息一定能发出去）。
+     * 把一段文本构建为 ChatMessage：始终先构建为文字消息（不等待 TTS），
+     * 避免消息展示被语音合成阻塞（合成耗时不定，阻塞会导致"正在输入…"长时间卡住甚至看似卡死）。
+     * 语音回复模式下，消息落库后会异步合成语音并原地升级为语音气泡，见 [scheduleVoiceUpgrade]。
      */
-    private suspend fun buildAiMessage(text: String): ChatMessage {
-        if (chatTtsController.isVoiceReplyEnabled()) {
-            val result = chatTtsController.synthesizeVoiceReply(text)
-            if (result != null) {
-                val (path, duration) = result
-                return ChatMessage(
-                    companionId = companionId,
-                    content = "[语音] $duration\"",
-                    isFromUser = false,
-                    timestamp = System.currentTimeMillis(),
-                    type = MessageType.VOICE,
-                    linkString = path
-                )
-            }
-            SecureLog.w("ChatViewModel", "voice synthesis failed, fallback to text")
-        }
+    private fun buildAiMessage(text: String): ChatMessage {
         return ChatMessage(
             companionId = companionId,
             content = text,
             isFromUser = false,
             timestamp = System.currentTimeMillis()
         )
+    }
+
+    /**
+     * 语音回复模式下，消息文字先落库展示，这里异步合成语音，成功后把该消息原地升级为语音气泡。
+     * 用 applicationApiScope（应用级作用域）而不是当前请求的协程作用域，
+     * 这样即使用户切走聊天页、当前请求被取消，语音合成仍会继续完成并正确更新消息。
+     * 合成失败或超时：消息保持文字形式，不影响消息本身已经展示。
+     */
+    private fun scheduleVoiceUpgrade(messageId: Long, text: String) {
+        if (!chatTtsController.isVoiceReplyEnabled()) return
+        applicationApiScope.launch {
+            try {
+                val result = chatTtsController.synthesizeVoiceReply(text)
+                if (result != null) {
+                    val (path, duration) = result
+                    chatRepository.updateMessageAsVoice(messageId, "[语音] $duration\"", path)
+                } else {
+                    SecureLog.w("ChatViewModel", "voice synthesis failed, message stays as text (id=$messageId)")
+                }
+            } catch (e: Exception) {
+                SecureLog.w("ChatViewModel", "voice upgrade failed for id=$messageId: ${e.message}")
+            }
+        }
     }
 
     private fun splitIntoSegments(text: String): List<String> {
