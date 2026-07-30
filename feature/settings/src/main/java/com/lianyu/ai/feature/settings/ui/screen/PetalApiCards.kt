@@ -653,7 +653,6 @@ fun PetalSavedApiCard(
     onDelete: () -> Unit,
     onTest: (ApiConfig) -> Unit,
     onToggleEnabled: () -> Unit,
-    onSelectActive: () -> Unit,
     onFetchModels: (String, String, String, Boolean) -> Unit,
     fetchedModels: Map<String, List<String>>,
     modelFetchStates: Map<String, SettingsViewModel.ModelFetchState>,
@@ -667,7 +666,7 @@ fun PetalSavedApiCard(
     onQueryBalance: (() -> Unit)? = null
 ) {
     var editingConfig by remember { mutableStateOf<ApiConfig?>(null) }
-    val cardColor = if (isDarkTheme) PetalPrimaryContainer.copy(alpha = 0.08f) else PetalSurfaceContainer
+    val cardColor = if (isDarkTheme) PetalPrimaryContainer.copy(alpha = 0.08f) else PetalSecondaryContainer
 
     // 余额查询：连接成功后才自动查一次
     var balanceQueried by remember { mutableStateOf(false) }
@@ -711,16 +710,14 @@ fun PetalSavedApiCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Active indicator
-                    if (isActive) {
-                        PetalStatChip(
-                            icon = "\u2713",
-                            text = "启用中",
-                            color = PetalGreen,
-                            isDarkTheme = isDarkTheme
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
+    // Active indicator：始终显示，启用中为绿色，未启用为灰色
+    PetalStatChip(
+        icon = if (isActive) "\u2713" else "\u25CB",
+        text = if (isActive) "启用中" else "未启用",
+        color = if (isActive) PetalGreen else textSecondaryColor,
+        isDarkTheme = isDarkTheme
+    )
+    Spacer(modifier = Modifier.width(4.dp))
 
                     // Connection status indicator
                     val statusColor = when (connectionResult.status) {
@@ -878,8 +875,8 @@ fun PetalSavedApiCard(
                         Text("测试", color = PetalPrimary, fontSize = 13.sp)
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    TextButton(onClick = onSelectActive) {
-                        Text("设为活跃", color = PetalPrimary, fontSize = 13.sp)
+                    TextButton(onClick = onToggleEnabled) {
+                        Text(if (isActive) "停止" else "启用", color = if (isActive) PetalError else PetalGreen, fontSize = 13.sp)
                     }
                 }
             }
