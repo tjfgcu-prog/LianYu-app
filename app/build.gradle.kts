@@ -111,16 +111,16 @@ val patchSherpaOnnxRuntime = tasks.register("patchSherpaOnnxRuntime") {
             if (!originalOnnx.exists()) return@forEach
 
             originalOnnx.renameTo(renamedOnnx)
-            project.exec {
+            providers.exec {
                 commandLine("patchelf", "--set-soname", "libonnxruntime_sherpa.so", renamedOnnx.absolutePath)
-            }
+            }.result.get()
 
             listOf("libsherpa-onnx-jni.so", "libsherpa-onnx-c-api.so", "libsherpa-onnx-cxx-api.so").forEach { lib ->
                 val target = file("$jniDir/$lib")
                 if (target.exists()) {
-                    project.exec {
+                    providers.exec {
                         commandLine("patchelf", "--replace-needed", "libonnxruntime.so", "libonnxruntime_sherpa.so", target.absolutePath)
-                    }
+                    }.result.get()
                 }
             }
             println("Patched sherpa-onnx so for $abi: libonnxruntime.so -> libonnxruntime_sherpa.so")
