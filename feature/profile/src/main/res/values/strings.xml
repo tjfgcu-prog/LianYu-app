@@ -33,7 +33,7 @@
     <string name="framerate">帧率设置</string>
 
     <!-- 系统与维护 -->
-    <string name="tts_settings">TTS 语音设置</string>
+    <string name="tts_settings">语音</string>
     <string name="tts_settings_desc">配置语音合成服务</string>
     <string name="token_usage">Token 使用统计</string>
     <string name="token_usage_desc">查看AI对话Token消耗情况</string>
