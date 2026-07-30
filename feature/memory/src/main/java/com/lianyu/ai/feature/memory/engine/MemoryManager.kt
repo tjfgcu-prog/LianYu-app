@@ -728,7 +728,10 @@ private fun isLikelyQuestion(text: String): Boolean {
     val t = text.trim()
     if (t.endsWith("?") || t.endsWith("？")) return true
     if (t.endsWith("吗") || t.endsWith("呢")) return true
-    val markers = listOf("还是", "多少", "怎么样", "为什么", "什么时候")
+    val markers = listOf(
+        "还是", "多少", "怎么样", "怎么", "为什么", "什么时候", "什么",
+        "谁", "哪", "如何", "几点", "几岁", "是不是", "有没有", "对不对", "好不好"
+    )
     return markers.any { t.contains(it) }
 }
     private fun extractMemories(text: String): List<Triple<String, MemoryCategory, Float>> {
