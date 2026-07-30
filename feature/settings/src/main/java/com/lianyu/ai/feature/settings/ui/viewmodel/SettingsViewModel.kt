@@ -9,6 +9,7 @@ import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ApiConfig
 import com.lianyu.ai.database.model.ApiProvider
 import com.lianyu.ai.database.repository.ApiConfigRepository
+import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.domain.LocalModelProvider
 import com.lianyu.ai.domain.ModelState
 import com.lianyu.ai.domain.ModelStatus
@@ -31,7 +32,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     // [R6 FIX] 改为懒加载 ServiceRegistry 单例：原 6 处直接 new AiService(getApplication())，
     // 每次点击都新建网关实例（含 OkHttpClient/Retrofit/重试器/限流器），绕过单例。
     private val aiService: AiService by lazy {
-        ServiceRegistry.getOrThrow(AiService::class.java)
+        // AiService 注册在 ServiceRegistry 里的 key 是接口类型 AiServiceProvider（见 LianYuApplication），
+        // 这里按具体实现类取用，需要用接口类型去查找再转型（实际实例就是 AiService，转型是安全的）。
+        ServiceRegistry.getOrThrow(AiServiceProvider::class.java) as AiService
     }
     // [R6 FIX] localModelProvider 也改 lazy，避免构造时 ServiceRegistry.get 返回 null
     private val localModelProvider by lazy {
