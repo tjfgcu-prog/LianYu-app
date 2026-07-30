@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -120,24 +119,26 @@ fun VoiceMessageBubble(
 
     Box(
         modifier = modifier
-            .widthIn(max = 280.dp)
+            .widthIn(max = 190.dp)
             .clickable { togglePlayback() }
             .background(bubbleColor, RoundedCornerShape(16.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            IconButton(
-                onClick = { togglePlayback() },
-                modifier = Modifier.size(36.dp)
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clickable { togglePlayback() },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     contentDescription = if (isPlaying) "暂停" else "播放",
                     tint = iconColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -151,7 +152,7 @@ fun VoiceMessageBubble(
                 currentPosition = currentPosition.toInt()
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Text(
                 text = formatDuration(if (isPlaying && mediaPlayer != null) ((mediaPlayer?.duration ?: duration * 1000) / 1000) else duration),
@@ -172,8 +173,8 @@ private fun VoiceWaveform(
     currentPosition: Int
 ) {
     val barCount = 5
-    
-    Canvas(modifier = Modifier.width(80.dp).height(28.dp)) {
+
+    Canvas(modifier = Modifier.width(52.dp).height(20.dp)) {
         val barWidth = size.width / (barCount * 2 + 1)
         val maxHeight = size.height * 0.85f
         
