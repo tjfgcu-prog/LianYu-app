@@ -242,12 +242,6 @@ fun MainScreen(mainActivity: Activity) {
                                     onCreateGroupClick = { navController.navigate(MainRoute.CreateGroup.route) }
                                 )
                                 2 -> ProfileScreen(
-                                    // 记忆与管理
-                                    onMemoryClick = { navController.navigate(MainRoute.Memory.route) },
-                                    onContextMemoryClick = { navController.navigate(MainRoute.ContextMemory.route) },
-                                    // AI与外观
-                                    onSettingsClick = { navController.navigate(MainRoute.Settings.route) },
-                                    onThemeClick = { navController.navigate(MainRoute.Theme.route) },
                                     // 总设置
                                     onGeneralSettingsClick = { navController.navigate(MainRoute.GeneralSettings.route) }
                                 )
@@ -304,6 +298,12 @@ fun MainScreen(mainActivity: Activity) {
                 composable(MainRoute.GeneralSettings.route) {
                     GeneralSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
+                        // 记忆与管理
+                        onMemoryClick = { navController.navigate(MainRoute.Memory.route) },
+                        onContextMemoryClick = { navController.navigate(MainRoute.ContextMemory.route) },
+                        // AI与外观
+                        onSettingsClick = { navController.navigate(MainRoute.Settings.route) },
+                        onThemeClick = { navController.navigate(MainRoute.Theme.route) },
                         onFrameRateClick = { navController.navigate(MainRoute.FrameRate.route) },
                         onTtsSettingsClick = { navController.navigate(MainRoute.TtsSettings.route) },
                         onTokenUsageClick = { navController.navigate(MainRoute.TokenUsage.route) },
