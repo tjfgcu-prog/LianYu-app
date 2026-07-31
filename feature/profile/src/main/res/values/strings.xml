@@ -4,6 +4,8 @@
     <string name="profile_save">保存</string>
     <string name="profile_edit">编辑</string>
     <string name="profile_avatar_hint">点击头像更换，点击名字编辑</string>
+    <string name="profile_banner">封面图</string>
+    <string name="profile_banner_hint">点击上传封面图</string>
     <string name="memory_management">记忆管理</string>
     <string name="memory_management_desc">查看虚拟恋人记住的关于你的事</string>
     <string name="api_settings">API设置</string>
