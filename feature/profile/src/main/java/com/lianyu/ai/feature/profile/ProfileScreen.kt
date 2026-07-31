@@ -28,16 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +51,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,47 +58,43 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.feature.profile.R
-import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
-import com.lianyu.ai.uicommon.component.getChatBackgroundKey
-import com.lianyu.ai.uicommon.component.setChatBackgroundKey
 import kotlinx.coroutines.delay
 
 /**
- * 个人中心主页面 — 仅保留核心入口，其余设置收进"总设置"页。
+ * 个人中心主页面 — 固定为 3 个卡片，位置不再随设置项数量变化：
+ *   1. 顶部封面图大白框（点击上传，仅压缩尺寸不损画质）
+ *   2. 个人资料卡（头像 + 昵称）
+ *   3. 总设置入口
  *
- * 分层策略：
- *   外层（本页） — 高频核心入口：记忆、API、主题/背景、总设置入口、关于
- *   内层         — 总设置页收纳：语言、帧率、思考、TTS、Token、更新、权限、微信/QQ
+ * 记忆管理、上下文记忆、API 设置、主题模式、聊天背景等次要项
+ * 全部收纳进"总设置"页（见 GeneralSettingsScreen），本页不再直接承载。
  */
 @Composable
 fun ProfileScreen(
-    // 记忆与管理
-    onMemoryClick: () -> Unit,
-    onContextMemoryClick: () -> Unit,
-    // AI配置
-    onSettingsClick: () -> Unit,
-    // 外观
-    onThemeClick: () -> Unit,
     // 总设置
     onGeneralSettingsClick: () -> Unit,
-    
+
     viewModel: ProfileViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
 
     val userName by viewModel.userName.collectAsState()
     val userAvatar by viewModel.userAvatar.collectAsState()
+    val userBanner by viewModel.userBanner.collectAsState()
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
     var isVisible by remember { mutableStateOf(false) }
-
-    var showBackgroundDialog by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { viewModel.updateUserAvatar(it.toString()) }
+    }
+
+    val bannerPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.updateUserBanner(it.toString()) }
     }
 
     LaunchedEffect(Unit) {
@@ -122,10 +111,53 @@ fun ProfileScreen(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 顶部用户信息区域
+        // === 卡片 1：顶部封面大白框 — 可点击上传，仅压缩尺寸不损画质 ===
         AnimatedVisibility(
             visible = isVisible,
             enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(colorScheme.surface)
+                    .clickable { bannerPicker.launch("image/*") },
+                contentAlignment = Alignment.Center
+            ) {
+                if (userBanner != null) {
+                    AsyncImage(
+                        model = userBanner,
+                        contentDescription = stringResource(R.string.profile_banner),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Filled.Image,
+                            contentDescription = stringResource(R.string.profile_banner),
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.profile_banner_hint),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            color = colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // === 卡片 2：个人资料卡（头像 + 昵称） ===
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(tween(200, delayMillis = 60)) + slideInVertically(tween(200, delayMillis = 60)) { it / 4 }
         ) {
             Column(
                 modifier = Modifier
@@ -212,61 +244,17 @@ fun ProfileScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // === 第一组：记忆与管理 ===
-        SolidMenuGroup(
-            items = listOf(
-                MenuItemData(Icons.Filled.Memory, stringResource(R.string.memory_management), stringResource(R.string.memory_management_desc), onMemoryClick),
-                MenuItemData(Icons.Filled.Memory, stringResource(R.string.context_memory), stringResource(R.string.context_memory_desc), onContextMemoryClick)
-            ),
-            isVisible = isVisible, delayMillis = 80
-        )
-
         Spacer(modifier = Modifier.height(12.dp))
 
-        // === 第三组：AI配置 ===
-        SolidMenuGroup(
-            items = listOf(
-                MenuItemData(Icons.Filled.Settings, stringResource(R.string.api_settings), stringResource(R.string.api_settings_desc), onSettingsClick)
-            ),
-            isVisible = isVisible, delayMillis = 140
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // === 第四组：外观 ===
-        SolidMenuGroup(
-            items = listOf(
-                MenuItemData(Icons.Filled.Brush, stringResource(R.string.theme_mode), stringResource(R.string.theme_mode_desc), onThemeClick),
-                MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc), onClick = { showBackgroundDialog = true })
-            ),
-            isVisible = isVisible, delayMillis = 200
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // === 第五组：总设置入口 ===
+        // === 卡片 3：总设置入口 — 记忆、API、主题/背景等次要项均已收纳进此页 ===
         SolidMenuGroup(
             items = listOf(
                 MenuItemData(Icons.Filled.Settings, stringResource(R.string.general_settings), stringResource(R.string.general_settings_desc), onGeneralSettingsClick)
             ),
-            isVisible = isVisible, delayMillis = 260
+            isVisible = isVisible, delayMillis = 120
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-
-        
-
-        
-
-    if (showBackgroundDialog) {
-        ChatBackgroundPickerDialog(
-            currentKey = getChatBackgroundKey(context),
-            onDismiss = { showBackgroundDialog = false },
-            onSelect = { key -> setChatBackgroundKey(context, key); showBackgroundDialog = false }
-        )
-        }
     }
 }
 
@@ -332,4 +320,4 @@ internal fun SolidMenuGroup(items: List<MenuItemData>, isVisible: Boolean, delay
             Box(Modifier.fillMaxWidth().height(0.5.dp).background(colorScheme.outline).padding(start = 36.dp))
         }
     }
-}
+ }
