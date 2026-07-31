@@ -47,7 +47,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -243,69 +243,28 @@ private fun ThinkingSettingsEntry(): MenuItemData {
     )
 }
 
+// 简化：仅保留一个开关，默认关闭，切换即时生效，不再有自动折叠/字段名等易出 bug 的子设置。
 @Composable
 private fun ThinkingSettingsDialog(showDialog: MutableState<Boolean>, settingsStore: AppSettingsStore) {
     val scope = rememberCoroutineScope()
     val showReasoning by settingsStore.showReasoningFlow.collectAsState(initial = false)
-    val sendReasoning by settingsStore.sendReasoningFlow.collectAsState(initial = false)
-    val autoCollapse by settingsStore.autoCollapseReasoningFlow.collectAsState(initial = true)
-    val respField by settingsStore.reasoningResponseFieldFlow.collectAsState(initial = "reasoning_content")
-    val reqField by settingsStore.reasoningRequestFieldFlow.collectAsState(initial = "reasoning_content")
-
-    var localShow by remember { mutableStateOf(showReasoning) }
-    var localSend by remember { mutableStateOf(sendReasoning) }
-    var localCollapse by remember { mutableStateOf(autoCollapse) }
-    var localResp by remember { mutableStateOf(respField) }
-    var localReq by remember { mutableStateOf(reqField) }
-
-    // 修复：DataStore Flow 首帧只能拿到占位默认值，真实值要等一次协程调度后才到达；
-    // 上面的 remember 只在弹窗第一次进入组合时执行一次，会把占位值"钉死"，
-    // 导致弹窗打开时开关状态和菜单项小字显示的真实状态不一致。
-    // 这里用 LaunchedEffect 在真实值到达后同步一次本地状态（仅同步一次，避免覆盖用户正在编辑的修改）。
-    var localStateInitialized by remember { mutableStateOf(false) }
-    LaunchedEffect(showReasoning, sendReasoning, autoCollapse, respField, reqField) {
-        if (!localStateInitialized) {
-            localShow = showReasoning
-            localSend = sendReasoning
-            localCollapse = autoCollapse
-            localResp = respField
-            localReq = reqField
-            localStateInitialized = true
-        }
-    }
 
     AlertDialog(
         onDismissRequest = { showDialog.value = false },
-        title = { Text("思考设置") },
+        title = { Text("思考设置", fontWeight = FontWeight.Bold) },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("启用思考过程显示"); Switch(checked = localShow, onCheckedChange = { localShow = it })
-                }
-                if (localShow) {
-                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("思考完成时自动折叠"); Switch(checked = localCollapse, onCheckedChange = { localCollapse = it })
-                    }
-                    OutlinedTextField(localResp, { localResp = it }, label = { Text("响应字段名") }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
-                    OutlinedTextField(localReq, { localReq = it }, label = { Text("请求字段名") }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
-                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("发送思考内容"); Switch(checked = localSend, onCheckedChange = { localSend = it })
-                    }
-                }
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("思考过程默认关闭", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Switch(
+                    checked = showReasoning,
+                    onCheckedChange = { checked -> scope.launch { settingsStore.setShowReasoning(checked) } }
+                )
             }
         },
-        confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    settingsStore.setShowReasoning(localShow)
-                    settingsStore.setAutoCollapseReasoning(localCollapse)
-                    settingsStore.setReasoningResponseField(localResp)
-                    settingsStore.setReasoningRequestField(localReq)
-                    settingsStore.setSendReasoning(localSend)
-                }
-                showDialog.value = false
-            }) { Text("保存") }
-        },
-        dismissButton = { TextButton(onClick = { showDialog.value = false }) { Text("取消") } }
+        confirmButton = { TextButton(onClick = { showDialog.value = false }) { Text("关闭") } }
     )
 }
