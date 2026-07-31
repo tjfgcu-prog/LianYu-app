@@ -22,10 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
@@ -103,29 +103,26 @@ fun ProfileScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorScheme.background)
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // === 卡片 1：顶部封面大白框 — 可点击上传，仅压缩尺寸不损画质 ===
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorScheme.background)
+                .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(colorScheme.surface)
-                    .clickable { bannerPicker.launch("image/*") },
-                contentAlignment = Alignment.Center
+            // === 卡片 1：顶部封面大图 — 占满剩余空间，把下方"我"和"总设置"顶到贴近底部导航栏 ===
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 },
+                modifier = Modifier.weight(1f)
             ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(colorScheme.surface)
+                        .clickable { bannerPicker.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
                 if (userBanner != null) {
                     AsyncImage(
                         model = userBanner,
