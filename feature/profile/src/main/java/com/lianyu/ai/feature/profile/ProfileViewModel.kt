@@ -59,6 +59,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     val userName: StateFlow<String> by lazy { repository.userName }
     val userAvatar: StateFlow<String?> by lazy { repository.userAvatar }
+    val userBanner: StateFlow<String?> by lazy { repository.userBanner }
     val selectedRole: StateFlow<CompanionRole> by lazy { repository.selectedRole }
 
     // [R13 FIX] 一次性事件改用 SharedFlow（非 sticky）：原 StateFlow<RoleSwitchState.Error>
@@ -86,6 +87,15 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 ImageUtils.saveUriToInternalStorage(getApplication(), avatarUri)
             } else null
             repository.updateUserAvatar(savedUri)
+        }
+    }
+
+     fun updateUserBanner(bannerUri: String?) {
+        viewModelScope.launch {
+            val savedUri = if (bannerUri != null) {
+                ImageUtils.saveBannerToInternalStorage(getApplication(), bannerUri)
+            } else null
+            repository.updateUserBanner(savedUri)
         }
     }
 
