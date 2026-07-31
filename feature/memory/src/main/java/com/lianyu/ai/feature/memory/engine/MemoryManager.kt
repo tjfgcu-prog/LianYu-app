@@ -601,6 +601,28 @@ class MemoryManager private constructor(
         invalidateQueryCache()
     }
 
+/**
+     * 立即（同步）把所有当前在内存里但还没写盘的记忆刷到磁盘。
+     * schedulePersist() 只是把落盘任务丢进 ioScope 异步执行，如果 App 在任务
+     * 真正执行前就被系统杀掉进程（比如用户划掉后台），这次写入就彻底丢了——
+     * 这也是"核心记忆"关闭 App 后消失的根因。这个方法在 App 进入后台时
+     * （LianYuApplication.onTrimMemory）同步调用一次，确保杀进程前已经落盘。
+     */
+    fun flushAllPending() {
+        val keys = shortTermCache.keys + midTermCache.keys + indexCache.keys
+        keys.toSet().forEach { key ->
+            runCatching {
+                val id = key.substringAfterLast("_").toLongOrNull() ?: return@forEach
+                val scope = MemoryScope.valueOf(key.substringBeforeLast("_"))
+                val shortItems = shortTermCache[key]?.toList() ?: emptyList()
+                val midItems = midTermCache[key]?.toList() ?: emptyList()
+                store.saveTier(scope, id, MemoryTier.SHORT, shortItems)
+                store.saveTier(scope, id, MemoryTier.MID, midItems)
+                indexCache[key]?.let { index -> store.saveIndex(scope, id, index.serialize()) }
+            }.onFailure { Log.e(TAG, "flushAllPending 失败 key=$key", it) }
+        }
+    }
+
     /**
      * 调度异步持久化
      */
