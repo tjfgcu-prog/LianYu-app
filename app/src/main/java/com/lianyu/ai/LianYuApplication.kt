@@ -81,6 +81,17 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
         applyStoredLanguage(this)
     }
 
+    // App 切到后台（UI 不可见）时同步落盘一次待写入的记忆，防止系统随后杀掉进程
+    // 导致 schedulePersist() 里排队的异步写入还没执行就丢失（"核心记忆"消失的根因）。
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            runCatching {
+                com.lianyu.ai.feature.memory.engine.MemoryManager.getInstance(this).flushAllPending()
+            }
+        }
+    }
+
     override fun onTerminate() {
         bgScope.launch {
             SaltStore.shutdown()
