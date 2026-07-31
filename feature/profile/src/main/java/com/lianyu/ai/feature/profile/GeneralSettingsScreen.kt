@@ -26,15 +26,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.ChatBubble
 
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.filled.Tune
@@ -71,19 +75,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.FrameRateManager
+import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
+import com.lianyu.ai.uicommon.component.getChatBackgroundKey
+import com.lianyu.ai.uicommon.component.setChatBackgroundKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * 总设置页 — 收纳次要设置项，按功能领域分为 3 组。
+ * 总设置页 — 收纳全部次要设置项，按功能领域分组。
  *
- *   1. 外观与对话  — 语言、帧率、思考设置
- *   2. 系统与维护  — TTS、Token、更新、权限
+ *   1. 记忆与管理  — 记忆管理、上下文记忆
+ *   2. AI 配置    — API 设置
+ *   3. 外观       — 主题模式、聊天背景
+ *   4. 外观与对话  — 语言、帧率、思考设置
+ *   5. 系统与维护  — TTS、Token、更新、权限
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeneralSettingsScreen(
     onNavigateBack: () -> Unit,
+    // 记忆与管理
+    onMemoryClick: () -> Unit,
+    onContextMemoryClick: () -> Unit,
+    // AI配置
+    onSettingsClick: () -> Unit,
+    // 外观
+    onThemeClick: () -> Unit,
     onFrameRateClick: () -> Unit,
     onTtsSettingsClick: () -> Unit,
     onTokenUsageClick: () -> Unit,
@@ -95,6 +112,7 @@ fun GeneralSettingsScreen(
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     var isVisible by remember { mutableStateOf(false) }
+    var showBackgroundDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { delay(80); isVisible = true }
 
@@ -121,6 +139,38 @@ fun GeneralSettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            // === 记忆与管理 ===
+            SolidMenuGroup(
+                items = listOf(
+                    MenuItemData(Icons.Filled.Memory, stringResource(R.string.memory_management), stringResource(R.string.memory_management_desc), onMemoryClick),
+                    MenuItemData(Icons.Filled.Memory, stringResource(R.string.context_memory), stringResource(R.string.context_memory_desc), onContextMemoryClick)
+                ),
+                isVisible = isVisible, delayMillis = 20
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // === AI 配置 ===
+            SolidMenuGroup(
+                items = listOf(
+                    MenuItemData(Icons.Filled.Settings, stringResource(R.string.api_settings), stringResource(R.string.api_settings_desc), onSettingsClick)
+                ),
+                isVisible = isVisible, delayMillis = 60
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // === 外观：主题模式 / 聊天背景 ===
+            SolidMenuGroup(
+                items = listOf(
+                    MenuItemData(Icons.Filled.Brush, stringResource(R.string.theme_mode), stringResource(R.string.theme_mode_desc), onThemeClick),
+                    MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc), onClick = { showBackgroundDialog = true })
+                ),
+                isVisible = isVisible, delayMillis = 100
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // === 第一组：外观与对话 ===
             val currentFrameRate = FrameRateManager.getSavedFrameRate(context)
             SolidMenuGroup(
@@ -129,7 +179,7 @@ fun GeneralSettingsScreen(
                     
                     ThinkingSettingsEntry()
                 ),
-                isVisible = isVisible, delayMillis = 100
+                isVisible = isVisible, delayMillis = 140
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -159,6 +209,14 @@ fun GeneralSettingsScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (showBackgroundDialog) {
+        ChatBackgroundPickerDialog(
+            currentKey = getChatBackgroundKey(context),
+            onDismiss = { showBackgroundDialog = false },
+            onSelect = { key -> setChatBackgroundKey(context, key); showBackgroundDialog = false }
+        )
     }
 }
 
