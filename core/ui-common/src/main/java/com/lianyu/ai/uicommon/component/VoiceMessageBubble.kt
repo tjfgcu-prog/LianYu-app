@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -120,7 +121,10 @@ fun VoiceMessageBubble(
     Box(
         modifier = modifier
             .widthIn(max = 190.dp)
-            .clickable { togglePlayback() }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { togglePlayback() }
             .background(bubbleColor, RoundedCornerShape(16.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
@@ -131,7 +135,10 @@ fun VoiceMessageBubble(
             Box(
                 modifier = Modifier
                     .size(26.dp)
-                    .clickable { togglePlayback() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { togglePlayback() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
