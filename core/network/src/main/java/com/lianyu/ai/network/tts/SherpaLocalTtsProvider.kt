@@ -34,13 +34,6 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
     private var config: TtsConfig = TtsConfig()
 
     override fun updateConfig(config: TtsConfig) {
-        // 模型/speed 变更后需要重新加载
-        if (this.config.localTtsSpeed != config.localTtsSpeed ||
-            this.config.localTtsSid != config.localTtsSid
-        ) {
-            // speed 是 generate 参数，不影响 engine；sid 也是 generate 参数
-            // 只在模型切换时才需要 reload，这里只更新 config
-        }
         this.config = config
     }
 
