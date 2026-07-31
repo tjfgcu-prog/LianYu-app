@@ -16,6 +16,9 @@ class UserRepository(context: Context) {
     private val _userAvatar = MutableStateFlow(prefs.getString("user_avatar", null))
     val userAvatar: StateFlow<String?> = _userAvatar
 
+    private val _userBanner = MutableStateFlow(prefs.getString("user_banner", null))
+    val userBanner: StateFlow<String?> = _userBanner
+
     private val _selectedRole = MutableStateFlow(
         CompanionRole.fromName(prefs.getString("selected_role", null))
     )
@@ -33,6 +36,15 @@ class UserRepository(context: Context) {
             prefs.edit { remove("user_avatar") }
         }
         _userAvatar.value = avatarUri
+    }
+
+    fun updateUserBanner(bannerUri: String?) {
+        if (bannerUri != null) {
+            prefs.edit { putString("user_banner", bannerUri) }
+        } else {
+            prefs.edit { remove("user_banner") }
+        }
+        _userBanner.value = bannerUri
     }
 
     fun updateSelectedRole(role: CompanionRole) {
