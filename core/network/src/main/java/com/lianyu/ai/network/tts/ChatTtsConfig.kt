@@ -70,7 +70,7 @@ data class ChatTtsConfig(
                     putBoolean(KEY_SKIP_PARENTHESES, config.skipParentheses)
                     putBoolean(KEY_AUTO_DEDUP, config.autoDedup)
                     putBoolean(KEY_BEAUTIFY, config.beautify)
-                    apply()
+                    commit()
                 }
             } catch (e: Exception) {
                 SecureLog.e("ChatTtsConfig", "Failed to save prefs", e)
