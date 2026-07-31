@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -427,27 +428,59 @@ private fun LocalModeCard(
             isDownloading ->
                 Button(onClick = onCancelDownload, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PetalError.copy(alpha = 0.15f), contentColor = PetalError)) { Text("取消下载") }
-            isReady ->
-                Button(onClick = onEnable, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalGreen.copy(alpha = 0.15f), contentColor = PetalGreen)) { Text("启用") }
-            isEnabled ->
+            isReady || isEnabled ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onDisable, modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp)) { Text("禁用", fontSize = 13.sp) }
-                    OutlinedButton(onClick = onDelete, modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)) { Text("删除模型", fontSize = 13.sp) }
+                    OutlinedButton(
+                        onClick = onDisable, enabled = isEnabled,
+                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, if (isEnabled) PetalPrimary else textSecondaryColor.copy(alpha = 0.25f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PetalPrimary,
+                            disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
+                        )
+                    ) { Text("禁用", fontSize = 13.sp) }
+                    OutlinedButton(
+                        onClick = onEnable, enabled = isReady,
+                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, if (isReady) PetalGreen else textSecondaryColor.copy(alpha = 0.25f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PetalGreen,
+                            disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
+                        )
+                    ) { Text("启用", fontSize = 13.sp) }
+                    OutlinedButton(
+                        onClick = onDelete,
+                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, PetalError),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)
+                    ) { Text("删除模型", fontSize = 13.sp) }
                 }
         }
 
         if (isEnabled || isReady) {
             Divider(color = textSecondaryColor.copy(alpha = 0.15f))
-            Text("音色: ${localTtsSid} / ${model.numSpeakers - 1}", fontSize = 13.sp, color = textSecondaryColor)
-            Slider(value = localTtsSid.toFloat(), onValueChange = { onSidChange(it.toInt()) },
+
+            // 拖动时只更新本地草稿值（即时显示数字），松手才真正下发 onSidChange/onSpeedChange，
+            // 避免拖动过程中每帧都触发保存+引擎参数更新，导致听感上"调了跟没调一样"。
+            var draftSid by remember(localTtsSid) { mutableFloatStateOf(localTtsSid.toFloat()) }
+            Text("音色: ${draftSid.toInt()} / ${model.numSpeakers - 1}", fontSize = 13.sp, color = textSecondaryColor)
+            Slider(
+                value = draftSid,
+                onValueChange = { draftSid = it },
+                onValueChangeFinished = { onSidChange(draftSid.toInt()) },
                 valueRange = 0f..(model.numSpeakers - 1).toFloat(), modifier = Modifier.fillMaxWidth(),
-                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary))
-            Text("语速: ${String.format("%.1f", localTtsSpeed)}", fontSize = 13.sp, color = textSecondaryColor)
-            Slider(value = localTtsSpeed, onValueChange = { onSpeedChange(String.format("%.1f", it).toFloat()) },
+                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
+            )
+
+            var draftSpeed by remember(localTtsSpeed) { mutableFloatStateOf(localTtsSpeed) }
+            Text("语速: ${String.format("%.1f", draftSpeed)}", fontSize = 13.sp, color = textSecondaryColor)
+            Slider(
+                value = draftSpeed,
+                onValueChange = { draftSpeed = it },
+                onValueChangeFinished = { onSpeedChange(String.format("%.1f", draftSpeed).toFloat()) },
                 valueRange = 0.5f..2.0f, modifier = Modifier.fillMaxWidth(),
-                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary))
+                colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
+            )
         }
 
         Text("离线端上推理，无需联网，隐私更好。", fontSize = 12.sp, color = textSecondaryColor)
