@@ -113,7 +113,7 @@ fun TtsSettingsScreen(
         prefs.edit().apply {
             putBoolean("tts_enabled", ttsEnabled)
             putString("tts_provider", selectedProvider.name)
-            apply()
+            commit()
         }
         ttsService.setProvider(selectedProvider)
     }
