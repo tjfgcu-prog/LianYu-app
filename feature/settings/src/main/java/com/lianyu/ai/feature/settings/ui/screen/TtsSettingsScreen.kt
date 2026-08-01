@@ -335,8 +335,8 @@ private fun TtsToggleCard(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
-            Text("启用 TTS 语音", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
-            Text("开启后 AI 回复将使用语音播放", fontSize = 12.sp, color = textSecondaryColor)
+            Text("启用语音", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
+            Text("开启后 AI 回复将使用语音", fontSize = 12.sp, color = textSecondaryColor)
         }
         Switch(checked = enabled, onCheckedChange = onToggle)
     }
@@ -350,8 +350,8 @@ private fun ModeSegmentedControl(
 ) {
     val options = listOf(
         Triple(TtsProvider.ANDROID, "系统", Icons.Filled.PhoneAndroid),
-        Triple(TtsProvider.LOCAL, "本地漫剧", Icons.Filled.SdStorage),
-        Triple(TtsProvider.CLOUD, "云端漫剧", Icons.Filled.CloudQueue)
+        Triple(TtsProvider.LOCAL, "本地", Icons.Filled.SdStorage),
+        Triple(TtsProvider.CLOUD, "云端", Icons.Filled.CloudQueue)
     )
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(cardBg).padding(6.dp),
