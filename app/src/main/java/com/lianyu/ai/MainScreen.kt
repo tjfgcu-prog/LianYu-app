@@ -229,8 +229,8 @@ fun MainScreen(mainActivity: Activity) {
                         }
                         AnimatedVisibility(
                             visible = visible,
-                            enter = fadeIn(animationSpec = tween(350)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350)),
-                            exit = fadeOut(animationSpec = tween(200))
+                            enter = fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) + scaleIn(initialScale = 0.94f, animationSpec = tween(300, easing = FastOutSlowInEasing)),
+                            exit = fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing))
                         ) {
                             when (page) {
                                 0 -> HomeScreen(
