@@ -3,6 +3,7 @@ package com.lianyu.ai
 import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -191,16 +192,20 @@ fun MainScreen(mainActivity: Activity) {
                 navController = navController,
                 startDestination = "home",
                 enterTransition = {
-                    fadeIn(animationSpec = tween(250)) + slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it / 4 })
+                    fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+                        slideInHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), initialOffsetX = { it / 4 })
                 },
                 exitTransition = {
-                    fadeOut(animationSpec = tween(200)) + slideOutHorizontally(animationSpec = tween(250), targetOffsetX = { -it / 6 })
+                    fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+                        slideOutHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), targetOffsetX = { -it / 6 })
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(250)) + slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it / 4 })
+                    fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+                        slideInHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), initialOffsetX = { -it / 4 })
                 },
                 popExitTransition = {
-                    fadeOut(animationSpec = tween(200)) + slideOutHorizontally(animationSpec = tween(250), targetOffsetX = { it / 4 })
+                    fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+                        slideOutHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), targetOffsetX = { it / 4 })
                 }
             ) {
                 // === 主页 Pager ===
