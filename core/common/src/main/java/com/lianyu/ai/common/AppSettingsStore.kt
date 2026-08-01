@@ -27,18 +27,6 @@ class AppSettingsStore(context: Context) {
         private val SHOW_REASONING_KEY = booleanPreferencesKey("show_reasoning")
         private const val DEFAULT_SHOW_REASONING = false
 
-        private val REASONING_RESPONSE_FIELD_KEY = stringPreferencesKey("reasoning_response_field")
-        private const val DEFAULT_REASONING_RESPONSE_FIELD = "reasoning_content"
-
-        private val REASONING_REQUEST_FIELD_KEY = stringPreferencesKey("reasoning_request_field")
-        private const val DEFAULT_REASONING_REQUEST_FIELD = "reasoning_content"
-
-        private val SEND_REASONING_KEY = booleanPreferencesKey("send_reasoning")
-        private const val DEFAULT_SEND_REASONING = false
-
-        private val AUTO_COLLAPSE_REASONING_KEY = booleanPreferencesKey("auto_collapse_reasoning")
-        private const val DEFAULT_AUTO_COLLAPSE_REASONING = true
-
         private val VISION_ENABLED_KEY = booleanPreferencesKey("vision_enabled")
         private const val DEFAULT_VISION_ENABLED = true
 
@@ -142,45 +130,7 @@ class AppSettingsStore(context: Context) {
         dataStore.edit { prefs -> prefs[SHOW_REASONING_KEY] = enabled }
     }
 
-    val reasoningResponseFieldFlow: Flow<String> = dataStore.data.map { prefs ->
-        prefs[REASONING_RESPONSE_FIELD_KEY] ?: DEFAULT_REASONING_RESPONSE_FIELD
-    }
-
-    suspend fun getReasoningResponseField(): String = reasoningResponseFieldFlow.first()
-
-    suspend fun setReasoningResponseField(field: String) {
-        dataStore.edit { prefs -> prefs[REASONING_RESPONSE_FIELD_KEY] = field }
-    }
-
-    val reasoningRequestFieldFlow: Flow<String> = dataStore.data.map { prefs ->
-        prefs[REASONING_REQUEST_FIELD_KEY] ?: DEFAULT_REASONING_REQUEST_FIELD
-    }
-
-    suspend fun getReasoningRequestField(): String = reasoningRequestFieldFlow.first()
-
-    suspend fun setReasoningRequestField(field: String) {
-        dataStore.edit { prefs -> prefs[REASONING_REQUEST_FIELD_KEY] = field }
-    }
-
-    val sendReasoningFlow: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[SEND_REASONING_KEY] ?: DEFAULT_SEND_REASONING
-    }
-
-    suspend fun getSendReasoning(): Boolean = sendReasoningFlow.first()
-
-    suspend fun setSendReasoning(enabled: Boolean) {
-        dataStore.edit { prefs -> prefs[SEND_REASONING_KEY] = enabled }
-    }
-
-    val autoCollapseReasoningFlow: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[AUTO_COLLAPSE_REASONING_KEY] ?: DEFAULT_AUTO_COLLAPSE_REASONING
-    }
-
-    suspend fun getAutoCollapseReasoning(): Boolean = autoCollapseReasoningFlow.first()
-
-    suspend fun setAutoCollapseReasoning(enabled: Boolean) {
-        dataStore.edit { prefs -> prefs[AUTO_COLLAPSE_REASONING_KEY] = enabled }
-    }
+    
 
     val visionEnabledFlow: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[VISION_ENABLED_KEY] ?: DEFAULT_VISION_ENABLED
