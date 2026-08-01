@@ -470,8 +470,9 @@ class MemoryManager private constructor(
                     syncToGlobal(item)
                 }
 
-                // 异步持久化
-                schedulePersist(scope, sourceId)
+                // 立即同步持久化（不依赖任何后台协程/生命周期回调是否来得及执行，
+                // 从根本上消除"划掉后台瞬间进程被杀、写盘还没发生"的竞态）
+                persistNow(scope, sourceId)
 
                 // [R9 FIX] 写入后清除查询缓存：原 queryCache 写入后不清除，saveMemory 后同 key
                 // 查询返回旧快照，新记忆最多被 32 条查询掩盖。
@@ -629,6 +630,31 @@ class MemoryManager private constructor(
         }
     }
 
+    /**
+     * 同步持久化：调用方 suspend 挂起直到真正写盘完成再返回。
+     * 用在"新建记忆"这种不能接受丢失的关键路径上，避免依赖 ioScope 异步任务
+     * 是否来得及在进程被杀之前跑完。
+     */
+    private suspend fun persistNow(scope: MemoryScope, id: Long) = withContext(Dispatchers.IO) {
+        val key = scopeKey(scope, id)
+        runCatching {
+            val shortItems = shortTermCache[key]?.toList() ?: emptyList()
+            val midItems = midTermCache[key]?.toList() ?: emptyList()
+
+            store.saveTier(scope, id, MemoryTier.SHORT, shortItems)
+            store.saveTier(scope, id, MemoryTier.MID, midItems)
+
+            indexCache[key]?.let { index ->
+                store.saveIndex(scope, id, index.serialize())
+            }
+        }.onFailure { Log.e(TAG, "持久化失败 scope=$key", it) }
+    }
+
+    /**
+     * 调度异步持久化
+     */
+    private fun schedulePersist(scope: MemoryScope, id: Long) {
+    
     /**
      * 调度异步持久化
      */
