@@ -16,10 +16,6 @@ data class CompanionChatDetailSettings(
     val backgroundKey: String? = null,
     val useGlobalBackground: Boolean = true,
     val proactiveEnabled: Boolean = true,
-    val proactiveIntervalMinutes: Int = 180,       // 手动输入的主动消息间隔（分钟），替代 preset
-    val proactiveMinIntervalMinutes: Int = 60,      // 最小间隔（分钟）
-    val proactiveMaxIntervalMinutes: Int = 720,     // 最大间隔（分钟）
-    val proactiveDailyLimit: Int = 6,
     val allowNewTopic: Boolean = true,
     val allowLateNightMessage: Boolean = false,
     val allowFollowUpMessage: Boolean = true,
