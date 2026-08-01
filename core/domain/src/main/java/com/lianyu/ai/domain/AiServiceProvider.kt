@@ -156,6 +156,16 @@ interface AiServiceProvider {
     }
 
     /**
+     * 生成一条"病娇模式"追发消息（用户长时间未回复/未联系时触发）。
+     *
+     * @return 消息内容，null 表示不发送（默认不支持，实现侧可覆盖）
+     */
+    suspend fun generateYandereMessage(
+        companion: AiCompanionInfo,
+        recentMessages: List<AiChatMessage>
+    ): String? = null
+
+    /**
      * 使用自定义系统提示词发送消息（群聊场景）。
      *
      * @param companion 伴侣角色信息
