@@ -427,6 +427,12 @@ class MemoryManager private constructor(
                 // 创建新记忆
                 val now = System.currentTimeMillis()
                 val computedEmbedding = runCatching { embeddingProvider.embed(content) }.getOrNull()
+                // 事实/偏好/关系类，或重要度较高的记忆，属于"应该被长期记住"的核心信息
+                // （比如"我是女生"），不该只给 5 分钟寿命就被清理任务删掉；
+                // 直接跳过短期层，进中期存储且不设过期时间。
+                val isDurable = scope == MemoryScope.GLOBAL ||
+                    category in setOf(MemoryCategory.FACT, MemoryCategory.PREFERENCE, MemoryCategory.RELATIONSHIP) ||
+                    importance >= 0.7f
                 val item = MemoryItem(
                     id = UUID.randomUUID().toString(),
                     content = content,
@@ -438,8 +444,8 @@ class MemoryManager private constructor(
                     sourceId = sourceId,
                     scope = scope,
                     tags = MemoryTokenizer.extractKeywords(content),
-                    expireAt = if (scope == MemoryScope.GLOBAL) null else now + SHORT_TERM_TTL_MS,
-                    tier = MemoryTier.SHORT,
+                    expireAt = if (isDurable) null else now + SHORT_TERM_TTL_MS,
+                    tier = if (isDurable) MemoryTier.MID else MemoryTier.SHORT,
                     embedding = computedEmbedding?.toList()
                 )
 
