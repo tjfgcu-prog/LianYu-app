@@ -87,30 +87,7 @@ class AiService(context: Context) : AiServiceProvider {
         userRepository = ServiceRegistry.getOrThrow(UserRepository::class.java)
     }
 
-    /**
-     * 按需追加病娇模式系统提示词。
-     * 仅在全局开关开启、本轮概率触发且能构建出非空提示词时追加。
-     * 失败时静默降级，不影响正常对话。
-     */
-    private suspend fun appendYanderePromptIfNeeded(systemPrompt: String, companion: CompanionModel, lastUserMessageTime: Long): String {
-        return try {
-            val manager = ServiceRegistry.get(YandereModeManager::class.java)
-                ?: return systemPrompt
-            if (!appSettingsStore.getYandereModeEnabled()) return systemPrompt
-            if (!manager.shouldTriggerThisRound(lastUserMessageTime)) return systemPrompt
-            val role = ServiceRegistry.get(UserRepository::class.java)?.selectedRole?.value
-                ?: CompanionRole.GIRLFRIEND
-            val yanderePrompt = manager.buildYandereModeSystemPrompt(role)
-            if (yanderePrompt.isBlank()) return systemPrompt
-            SecureLog.d("AiService", "Yandere mode triggered for companion=${companion.name}, role=$role")
-            "$systemPrompt\n\n$yanderePrompt"
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            SecureLog.w("AiService", "appendYanderePromptIfNeeded failed: ${e.message}")
-            systemPrompt
-        }
-    }
+    
 
     private suspend fun resolveConfig(): ApiConfig? {
         return apiConfigRepository.getActiveEnabledConfig()
