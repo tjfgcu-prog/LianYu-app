@@ -33,7 +33,7 @@ class YandereModeManager(private val context: Context) {
         private const val CACHE_FILE_NAME = "yandere_mode_cache.json"
         private const val CACHE_EXPIRE_HOURS = 6L
         private const val TOP_USAGE_APPS = 10
-        private const val MIN_TRIGGER_INTERVAL = 3
+        
 
         private val json = Json {
             prettyPrint = true
@@ -50,13 +50,7 @@ class YandereModeManager(private val context: Context) {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    // [R11 FIX] 病娇触发计数器改为 @Volatile + synchronized 保护：
-    // 原为普通 Int，多请求并发下 lost increment，触发概率失准。
-    @Volatile
-    private var lastTriggerRound = -MIN_TRIGGER_INTERVAL
-    @Volatile
-    private var currentRound = 0
-    private val triggerLock = Any()
+    
 
     private val cacheFile: File
         get() = File(appContext.filesDir, CACHE_FILE_NAME)
@@ -244,16 +238,7 @@ class YandereModeManager(private val context: Context) {
         return sb.toString()
     }
 
-    /**
-     * 判断本轮是否应该触发病娇提及。
-     * 基于最小间隔和概率控制，避免过度触发。
-     */
-    fun shouldTriggerThisRound(lastUserMessageTime: Long): Boolean {
-        synchronized(triggerLock) {
-            val elapsed = System.currentTimeMillis() - lastUserMessageTime
-            return elapsed >= 60 * 60 * 1000L
-        }
-    }
+    
 
     private fun getAppName(packageName: String): String {
         return try {
