@@ -215,6 +215,26 @@ object ChatConstants {
     /** 主动消息用户输入最大间隔（分钟，24小时） */
     const val PROACTIVE_USER_MAX_INTERVAL_MINUTES = 1440
 
+    /** 是否"正在聊天"判定阈值（分钟）：最后一条消息（不分收发）距今在此范围内视为正在聊天，
+     * 期间不触发"主动发信息"和"病娇模式" */
+    const val ACTIVE_CHATTING_THRESHOLD_MINUTES = 5
+
+    /** 主动消息 Worker 固定检查间隔（分钟）：没有聊天时，每此间隔滚动一次概率 */
+    const val PROACTIVE_CHECK_INTERVAL_MINUTES = 60L
+
+    /** 主动消息触发概率（百分比）：没有聊天时，每次检查有此概率发送 */
+    const val PROACTIVE_TRIGGER_PROBABILITY_PERCENT = 70
+
+    // ── 病娇模式 Worker ──
+    /** 病娇消息 Worker 固定检查间隔（分钟） */
+    const val YANDERE_CHECK_INTERVAL_MINUTES = 10L
+
+    /** 病娇模式追发阈值（分钟）：AI 消息（含主动消息）发出后用户超过此时长未回复，则触发病娇追问 */
+    const val YANDERE_ESCALATE_AFTER_MINUTES = 10
+
+    /** 病娇模式空闲必发间隔（分钟）：完全没有聊天时，每此间隔必定触发一次病娇消息 */
+    const val YANDERE_IDLE_INTERVAL_MINUTES = 120L
+
     
 
     // ── 群聊延迟 ──
