@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,7 +31,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -51,7 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -91,7 +91,7 @@ fun ChatDetailScreen(
     var showBlockConfirm by remember { mutableStateOf(false) }
     var showClearConfirm by remember { mutableStateOf(false) }
     var showResetConfirm by remember { mutableStateOf(false) }
-    var showIntervalDialog by remember { mutableStateOf(false) }
+    
 
     val scrollState = rememberScrollState()
 
@@ -214,9 +214,7 @@ fun ChatDetailScreen(
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                SettingsRow(title = "主动消息间隔", subtitle = intervalLabel(settings.proactiveIntervalMinutes)) {
-                    showIntervalDialog = true
-                }
+                SettingsRow(title = "主动消息规则", subtitle = "没有聊天时，每60分钟有70%概率触发") { }
                 HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 SettingsToggleRow(
                     title = "允许主动开启新话题",
@@ -429,19 +427,7 @@ fun ChatDetailScreen(
         )
     }
 
-    // Interval input dialog
-    if (showIntervalDialog) {
-        IntervalInputDialog(
-            currentMinutes = settings.proactiveIntervalMinutes,
-            onDismiss = { showIntervalDialog = false },
-            onConfirm = { minutes ->
-                scope.launch {
-                    store.updateSettings(companionId) { it.copy(proactiveIntervalMinutes = minutes) }
-                }
-                showIntervalDialog = false
-            }
-        )
-    }
+    
 }
 
 @Composable
