@@ -453,7 +453,7 @@ private fun LocalModeCard(
                         modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, PetalError),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)
-                    ) { Text("删除模型", fontSize = 13.sp) }
+                    ) { Text("删除", fontSize = 13.sp) }
                 }
         }
 
