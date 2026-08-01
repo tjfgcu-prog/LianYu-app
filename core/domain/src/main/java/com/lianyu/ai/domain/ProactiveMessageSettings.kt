@@ -14,14 +14,6 @@ package com.lianyu.ai.domain
 data class ProactiveMessageSettings(
     /** 主动消息总开关 */
     val proactiveEnabled: Boolean = true,
-    /** 用户手动输入的主动消息间隔（分钟）。这是用户唯一可编辑的间隔，必须优先使用 */
-    val proactiveIntervalMinutes: Int = 180,
-    /** 最小间隔兜底（分钟），仅在 proactiveIntervalMinutes 不可用时使用 */
-    val proactiveMinIntervalMinutes: Int = 60,
-    /** 最大间隔兜底（分钟），仅在 proactiveIntervalMinutes 不可用时使用 */
-    val proactiveMaxIntervalMinutes: Int = 720,
-    /** 每日主动消息上限，0 表示不限 */
-    val proactiveDailyLimit: Int = 6,
     /** 是否允许 AI 主动开启新话题（false=必须承接上一话题） */
     val allowNewTopic: Boolean = true,
     /** 是否允许在主动消息后追问 */
