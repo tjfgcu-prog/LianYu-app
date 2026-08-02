@@ -450,18 +450,27 @@ class MemoryManager private constructor(
                     embedding = computedEmbedding?.toList()
                 )
 
-                // 添加到短期记忆
-                shortTermCache.computeIfAbsent(key) { mutableListOf() }
-                    .let { items ->
-                        synchronized(items) {
-                            items.add(item)
-                            // 超容量时晋级最旧的到中期
-                            if (items.size > SHORT_TERM_MAX_PER_SCOPE) {
-                                val toPromote = items.removeAt(0)
-                                promoteToMid(scope, sourceId, toPromote)
+                // 永久/中期记忆直接进 midTermCache，不经过 shortTermCache：
+                // cleanupExpiredMemories() 里的"超容量淘汰最老一条"只看 lastAccessed，
+                // 不检查 tier/expireAt，如果先放进 shortTermCache、等它自然溢出才晋级，
+                // 期间完全可能在"晋级"发生之前就被当成普通短期记忆一起淘汰删掉——
+                // 这正是"核心记忆界面消失，但AI还记得（走的是同步到全局池的另一份拷贝）"的根因。
+                if (isDurable) {
+                    midTermCache.computeIfAbsent(key) { mutableListOf() }
+                        .let { items -> synchronized(items) { items.add(item) } }
+                } else {
+                    shortTermCache.computeIfAbsent(key) { mutableListOf() }
+                        .let { items ->
+                            synchronized(items) {
+                                items.add(item)
+                                // 超容量时晋级最旧的到中期
+                                if (items.size > SHORT_TERM_MAX_PER_SCOPE) {
+                                    val toPromote = items.removeAt(0)
+                                    promoteToMid(scope, sourceId, toPromote)
+                                }
                             }
                         }
-                    }
+                }
 
                 // 更新索引
                 indexCache.computeIfAbsent(key) { MemoryIndex() }.add(item)
@@ -529,7 +538,7 @@ class MemoryManager private constructor(
         )
 
         val globalKey = scopeKey(MemoryScope.GLOBAL, 0L)
-        shortTermCache.computeIfAbsent(globalKey) { mutableListOf() }
+        midTermCache.computeIfAbsent(globalKey) { mutableListOf() }
             .let { items ->
                 synchronized(items) { items.add(globalItem) }
             }
