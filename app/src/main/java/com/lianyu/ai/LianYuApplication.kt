@@ -134,6 +134,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
 
         private suspend fun initYandereMode(app: Application) {
             try {
+                com.lianyu.ai.feature.notification.YandereMessageWorker.schedule(app)
                 if (AppSettingsStore(app).getYandereModeEnabled()) {
                     ServiceRegistry.getOrThrow(YandereModeManager::class.java).start()
                 }
