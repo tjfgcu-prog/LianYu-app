@@ -654,11 +654,6 @@ class MemoryManager private constructor(
      * 调度异步持久化
      */
     private fun schedulePersist(scope: MemoryScope, id: Long) {
-    
-    /**
-     * 调度异步持久化
-     */
-    private fun schedulePersist(scope: MemoryScope, id: Long) {
         val key = scopeKey(scope, id)
         ioScope.launch {
             runCatching {
