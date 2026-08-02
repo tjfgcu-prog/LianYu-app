@@ -476,7 +476,7 @@ class AiService(context: Context) : AiServiceProvider {
                 }.distinct()
                 val role = userRepository.selectedRole.value
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sanitizedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
+                val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
                 SecureLog.api("SEND", "provider=${config.provider}, model=${config.model}, messages=${messages.size}, contextLimit=$contextLimit, stickerProb=$stickerProbability, stickers=${availableStickers.size}")
@@ -509,7 +509,13 @@ class AiService(context: Context) : AiServiceProvider {
         }
     }
 
-    suspend fun generateProactiveMessage(companion: CompanionModel, recentMessages: List<ChatMessage>, settings: ProactiveMessageSettings? = null): String? {
+    suspend fun generateProactiveMessage(
+        companion: CompanionModel,
+        recentMessages: List<ChatMessage>,
+        settings: ProactiveMessageSettings? = null,
+        extraSystemPrompt: String? = null,
+        instructionOverride: String? = null
+    ): String? {
         return withContext(Dispatchers.IO) {
             val config = resolveConfig()
             val localModelProvider = com.lianyu.ai.domain.ServiceRegistry.get(com.lianyu.ai.domain.LocalModelProvider::class.java)
@@ -528,19 +534,20 @@ class AiService(context: Context) : AiServiceProvider {
             val contextLimit = appSettingsStore.getContextLimit()
             val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
 
-            val systemPrompt = buildProactiveSystemPrompt(companion, memoryContext, settings)
+            val baseSystemPrompt = buildProactiveSystemPrompt(companion, memoryContext, settings)
+            val systemPrompt = if (extraSystemPrompt.isNullOrBlank()) baseSystemPrompt else "$baseSystemPrompt\n\n$extraSystemPrompt"
             val contextMessages = AiPromptBuilder.buildProactiveContext(sortedMessages, companion)
 
             val messages = listOf(
                 Message("system", systemPrompt),
                 Message("user", contextMessages),
-                Message("user", "以${companion.name}的身份，继续刚才的对话。要求：\n1. 15-50字，像真人聊天一样自然\n2. 直接接上一条话茬，不要重新开场、不要回忆之前说过的话\n3. 如果用户最后一条是问题，直接回答它\n4. 带语气词（呀/呢/啦/嘛/哼/嘿嘿/诶/哇/呜呜/嘤）\n5. 可以撒娇/嘴硬/分享小事/突然温柔/反问\n6. 禁止括号，禁止AI感词汇，禁止说教\n7. 必须结合当前时间和场景（上面已提供），让内容贴合现在这个时间段该做的事和情绪")
+                Message("user", instructionOverride ?: "以${companion.name}的身份，继续刚才的对话。要求：\n1. 15-50字，像真人聊天一样自然\n2. 直接接上一条话茬，不要重新开场、不要回忆之前说过的话\n3. 如果用户最后一条是问题，直接回答它\n4. 带语气词（呀/呢/啦/嘛/哼/嘿嘿/诶/哇/呜呜/嘤）\n5. 可以撒娇/嘴硬/分享小事/突然温柔/反问\n6. 禁止括号，禁止AI感词汇，禁止说教\n7. 必须结合当前时间和场景（上面已提供），让内容贴合现在这个时间段该做的事和情绪")
             )
 
             try {
                 val rawResponse = if (useLocalModel) {
                     localModelProvider!!.generateResponse(
-                        prompt = "$contextMessages\n\n以${companion.name}的身份，继续刚才的对话，15-50字，像真人聊天一样自然",
+                        prompt = "$contextMessages\n\n${instructionOverride ?: "以${companion.name}的身份，继续刚才的对话，15-50字，像真人聊天一样自然"}",
                         context = systemPrompt
                     )
                 } else when (config!!.provider) {
@@ -564,6 +571,25 @@ class AiService(context: Context) : AiServiceProvider {
                 null
             }
         }
+    }
+
+    suspend fun generateYandereMessage(companion: CompanionModel, recentMessages: List<ChatMessage>): String? {
+        val manager = ServiceRegistry.get(YandereModeManager::class.java)
+        val role = ServiceRegistry.get(UserRepository::class.java)?.selectedRole?.value ?: CompanionRole.GIRLFRIEND
+        val possessiveWord = when (role) {
+            CompanionRole.BOYFRIEND -> "占有欲"
+            CompanionRole.GIRLFRIEND -> "占有欲、吃醋"
+        }
+        val yanderePrompt = manager?.buildYandereModeSystemPrompt(role)?.takeIf { it.isNotBlank() }
+            ?: "=== 病娇模式附加信息 ===\n用户已经很久没有回复/联系你了，请以略带${possessiveWord}、委屈、担心交织的方式追问。"
+
+        return generateProactiveMessage(
+            companion = companion,
+            recentMessages = recentMessages,
+            settings = null,
+            extraSystemPrompt = yanderePrompt,
+            instructionOverride = "以${companion.name}的身份，因为用户一直没有回复/没有联系，主动发一条带${possessiveWord}情绪的追问消息。要求：\n1. 15-50字，像真人聊天一样自然\n2. 语气要体现出因为对方不回应而产生的不安、委屈或担心\n3. 带语气词（呀/呢/啦/嘛/哼/嘿嘿/诶/呜呜/嘤）\n4. 禁止括号，禁止AI感词汇，禁止说教"
+        )
     }
 
     suspend fun sendMessageWithCustomSystem(
@@ -1785,7 +1811,7 @@ $chatText
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sortedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
+                val systemPrompt = baseSystemPrompt
 
                 SecureLog.api("VISION", "provider=${config.provider}, model=${config.model}, image=$imagePath")
 
@@ -2164,7 +2190,7 @@ $chatText
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
                 val role = userRepository.selectedRole.value
                 val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
-                val systemPrompt = appendYanderePromptIfNeeded(baseSystemPrompt, companion, sanitizedHistory.lastOrNull { it.isFromUser }?.timestamp ?: 0L)
+                val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
                 SecureLog.api("SEND", "provider=${config.provider}, model=${config.model}, messages=${messages.size}, tools=${tools.size}")
@@ -2254,6 +2280,15 @@ $chatText
         val entity = companion.toCompanionEntity()
         val messages = recentMessages.map { it.toChatMessage() }
         return shouldProactivelyMessage(entity, messages)
+    }
+
+    override suspend fun generateYandereMessage(
+        companion: AiCompanionInfo,
+        recentMessages: List<AiChatMessage>
+    ): String? {
+        val entity = companion.toCompanionEntity()
+        val messages = recentMessages.map { it.toChatMessage() }
+        return generateYandereMessage(entity, messages)
     }
 
     override suspend fun generateProactiveMessage(
