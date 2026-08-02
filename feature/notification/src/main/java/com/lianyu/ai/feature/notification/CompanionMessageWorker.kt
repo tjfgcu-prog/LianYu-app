@@ -24,9 +24,8 @@ import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.common.AppForegroundTracker
 
 import com.lianyu.ai.common.ChatDetailSettingsDataStoreProvider
+import com.lianyu.ai.common.ChatConstants
 import com.lianyu.ai.common.SecureLog
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -43,11 +42,6 @@ import kotlin.random.Random
 @Serializable
 data class ProactiveSettings(
     val proactiveEnabled: Boolean = true,
-    /** 用户手动输入的间隔（分钟），优先使用；UI 可编辑范围 30~1440 */
-    val proactiveIntervalMinutes: Int = 180,
-    val proactiveMinIntervalMinutes: Int = 60,
-    val proactiveMaxIntervalMinutes: Int = 720,
-    val proactiveDailyLimit: Int = 6,
     /** 是否允许 AI 主动开启新话题 */
     val allowNewTopic: Boolean = true,
     /** 是否允许在主动消息后追加追问句 */
@@ -91,16 +85,13 @@ class CompanionMessageWorker(
 
             if (eligibleCompanions.isEmpty()) {
                 SecureLog.d("CompanionMessageWorker", "No eligible companions (all disabled/blocked), reschedule")
-                scheduleNext(context, null)
+                scheduleNext(context)
                 return@withContext Result.success()
             }
-
-            var lastUsedSettings: ProactiveSettings? = null
 
             for (companionItem in eligibleCompanions) {
                 val settings = runCatching { readCompanionSettings(companionItem.id) }.getOrNull()
                     ?: ProactiveSettings()
-                lastUsedSettings = settings
 
                 // ── 免打扰检查 ──
                 if (settings.doNotDisturbEnabled && !settings.allowPriorityMessageInDnd) {
@@ -121,11 +112,25 @@ class CompanionMessageWorker(
                     .map { ChatMessageCrypto.decryptFromStorage(it) }
                     .filterDecrypted()
 
-                val domainSettings = settings.toDomain()
-                if (!aiServiceProvider.shouldProactivelyMessage(companionItem.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)) {
+                // getRecentMessagesSync 按 timestamp DESC 排列，第一条即最新消息
+                val lastMessage = recentMessages.firstOrNull()
+                val nowMs = System.currentTimeMillis()
+                val isActivelyChatting = lastMessage != null &&
+                    (nowMs - lastMessage.timestamp) < TimeUnit.MINUTES.toMillis(ChatConstants.ACTIVE_CHATTING_THRESHOLD_MINUTES.toLong())
+
+                // 规则①：正在聊天中，不触发主动发信息
+                if (isActivelyChatting) {
+                    SecureLog.d("CompanionMessageWorker", "Actively chatting with ${companionItem.name}, skip proactive message")
                     continue
                 }
 
+                // 规则②：没有聊天时，每次检查有 70% 概率触发
+                if (Random.nextInt(100) >= ChatConstants.PROACTIVE_TRIGGER_PROBABILITY_PERCENT) {
+                    SecureLog.d("CompanionMessageWorker", "Probability roll missed for ${companionItem.name}, skip this round")
+                    continue
+                }
+
+                val domainSettings = settings.toDomain()
                 val messageContent = aiServiceProvider.generateProactiveMessage(companionItem.toAiCompanionInfo(), recentMessages.toAiChatMessages(), domainSettings)
                     ?: continue
 
@@ -154,7 +159,7 @@ class CompanionMessageWorker(
                 }
             }
 
-            scheduleNext(context, lastUsedSettings)
+            scheduleNext(context)
 
             Result.success()
         } catch (_: Exception) {
@@ -196,8 +201,6 @@ class CompanionMessageWorker(
         }.filter { it.isNotBlank() }
     }
 
-    
-
     /**
      * 从 DataStore 读取指定伴侣的主动消息相关设置。
      * 直接读取与 ChatDetailSettingsStore 共享的同一 DataStore，避免跨 feature 依赖。
@@ -217,10 +220,6 @@ class CompanionMessageWorker(
     /** 将 Worker 侧 [ProactiveSettings] 映射为 domain 层 [ProactiveMessageSettings] */
     private fun ProactiveSettings.toDomain() = ProactiveMessageSettings(
         proactiveEnabled = proactiveEnabled,
-        proactiveIntervalMinutes = proactiveIntervalMinutes,
-        proactiveMinIntervalMinutes = proactiveMinIntervalMinutes,
-        proactiveMaxIntervalMinutes = proactiveMaxIntervalMinutes,
-        proactiveDailyLimit = proactiveDailyLimit,
         allowNewTopic = allowNewTopic,
         allowFollowUpMessage = allowFollowUpMessage,
         doNotDisturbEnabled = doNotDisturbEnabled,
@@ -251,74 +250,29 @@ class CompanionMessageWorker(
     companion object {
         private const val WORK_NAME = "companion_message_work"
 
-        /** 默认间隔兜底（当设置读取失败时使用） */
-        private const val FALLBACK_MIN_MINUTES = 30L
-        private const val FALLBACK_MAX_MINUTES = 120L
-
-        private const val DAILY_COUNT_PREFS = "proactive_daily_count"
-
-        /** 获取指定伴侣今日已发主动消息数（精确计数，不取近似） */
-        private fun getTodayProactiveCount(context: Context, companionId: Long): Int {
-            val prefs = context.getSharedPreferences(DAILY_COUNT_PREFS, Context.MODE_PRIVATE)
-            val today = todayKey()
-            val storedDate = prefs.getString("date_$companionId", null)
-            return if (storedDate == today) prefs.getInt("count_$companionId", 0) else 0
-        }
-
-        /** 增加指定伴侣今日主动消息计数 */
-        private fun incrementTodayProactiveCount(context: Context, companionId: Long, delta: Int) {
-            val prefs = context.getSharedPreferences(DAILY_COUNT_PREFS, Context.MODE_PRIVATE)
-            val today = todayKey()
-            val count = getTodayProactiveCount(context, companionId) + delta
-            prefs.edit()
-                .putString("date_$companionId", today)
-                .putInt("count_$companionId", count)
-                .apply()
-        }
-
-        private fun todayKey(): String {
-            val cal = java.util.Calendar.getInstance()
-            return "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.DAY_OF_YEAR)}"
-        }
-
         private val networkConstraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
         /**
-         * 外部入口：首次调度，使用默认间隔。
+         * 外部入口：首次调度。
          * 使用 enqueueUniqueWork + REPLACE 确保只保留最新一次调度，
          * 消除 KeepAliveService 15min 心跳 + MainActivity 启动反复 schedule 导致的请求堆叠。
          */
         fun schedule(context: Context) {
-            val delayMinutes = Random.nextInt(FALLBACK_MIN_MINUTES.toInt(), FALLBACK_MAX_MINUTES.toInt())
-
-            val workRequest = OneTimeWorkRequestBuilder<CompanionMessageWorker>()
-                .setConstraints(networkConstraints)
-                .setInitialDelay(delayMinutes.toLong(), TimeUnit.MINUTES)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                WORK_NAME,
-                ExistingWorkPolicy.REPLACE,
-                workRequest
-            )
+            enqueue(context, ChatConstants.PROACTIVE_CHECK_INTERVAL_MINUTES)
         }
 
         /**
-         * 后续调度：优先使用用户手动输入的 [ProactiveSettings.proactiveIntervalMinutes]，
-         * 未设置时回退到 min/max 区间随机。
+         * 后续调度：固定每 [ChatConstants.PROACTIVE_CHECK_INTERVAL_MINUTES] 分钟检查一次。
+         * 是否真正发送由 doWork() 内的"是否正在聊天"+"70% 概率"两条规则决定，
+         * 不再支持用户自定义间隔。
          */
-        private fun scheduleNext(context: Context, settings: ProactiveSettings?) {
-            val delayMinutes = if (settings != null && settings.proactiveIntervalMinutes > 0) {
-                // 用户手动输入的间隔优先，确保 ≥15 分钟，最大 1440 分钟（24h）
-                settings.proactiveIntervalMinutes.coerceIn(15, 1440).toLong()
-            } else {
-                val minInterval = settings?.proactiveMinIntervalMinutes?.coerceAtLeast(15) ?: FALLBACK_MIN_MINUTES.toInt()
-                val maxInterval = settings?.proactiveMaxIntervalMinutes?.coerceAtLeast(minInterval + 1) ?: FALLBACK_MAX_MINUTES.toInt()
-                Random.nextInt(minInterval, maxInterval + 1).toLong()
-            }
+        private fun scheduleNext(context: Context) {
+            enqueue(context, ChatConstants.PROACTIVE_CHECK_INTERVAL_MINUTES)
+        }
 
+        private fun enqueue(context: Context, delayMinutes: Long) {
             val workRequest = OneTimeWorkRequestBuilder<CompanionMessageWorker>()
                 .setConstraints(networkConstraints)
                 .setInitialDelay(delayMinutes, TimeUnit.MINUTES)
