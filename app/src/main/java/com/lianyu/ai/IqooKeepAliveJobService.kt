@@ -59,6 +59,7 @@ class IqooKeepAliveJobService : JobService() {
         // 2. 确保 WorkManager 中有待处理任务
         try {
             CompanionMessageWorker.schedule(context)
+            com.lianyu.ai.feature.notification.YandereMessageWorker.schedule(context)
             SecureLog.d("IqooKeepAliveJobService", "WorkManager check passed")
         } catch (e: Exception) {
             SecureLog.w("IqooKeepAliveJobService", "Failed to schedule WorkManager: ${e.message}")
