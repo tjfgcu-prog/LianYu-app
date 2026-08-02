@@ -136,6 +136,7 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
         CompanionKeepAliveService.start(this)
         CompanionMessageWorker.schedule(this)
+        com.lianyu.ai.feature.notification.YandereMessageWorker.schedule(this)
         // IQOO/OriginOS 设备启用 JobScheduler 第三层兜底保活
         if (RomUtils.isVivo) {
             scheduleIqooKeepAliveJob()
