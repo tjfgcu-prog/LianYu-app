@@ -47,6 +47,14 @@ open class CompanionKeepAliveService : Service() {
             if (!hasActive) {
                 CompanionMessageWorker.schedule(applicationContext)
             }
+            val hasActiveYandere = runCatching {
+                workMgr.getWorkInfosForUniqueWork("yandere_message_work").get()
+                    .any { it.state == androidx.work.WorkInfo.State.ENQUEUED ||
+                            it.state == androidx.work.WorkInfo.State.RUNNING }
+            }.getOrDefault(false)
+            if (!hasActiveYandere) {
+                YandereMessageWorker.schedule(applicationContext)
+            }
             handler.postDelayed(this, 60 * 60 * 1000L) // 60 分钟（原 15 分钟过于频繁）
         }
     }
@@ -84,6 +92,7 @@ open class CompanionKeepAliveService : Service() {
         stopSelf(startId)
         // 超时后由 WorkManager 兜底重新调度，避免服务彻底停止。
         runCatching { CompanionMessageWorker.schedule(applicationContext) }
+        runCatching { YandereMessageWorker.schedule(applicationContext) }
     }
 
     override fun onDestroy() {
