@@ -14,6 +14,7 @@ class BootReceiver : BroadcastReceiver() {
                 SecureLog.w("BootReceiver", "Cannot start keep-alive service: ${e.message}")
             }
             CompanionMessageWorker.schedule(context)
+            YandereMessageWorker.schedule(context)
         }
     }
 }
