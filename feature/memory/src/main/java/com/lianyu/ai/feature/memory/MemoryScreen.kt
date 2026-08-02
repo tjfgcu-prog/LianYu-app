@@ -64,6 +64,7 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.memory.engine.MemoryCategory
 import com.lianyu.ai.feature.memory.engine.MemoryItem
+import com.lianyu.ai.feature.memory.engine.MemoryTier
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -175,12 +176,26 @@ fun MemoryScreen(
                         )
                             }
                         )
-                        
+                        Tab(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            text = {
+                                Text(
+                            stringResource(R.string.temp_memory),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 13.sp,
+                                fontWeight = if (selectedTab == 1) FontWeight.Medium else FontWeight.Normal
+                            ),
+                            color = if (selectedTab == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                            }
+                        )
+
                     }
 
                     when (selectedTab) {
                         0 -> CoreMemoryTab(companionId = companion.id, viewModel = viewModel)
-                        
+                        1 -> TempMemoryTab(companionId = companion.id, viewModel = viewModel)
                     }
                 } ?: run {
                     Box(
@@ -277,7 +292,8 @@ fun CompanionChip(
 
 @Composable
 fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
-    val memories by viewModel.getMemoriesForCompanion(companionId).collectAsState(initial = emptyList())
+    val allMemories by viewModel.getMemoriesForCompanion(companionId).collectAsState(initial = emptyList())
+    val memories = allMemories.filter { it.tier != MemoryTier.SHORT }
     val categories = MemoryCategory.values()
     var selectedCategory by remember { mutableStateOf<MemoryCategory?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -400,7 +416,78 @@ fun CoreMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
     }
 }
 
+@Composable
+fun TempMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
+    val allMemories by viewModel.getMemoriesForCompanion(companionId).collectAsState(initial = emptyList())
+    val memories = allMemories.filter { it.tier == MemoryTier.SHORT }
+        .sortedBy { it.expireAt ?: Long.MAX_VALUE }
 
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = "临时记忆是AI临时捕捉到的碎片信息，几分钟内会自动清理或沉淀为永久记忆",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        if (memories.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    stringResource(R.string.no_temp_memory),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(memories, key = { it.id }) { memory ->
+                    MemoryItemCard(
+                        memory = memory,
+                        onDelete = { viewModel.deleteMemory(companionId, memory) },
+                        onEdit = {}
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TierBadge(memory: MemoryItem) {
+    val isPermanent = memory.tier != MemoryTier.SHORT
+    val label = if (isPermanent) {
+        "永久"
+    } else {
+        val remainingMin = memory.expireAt?.let { ((it - System.currentTimeMillis()) / 60000L).coerceAtLeast(0) }
+        if (remainingMin != null) "临时 · ${remainingMin}分钟后清理" else "临时"
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(
+                if (isPermanent) {
+                    Color(0xFFE8B4C0).copy(alpha = 0.35f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
+                }
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Medium),
+            color = if (isPermanent) Color(0xFFB05C74) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+        )
+    }
+}
 
 @Composable
 fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
@@ -483,6 +570,8 @@ fun MemoryItemCard(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                         )
                     }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    TierBadge(memory = memory)
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
                     Icon(
