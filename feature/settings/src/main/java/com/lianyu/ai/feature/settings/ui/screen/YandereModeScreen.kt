@@ -328,9 +328,11 @@ fun YandereModeScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = app.packageName,
+                                        text = resolveAppLabel(context, app.packageName),
                                         style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     Text(
                                         text = formatDuration(app.totalTimeInForeground),
@@ -407,6 +409,16 @@ private fun openUsageSettings(context: android.content.Context) {
 private fun formatTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+private fun resolveAppLabel(context: android.content.Context, packageName: String): String {
+    return try {
+        val pm = context.packageManager
+        val appInfo = pm.getApplicationInfo(packageName, 0)
+        pm.getApplicationLabel(appInfo).toString()
+    } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+        packageName
+    }
 }
 
 private fun formatDuration(millis: Long): String {
