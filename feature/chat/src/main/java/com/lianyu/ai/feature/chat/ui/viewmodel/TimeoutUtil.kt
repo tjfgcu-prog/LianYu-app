@@ -1,24 +1,28 @@
 package com.lianyu.ai.feature.chat.ui.viewmodel
 
+import com.lianyu.ai.common.ConcurrencyConstants
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * Shared executor for [runInterruptibleSafe] — avoids creating a new single-thread
- * executor on every call. The pool grows on demand (cached thread pool) and idle
- * threads are reclaimed after 30 s.
- */
-private val sharedExecutor: ExecutorService = Executors.newCachedThreadPool { runnable ->
+private val threadCounter = AtomicInteger(0)
+
+private val sharedExecutor: ExecutorService = ThreadPoolExecutor(
+    ConcurrencyConstants.INTERRUPTIBLE_EXECUTOR_CORE_POOL_SIZE,
+    ConcurrencyConstants.INTERRUPTIBLE_EXECUTOR_MAXIMUM_POOL_SIZE,
+    ConcurrencyConstants.INTERRUPTIBLE_EXECUTOR_KEEP_ALIVE_SECONDS,
+    TimeUnit.SECONDS,
+    ArrayBlockingQueue(ConcurrencyConstants.INTERRUPTIBLE_EXECUTOR_WORK_QUEUE_CAPACITY)
+) { runnable ->
     Thread(runnable).apply {
         name = "runInterruptibleSafe-${threadCounter.incrementAndGet()}"
-        isDaemon = true  // don't prevent JVM shutdown
+        isDaemon = true
     }
 }
-
-private val threadCounter = AtomicInteger(0)
 
 /**
  * Execute a suspending block on a dedicated thread with a hard timeout.
@@ -57,9 +61,11 @@ suspend fun <T> runInterruptibleSafe(
         }
         future.get(timeoutMs, TimeUnit.MILLISECONDS)
     } catch (_: TimeoutException) {
-        onTimeout
-    } catch (_: InterruptedException) {
-        onTimeout
+    onTimeout
+} catch (_: InterruptedException) {
+    onTimeout
+} catch (_: RejectedExecutionException) {
+    onTimeout
     }
     // Other exceptions (RuntimeException, etc.) propagate to caller naturally
 }
