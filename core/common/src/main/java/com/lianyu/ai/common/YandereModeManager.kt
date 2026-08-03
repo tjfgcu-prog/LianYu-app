@@ -150,11 +150,15 @@ class YandereModeManager(private val context: Context) {
 
             stats
                 .filter { it.totalTimeInForeground > 0 }
-                .map { usage ->
+                .groupBy { it.packageName }
+                .map { (packageName, group) ->
+                    // queryUsageStats(INTERVAL_DAILY, ...) 按自然日分桶返回，
+                    // 查询区间跨了本地零点时，同一个包会拆成两条（昨天一部分+今天一部分），
+                    // 这里按包名合并求和，避免同一个 App 在列表里出现两次、时长还是被拆开的。
                     UsageApp(
-                        packageName = usage.packageName,
-                        totalTimeInForeground = usage.totalTimeInForeground,
-                        lastTimeUsed = usage.lastTimeUsed
+                        packageName = packageName,
+                        totalTimeInForeground = group.sumOf { it.totalTimeInForeground },
+                        lastTimeUsed = group.maxOf { it.lastTimeUsed }
                     )
                 }
                 .sortedByDescending { it.totalTimeInForeground }
