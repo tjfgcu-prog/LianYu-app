@@ -175,8 +175,9 @@ fun MainScreen(mainActivity: Activity) {
         bottomBar = {
             if (showBottomBar) {
                 FloatingGlassBottomNav(
-                    items = bottomNavItems,
-                    currentIndex = pagerState.currentPage,
+    items = bottomNavItems,
+    currentIndex = pagerState.currentPage,
+    isDark = isDark,   // 新增
                     onItemClick = { index ->
                         lastTabPage = index
                         coroutineScope.launch { pagerState.animateScrollToPage(index) }
