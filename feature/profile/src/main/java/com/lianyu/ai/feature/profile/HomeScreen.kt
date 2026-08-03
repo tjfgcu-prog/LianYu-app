@@ -65,9 +65,7 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.lianyu.ai.uicommon.component.floatAnimation
-import com.lianyu.ai.uicommon.component.glowPulse
-import com.lianyu.ai.uicommon.component.GradientOrbBackground
+
 
 enum class HomeTab {
     ALL, GROUP, FRIEND
