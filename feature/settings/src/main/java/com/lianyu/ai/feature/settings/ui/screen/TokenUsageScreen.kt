@@ -158,23 +158,18 @@ fun TokenUsageScreen(
             }
 
             if (isLoading) {
-    Column(
-        modifier = Modifier.fillMaxSize().weight(1f)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        repeat(3) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(cardBg)
-                    .shimmerEffect()
-            )
-        }
-    }
-} else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = PetalPrimary
+                    )
+                }
+            } else {
                 Column(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
