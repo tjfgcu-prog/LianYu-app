@@ -540,11 +540,10 @@ fun EmptyHomeState() {
     val colorScheme = MaterialTheme.colorScheme
 
     Box(
-    modifier = Modifier.fillMaxSize(),
-    contentAlignment = Alignment.Center
-) {
-    GradientOrbBackground(modifier = Modifier.fillMaxSize())
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(80.dp)
