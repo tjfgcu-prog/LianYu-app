@@ -112,7 +112,9 @@ class BackupViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun requestImport() {
-        _importRequest.tryEmit(Unit)
+        viewModelScope.launch {
+            _importRequest.emit(Unit)
+        }
     }
 
     fun onExportComplete() {
