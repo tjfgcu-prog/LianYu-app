@@ -54,6 +54,13 @@ class YandereMessageWorker(
                 return@withContext Result.success()
             }
 
+            // 每次检查都顺带尝试刷新一次应用使用数据快照；
+            // requestRefresh() 内部有 CACHE_EXPIRE_HOURS 节流，缓存未过期时直接跳过，
+            // 不会造成额外开销，只是确保追问消息用到的数据不会隔太久没更新。
+            runCatching {
+                ServiceRegistry.get(com.lianyu.ai.common.YandereModeManager::class.java)?.requestRefresh()
+            }
+
             val database = AppDatabase.getDatabase(context)
             val companionDao = database.companionDao()
             val chatMessageDao = database.chatMessageDao()
