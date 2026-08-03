@@ -100,8 +100,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lianyu.ai.database.model.ApiConfig
 import com.lianyu.ai.database.model.ApiProvider
-import com.lianyu.ai.domain.ModelState
-import com.lianyu.ai.domain.ModelStatus
+
 import com.lianyu.ai.feature.settings.R
 import com.lianyu.ai.feature.settings.ui.viewmodel.SettingsViewModel
 import com.lianyu.ai.uicommon.theme.ThemeMode
