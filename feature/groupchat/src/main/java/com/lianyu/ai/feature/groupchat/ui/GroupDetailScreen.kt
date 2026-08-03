@@ -136,34 +136,23 @@ var newGroupName by remember { mutableStateOf("") }
             }
         }
     ) { paddingValues ->
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = paddingValues.calculateTopPadding())
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
+        // 群头像和名称
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .then(
-                    when {
-                        isCompactDevice() -> Modifier
-                        isMediumDevice() -> Modifier.widthIn(max = 480.dp)
-                        isExpandedDevice() -> Modifier.widthIn(max = 560.dp)
-                        else -> Modifier
-                    }
-                )
-                .background(MaterialTheme.colorScheme.background)
-                .padding(top = paddingValues.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(20.dp)
         ) {
-            // 群头像和名称
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .liquidGlass(shape = RoundedCornerShape(16.dp), isDark = isDark)
-                    .padding(20.dp)
-            ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
