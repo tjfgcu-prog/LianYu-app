@@ -139,7 +139,10 @@ fun VoiceMessageBubble(
             if (isPlaying) Modifier.pulseScale(minScale = 0.92f, maxScale = 1.08f, durationMillis = 600)
             else Modifier
         )
-        .clickable(...) { togglePlayback() },
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null
+        ) { togglePlayback() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
