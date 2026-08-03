@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.lianyu.ai.R
-import com.lianyu.ai.uicommon.component.frostedGlassNav
+
 
 /** 底部导航项数据类 */
 data class BottomNavItem(
@@ -65,11 +65,12 @@ data class BottomNavItem(
 fun FloatingGlassBottomNav(
     items: List<BottomNavItem>,
     currentIndex: Int,
-    onItemClick: (Int) -> Unit,
-    isDark: Boolean = false
+    onItemClick: (Int) -> Unit
 ) {
     val selectedColor = MaterialTheme.colorScheme.primary
     val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+
 
     Box(
         modifier = Modifier
