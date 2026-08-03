@@ -296,7 +296,6 @@ var newGroupName by remember { mutableStateOf("") }
             }
         }
     }
-    }
     
     // 删除确认对话框
     if (showDeleteDialog) {
