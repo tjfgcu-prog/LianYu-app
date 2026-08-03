@@ -301,6 +301,12 @@ fun YandereModeScreen(
                         }
 
                         Text(
+                            text = stringResource(R.string.yandere_current_data_subtitle),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colorScheme.primary.copy(alpha = 0.75f)
+                        )
+
+                        Text(
                             text = stringResource(R.string.yandere_data_update_time, formatTime(snapshot!!.collectedAt)),
                             style = MaterialTheme.typography.bodySmall,
                             color = colorScheme.onSurfaceVariant
