@@ -30,12 +30,10 @@ data class LocalTtsPreferencesState(
 /**
  * 本地离线 TTS 偏好持久化。
  *
- * 镜像 [com.lianyu.ai.feature.localmodel.LocalModelPreferences] +
- * [com.lianyu.ai.common.localmodel.LocalModelStateManager] 模式，
- * 但合并为单文件并放 core:network（自包含，不污染 core:common）。
+ * 单文件自包含实现，放在 core:network（不污染 core:common）。
  *
  * DataStore name: `"local_tts_settings"`
- * Keys 按 modelId 参数化（`<modelId>_enabled` 等），避免 LocalModelManager 的 gemma 硬编码 quirk。
+ * Keys 按 modelId 参数化（`<modelId>_enabled` 等）。
  */
 class LocalTtsPreferences(private val context: Context) {
 
