@@ -145,9 +145,21 @@ var newGroupName by remember { mutableStateOf("") }
             }
         }
     ) { paddingValues ->
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .then(
+                    when {
+                        isCompactDevice() -> Modifier
+                        isMediumDevice() -> Modifier.widthIn(max = 480.dp)
+                        isExpandedDevice() -> Modifier.widthIn(max = 560.dp)
+                        else -> Modifier
+                    }
+                )
                 .background(MaterialTheme.colorScheme.background)
                 .padding(top = paddingValues.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
