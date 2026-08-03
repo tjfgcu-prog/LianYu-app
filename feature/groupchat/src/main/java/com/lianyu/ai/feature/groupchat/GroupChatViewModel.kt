@@ -833,33 +833,47 @@ class GroupChatViewModel(
         }
     }
 
-    fun updateGroupName(name: String) {
-    val trimmed = name.trim()
-    if (trimmed.isEmpty()) return
-    viewModelScope.launch(Dispatchers.IO) {
-        try {
-            val group = _groupData.value
-                ?: throw IllegalStateException("Group data is null")
-            val updatedGroup = group.copy(name = trimmed)
-            chatGroupRepository.updateGroup(updatedGroup)
-            _groupData.value = updatedGroup
-        } catch (e: Exception) {
-            Log.e("GroupChatViewModel", "updateGroupName failed", e)
+    fun updateGroupAvatar(avatarUrl: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val group = _groupData.value
+                    ?: throw IllegalStateException("Group data is null")
+                val updatedGroup = group.copy(avatarUrl = avatarUrl)
+                chatGroupRepository.updateGroup(updatedGroup)
+                _groupData.value = updatedGroup
+            } catch (e: Exception) {
+                Log.e("GroupChatViewModel", "updateGroupAvatar failed", e)
+            }
         }
     }
-}
 
-/** 清空当前群聊的所有聊天记录（不删除群聊本身）。与单聊 ChatViewModel.clearChatHistory() 行为一致。 */
-fun clearGroupHistory() {
-    viewModelScope.launch(Dispatchers.IO) {
-        try {
-            groupMessageRepository.clearGroupHistory(groupId)
-            Log.i("GroupChatViewModel", "Group history cleared for group=$groupId")
-        } catch (e: Exception) {
-            Log.e("GroupChatViewModel", "clearGroupHistory failed", e)
+    fun updateGroupName(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val group = _groupData.value
+                    ?: throw IllegalStateException("Group data is null")
+                val updatedGroup = group.copy(name = trimmed)
+                chatGroupRepository.updateGroup(updatedGroup)
+                _groupData.value = updatedGroup
+            } catch (e: Exception) {
+                Log.e("GroupChatViewModel", "updateGroupName failed", e)
+            }
         }
     }
-}
+
+    /** 清空当前群聊的所有聊天记录（不删除群聊本身）。与单聊 ChatViewModel.clearChatHistory() 行为一致。 */
+    fun clearGroupHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                groupMessageRepository.clearGroupHistory(groupId)
+                Log.i("GroupChatViewModel", "Group history cleared for group=$groupId")
+            } catch (e: Exception) {
+                Log.e("GroupChatViewModel", "clearGroupHistory failed", e)
+            }
+        }
+    }
 
     fun updateGroupName(name: String) {
         viewModelScope.launch(Dispatchers.IO) {
