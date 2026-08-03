@@ -133,12 +133,13 @@ fun VoiceMessageBubble(
             horizontalArrangement = Arrangement.Start
         ) {
             Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { togglePlayback() },
+    modifier = Modifier
+        .size(26.dp)
+        .then(
+            if (isPlaying) Modifier.pulseScale(minScale = 0.92f, maxScale = 1.08f, durationMillis = 600)
+            else Modifier
+        )
+        .clickable(...) { togglePlayback() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
