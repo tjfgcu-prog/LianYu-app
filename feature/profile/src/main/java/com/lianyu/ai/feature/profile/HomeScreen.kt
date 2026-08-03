@@ -65,6 +65,9 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.lianyu.ai.uicommon.component.floatAnimation
+import com.lianyu.ai.uicommon.component.glowPulse
+import com.lianyu.ai.uicommon.component.GradientOrbBackground
 
 enum class HomeTab {
     ALL, GROUP, FRIEND
@@ -539,17 +542,20 @@ fun EmptyHomeState() {
     val colorScheme = MaterialTheme.colorScheme
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE0E0E0)),
-                contentAlignment = Alignment.Center
-            ) {
+    modifier = Modifier.fillMaxSize(),
+    contentAlignment = Alignment.Center
+) {
+    GradientOrbBackground(modifier = Modifier.fillMaxSize())
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .glowPulse(color = PinkPrimary, durationMillis = 2400)
+                .floatAnimation(amplitude = 6f, durationMillis = 2200)
+                .clip(CircleShape)
+                .background(Color(0xFFE0E0E0)),
+            contentAlignment = Alignment.Center
+        ) {
                 Icon(
                     imageVector = Icons.Outlined.ChatBubbleOutline,
                     contentDescription = null,
