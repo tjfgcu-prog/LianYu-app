@@ -165,19 +165,7 @@ fun GroupChatScreen(
     var showExtensionPanel by remember { mutableStateOf(false) }
     var showStickerPanel by remember { mutableStateOf(false) }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            scope.launch { snackbarHostState.showSnackbar("相机功能开发中...") }
-        } else {
-            if (PermissionManager.shouldShowRationale(context as android.app.Activity, PermissionManager.CAMERA)) {
-                scope.launch { snackbarHostState.showSnackbar(PermissionManager.getPermissionRationale(PermissionManager.CAMERA)) }
-            } else {
-                scope.launch { snackbarHostState.showSnackbar("相机权限被拒绝，请在设置中开启") }
-            }
-        }
-    }
+    
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -214,14 +202,7 @@ fun GroupChatScreen(
         }
     }
 
-    fun handleCameraClick() {
-        showExtensionPanel = false
-        if (PermissionManager.hasPermission(context, PermissionManager.CAMERA)) {
-            scope.launch { snackbarHostState.showSnackbar("相机功能开发中...") }
-        } else {
-            cameraPermissionLauncher.launch(PermissionManager.CAMERA)
-        }
-    }
+    
 
     val stickerPickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
