@@ -57,7 +57,7 @@ import com.lianyu.ai.uicommon.theme.PetalOnPrimaryContainer
 import com.lianyu.ai.uicommon.theme.PetalSurface
 import com.lianyu.ai.uicommon.theme.PetalGreen
 import com.lianyu.ai.uicommon.theme.PetalError
-
+import com.lianyu.ai.uicommon.component.shimmerEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -158,18 +158,23 @@ fun TokenUsageScreen(
             }
 
             if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = PetalPrimary
-                    )
-                }
-            } else {
+    Column(
+        modifier = Modifier.fillMaxSize().weight(1f)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        repeat(3) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(cardBg)
+                    .shimmerEffect()
+            )
+        }
+    }
+} else {
                 Column(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
