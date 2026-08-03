@@ -83,7 +83,8 @@ fun FloatingGlassBottomNav(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .height(52.dp)
-                .frostedGlassNav(isDark = isDark),
+                .clip(RoundedCornerShape(26.dp))
+                .background(backgroundColor),
             contentAlignment = Alignment.Center
         ) {
             Row(
