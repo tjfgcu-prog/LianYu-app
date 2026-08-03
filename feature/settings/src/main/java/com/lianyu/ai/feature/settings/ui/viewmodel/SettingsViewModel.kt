@@ -533,7 +533,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 val chatModels = models.filter { m -> chatKeywords.any { m.contains(it, ignoreCase = true) } }
 fun isExcludedModel(m: String) =
     com.lianyu.ai.common.AiModelConstants.EXCLUDED_MODEL_KEYWORDS.any { m.contains(it, ignoreCase = true) }
-                    }
+                    
 
                     // [FIX] PARTNER 始终走本地随机选择，避免 server randomModel 固定导致每次相同
                     // 非 PARTNER: 用户已填模型名则尊重用户选择，未填则自动选第一个 chat 模型
