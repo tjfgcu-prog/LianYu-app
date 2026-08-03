@@ -10,14 +10,4 @@ interface LocalModelProvider {
     suspend fun preloadIfEnabled()
     fun getModelName(): String
     fun getModelVersion(): String
-
-    /** Model management — consumed by feature:settings */
-    fun getAvailableModels(): List<ModelInfo>
-    fun getModelState(modelId: String): ModelState
-    fun getAllModelStates(): Map<String, ModelState>
-    suspend fun downloadModel(modelId: String)
-    suspend fun cancelDownload(modelId: String)
-    suspend fun enableModel(modelId: String)
-    suspend fun disableModel(modelId: String)
-    suspend fun deleteModel(modelId: String)
 }
