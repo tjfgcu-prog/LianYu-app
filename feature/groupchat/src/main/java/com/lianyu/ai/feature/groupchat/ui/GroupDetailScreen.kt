@@ -158,8 +158,7 @@ var newGroupName by remember { mutableStateOf("") }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+                    .liquidGlass(shape = RoundedCornerShape(16.dp), isDark = isDark)
                     .padding(20.dp)
             ) {
                 Column(
