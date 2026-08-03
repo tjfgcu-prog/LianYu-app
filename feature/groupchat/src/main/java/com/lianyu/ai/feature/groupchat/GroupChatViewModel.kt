@@ -875,20 +875,6 @@ class GroupChatViewModel(
         }
     }
 
-    fun updateGroupName(name: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val group = _groupData.value
-                    ?: throw IllegalStateException("Group data is null")
-                val updatedGroup = group.copy(name = name)
-                chatGroupRepository.updateGroup(updatedGroup)
-                _groupData.value = updatedGroup
-            } catch (e: Exception) {
-                Log.e("GroupChatViewModel", "updateGroupName failed", e)
-            }
-        }
-    }
-
     // 微信桥接功能已移除，保留空占位以避免大范围改动调用点。
      private fun notifyExternalBridgeNoop(companionId: Long, messageId: Long) {
          // no-op
