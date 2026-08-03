@@ -103,8 +103,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lianyu.ai.database.model.ApiConfig
 import com.lianyu.ai.database.model.ApiProvider
-import com.lianyu.ai.domain.ModelState
-import com.lianyu.ai.domain.ModelStatus
+
 import com.lianyu.ai.feature.settings.R
 import com.lianyu.ai.feature.settings.ui.viewmodel.SettingsViewModel
 import com.lianyu.ai.uicommon.theme.PetalPrimary
@@ -124,8 +123,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val configs by viewModel.configs.collectAsState(initial = emptyList())
-    val modelStates by viewModel.modelStates.collectAsState()
-    val localModelState by viewModel.localModelState.collectAsState()
+    
     val fetchedModels by viewModel.fetchedModels.collectAsState()
     val modelFetchStates by viewModel.modelFetchStates.collectAsState()
     val balanceInfo by viewModel.balanceInfo.collectAsState()
@@ -171,7 +169,7 @@ fun SettingsScreen(
     val cardBackground = colorScheme.surfaceVariant
 
     LaunchedEffect(Unit) {
-        viewModel.refreshLocalModel()
+        
         viewModel.refreshConnectionStatus()
         viewModel.refreshPartnerQuota()
         delay(30)
