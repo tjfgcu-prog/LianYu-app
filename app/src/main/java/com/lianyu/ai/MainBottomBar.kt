@@ -66,11 +66,23 @@ fun FloatingGlassBottomNav(
     items: List<BottomNavItem>,
     currentIndex: Int,
     onItemClick: (Int) -> Unit,
-    isDark: Boolean = false   // 新增
+    isDark: Boolean = false
 ) {
     val selectedColor = MaterialTheme.colorScheme.primary
     val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-    .frostedGlassNav(isDark = isDark)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(52.dp)
+                .frostedGlassNav(isDark = isDark),
             contentAlignment = Alignment.Center
         ) {
             Row(
