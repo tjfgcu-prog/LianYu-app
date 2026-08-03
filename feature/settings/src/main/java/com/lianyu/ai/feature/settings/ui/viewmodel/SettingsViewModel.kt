@@ -11,8 +11,7 @@ import com.lianyu.ai.database.model.ApiProvider
 import com.lianyu.ai.database.repository.ApiConfigRepository
 import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.domain.LocalModelProvider
-import com.lianyu.ai.domain.ModelState
-import com.lianyu.ai.domain.ModelStatus
+
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.network.AiService
 import kotlinx.coroutines.flow.Flow
@@ -37,16 +36,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         ServiceRegistry.getOrThrow(AiServiceProvider::class.java) as AiService
     }
     // [R6 FIX] localModelProvider 也改 lazy，避免构造时 ServiceRegistry.get 返回 null
-    private val localModelProvider by lazy {
-        ServiceRegistry.getOrThrow(LocalModelProvider::class.java)
-    }
+    
     private val appSettingsStore = AppSettingsStore(application)
     private lateinit var repository: ApiConfigRepository
     val configs: Flow<List<ApiConfig>>
-    private val _localModelState = MutableStateFlow(ModelState())
-    val localModelState: StateFlow<ModelState> = _localModelState.asStateFlow()
-    private val _modelStates = MutableStateFlow<Map<String, ModelState>>(emptyMap())
-    val modelStates: StateFlow<Map<String, ModelState>> = _modelStates.asStateFlow()
+    
 
     // [R7 FIX] 改为 StateFlow + ConcurrentHashMap 替代 Compose mutableStateMapOf：
     // 原实现从多个 Dispatchers.IO 协程并发写 Compose 快照状态，违反数据流规范。
@@ -218,9 +212,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
                 val aiService = aiService
                 val testMessages = listOf(
-                    com.lianyu.ai.network.Message("system", "You are a helpful assistant."),
-                    com.lianyu.ai.network.Message("user", "Hi")
-                )
+    com.lianyu.ai.network.Message("system", com.lianyu.ai.common.AiModelConstants.TEST_SYSTEM_MESSAGE),
+    com.lianyu.ai.network.Message("user", com.lianyu.ai.common.AiModelConstants.TEST_USER_MESSAGE)
+)
 
                 val response = when (resolvedProvider) {
                     ApiProvider.ANTHROPIC -> aiService.callAnthropicForTest(config, testMessages, "Be helpful.")
@@ -276,22 +270,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // 同时启动异步持续监听（供 refreshConnectionStatus 和后续配置变更）
         refreshConnectionStatus()
 
-        viewModelScope.launch(Dispatchers.IO) {
-            // [R15 FIX] 轮询移到 IO 线程 + distinctUntilChanged，避免每 500ms 主线程执行 + 无条件重组
-            // [R6 FIX] localModelProvider 现在是 non-null lazy，不再需要 ?.let
-            val provider = localModelProvider
-            while (true) {
-                val states = provider.getAllModelStates()
-                if (states != _modelStates.value) {
-                    _modelStates.value = states
-                }
-                val selected = states.values.find { it.isSelected }
-                if (selected != null && selected != _localModelState.value) {
-                    _localModelState.value = selected
-                }
-                kotlinx.coroutines.delay(500)
-            }
-        }
+        
     }
 
     fun saveConfig(config: ApiConfig) {
@@ -550,10 +529,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
                     // P2-15: 优先选 chat 模型，避免随机到 embedding/vision-only 模型导致测试失败
                     // [FIX] 补上 kimi，避免 kimi-k2.7-code 等模型被排除
-                    val chatKeywords = listOf("chat", "completion", "instruct", "gpt", "claude", "gemini",
-                        "deepseek", "qwen", "glm", "moonshot", "kimi", "yi-", "ernie", "hunyuan", "doubao")
-                    val chatModels = models.filter { m ->
-                        chatKeywords.any { m.contains(it, ignoreCase = true) }
+                    val chatKeywords = com.lianyu.ai.common.AiModelConstants.CHAT_MODEL_KEYWORDS
+val chatModels = models.filter { m -> chatKeywords.any { m.contains(it, ignoreCase = true) } }
+fun isExcludedModel(m: String) =
+    com.lianyu.ai.common.AiModelConstants.EXCLUDED_MODEL_KEYWORDS.any { m.contains(it, ignoreCase = true) }
                     }
 
                     // [FIX] PARTNER 始终走本地随机选择，避免 server randomModel 固定导致每次相同
@@ -603,9 +582,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 val aiService = aiService
 
                 val testMessages = listOf(
-                    com.lianyu.ai.network.Message("system", "You are a helpful assistant."),
-                    com.lianyu.ai.network.Message("user", "Hi")
-                )
+    com.lianyu.ai.network.Message("system", com.lianyu.ai.common.AiModelConstants.TEST_SYSTEM_MESSAGE),
+    com.lianyu.ai.network.Message("user", com.lianyu.ai.common.AiModelConstants.TEST_USER_MESSAGE)
+)
 
                 SecureLog.d("SettingsViewModel", "Calling API with: url=${testConfig.baseUrl}, model=${testConfig.model}")
 
@@ -830,26 +809,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun startGemmaDownload() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                val selected = _modelStates.value.values.find { it.isSelected }?.modelId
-                if (selected != null) provider.downloadModel(selected)
-            }
-        }
-    }
-
     
-
-    fun refreshLocalModel() {
-        viewModelScope.launch {
-            val provider = localModelProvider
-            provider.let { provider ->
-                _modelStates.value = provider.getAllModelStates()
-            }
-        }
-    }
 
     override fun onCleared() {
         super.onCleared()
