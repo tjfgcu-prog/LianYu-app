@@ -34,12 +34,6 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         }
     }
 
-    override fun getAvailableModels(): List<ModelInfo> = emptyList()
-override fun getModelState(modelId: String): ModelState = ModelState(...)
-override fun getAllModelStates(): Map<String, ModelState> = emptyMap()
-override suspend fun downloadModel(modelId: String) {}
-override suspend fun cancelDownload(modelId: String) {}
-override suspend fun enableModel(modelId: String) {}
-override suspend fun disableModel(modelId: String) {}
-override suspend fun deleteModel(modelId: String) {}
+    override fun getModelName(): String = "GGUF (Custom)"
+    override fun getModelVersion(): String = "custom"
 }
