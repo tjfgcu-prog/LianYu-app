@@ -60,6 +60,14 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.groupchat.GroupChatViewModel
 import com.lianyu.ai.feature.groupchat.GroupChatViewModelFactory
+import com.lianyu.ai.uicommon.component.liquidGlass
+import com.lianyu.ai.uicommon.theme.ThemeViewModel
+import com.lianyu.ai.uicommon.utils.isCompactDevice
+import com.lianyu.ai.uicommon.utils.isExpandedDevice
+import com.lianyu.ai.uicommon.utils.isMediumDevice
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.widthIn
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,14 +78,17 @@ fun GroupDetailScreen(
 ) {
     val context = LocalContext.current
     val viewModel: GroupChatViewModel = viewModel(
-        factory = GroupChatViewModelFactory(context.applicationContext as Application, groupId)
-    )
-    val groupData by viewModel.groupData.collectAsState()
+    factory = GroupChatViewModelFactory(context.applicationContext as Application, groupId)
+)
+val themeViewModel: ThemeViewModel = viewModel()
+val isDark by themeViewModel.isDarkTheme.collectAsStateWithLifecycle()
+val groupData by viewModel.groupData.collectAsState()
     val companions by viewModel.allCompanions.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showEditNameDialog by remember { mutableStateOf(false) }
-    var newGroupName by remember { mutableStateOf("") }
+var showEditNameDialog by remember { mutableStateOf(false) }
+var showClearHistoryDialog by remember { mutableStateOf(false) }
+var newGroupName by remember { mutableStateOf("") }
 
     val activeCompanionIds = groupData?.getCompanionIdList() ?: emptyList()
     val activeCompanions = companions.filter { activeCompanionIds.contains(it.id) }
@@ -247,10 +258,10 @@ fun GroupDetailScreen(
                 Column {
                     // 清空聊天记录
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { /* TODO */ }
-                            .padding(vertical = 12.dp),
+    modifier = Modifier
+        .fillMaxWidth()
+        .clickable { showClearHistoryDialog = true }
+        .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -339,22 +350,49 @@ fun GroupDetailScreen(
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        // TODO: 更新群名称
-                        showEditNameDialog = false
-                    }
-                ) {
-                    Text("确定", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("取消")
-                }
+    TextButton(
+        onClick = {
+            val trimmed = newGroupName.trim()
+            if (trimmed.isNotEmpty()) {
+                viewModel.updateGroupName(trimmed)
             }
-        )
+            showEditNameDialog = false
+        }
+    ) {
+        Text("确定", color = MaterialTheme.colorScheme.primary)
     }
+},
+dismissButton = {
+    TextButton(onClick = { showEditNameDialog = false }) {
+        Text("取消")
+    }
+}
+)
+}
+
+// 清空聊天记录确认对话框
+if (showClearHistoryDialog) {
+    AlertDialog(
+        onDismissRequest = { showClearHistoryDialog = false },
+        title = { Text("确认清空") },
+        text = { Text("清空后将无法恢复，确定要清空聊天记录吗？") },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    viewModel.clearGroupHistory()
+                    showClearHistoryDialog = false
+                }
+            ) {
+                Text("清空", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { showClearHistoryDialog = false }) {
+                Text("取消")
+            }
+        }
+    )
+}
 }
 
 @Composable
