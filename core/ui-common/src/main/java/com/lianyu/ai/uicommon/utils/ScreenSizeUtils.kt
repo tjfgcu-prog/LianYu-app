@@ -32,14 +32,7 @@ fun rememberDeviceScreenSize(): DeviceScreenSize {
     }
 }
 
-@Composable
-fun isCompactDevice(): Boolean = rememberDeviceScreenSize() == DeviceScreenSize.COMPACT
 
-@Composable
-fun isMediumDevice(): Boolean = rememberDeviceScreenSize() == DeviceScreenSize.MEDIUM
-
-@Composable
-fun isExpandedDevice(): Boolean = rememberDeviceScreenSize() == DeviceScreenSize.EXPANDED
 
 @Composable
 fun responsiveDp(
