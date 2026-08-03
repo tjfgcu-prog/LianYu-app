@@ -507,7 +507,7 @@ fun ChatScreen(
                         isUser = message.isFromUser,
                         userAvatar = userAvatar,
                         userName = userName,
-                        onVoiceClick = { /* TODO: play voice message */ },
+                        
                         onRecall = { msg -> viewModel.recallMessage(msg) },
                         onRegenerate = { msg -> viewModel.regenerateMessage(msg) },
                         adaptiveSizing = adaptiveSizing,
