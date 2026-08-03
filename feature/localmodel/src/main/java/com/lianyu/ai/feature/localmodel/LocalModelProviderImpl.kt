@@ -2,9 +2,7 @@ package com.lianyu.ai.feature.localmodel
 
 import android.content.Context
 import com.lianyu.ai.domain.LocalModelProvider
-import com.lianyu.ai.domain.ModelInfo
-import com.lianyu.ai.domain.ModelState
-import com.lianyu.ai.domain.ModelStatus
+
 
 class LocalModelProviderImpl(context: Context) : LocalModelProvider {
 
@@ -36,17 +34,12 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         }
     }
 
-    override fun getModelName(): String = "GGUF (Custom)"
-    override fun getModelVersion(): String = "custom"
     override fun getAvailableModels(): List<ModelInfo> = emptyList()
-    override fun getModelState(modelId: String): ModelState = ModelState(
-        modelId = modelId, displayName = "", downloadUrl = "", expectedBytes = 0L,
-        isSelected = false, status = ModelStatus.NOT_DOWNLOADED
-    )
-    override fun getAllModelStates(): Map<String, ModelState> = emptyMap()
-    override suspend fun downloadModel(modelId: String) {}
-    override suspend fun cancelDownload(modelId: String) {}
-    override suspend fun enableModel(modelId: String) {}
-    override suspend fun disableModel(modelId: String) {}
-    override suspend fun deleteModel(modelId: String) {}
+override fun getModelState(modelId: String): ModelState = ModelState(...)
+override fun getAllModelStates(): Map<String, ModelState> = emptyMap()
+override suspend fun downloadModel(modelId: String) {}
+override suspend fun cancelDownload(modelId: String) {}
+override suspend fun enableModel(modelId: String) {}
+override suspend fun disableModel(modelId: String) {}
+override suspend fun deleteModel(modelId: String) {}
 }
