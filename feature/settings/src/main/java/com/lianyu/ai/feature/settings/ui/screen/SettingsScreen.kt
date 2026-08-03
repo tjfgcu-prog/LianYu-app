@@ -116,6 +116,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.foundation.isSystemInDarkTheme
+import com.lianyu.ai.uicommon.component.BackgroundPermissionsCard
 
 @Composable
 fun SettingsScreen(
@@ -276,7 +277,16 @@ fun SettingsScreen(
                 testedConfigs = testedConfigs
             )
 
-            // ====== Vision Model Settings Section ======
+            // ====== 权限与后台运行 Section ======
+BackgroundPermissionsCard(
+    isVisible = isVisible,
+    textPrimaryColor = textPrimaryColor,
+    textSecondaryColor = textSecondaryColor
+)
+
+Spacer(modifier = Modifier.height(16.dp))
+
+// ====== Vision Model Settings Section ======
             AnimatedVisibility(
                 visible = isVisible,
                 enter = fadeIn(tween(200, delayMillis = 100)) +
