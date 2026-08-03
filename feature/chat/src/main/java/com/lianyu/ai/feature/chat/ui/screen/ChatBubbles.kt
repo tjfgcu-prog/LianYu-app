@@ -73,7 +73,7 @@ import com.lianyu.ai.uicommon.component.CompanionAvatar
 import com.lianyu.ai.uicommon.component.UserAvatar
 import com.lianyu.ai.uicommon.component.VoiceMessageBubble
 import com.lianyu.ai.uicommon.theme.AdaptiveSizing
-import com.lianyu.ai.uicommon.component.bounceIn
+
 import android.net.Uri
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -103,9 +103,7 @@ fun TypingIndicatorBubble(
     )
 
     Row(
-    modifier = Modifier
-        .fillMaxWidth()
-        .bounceIn(),
+    modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Bottom
     ) {
