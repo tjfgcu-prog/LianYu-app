@@ -4,6 +4,8 @@ import okhttp3.ConnectionSpec
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import com.lianyu.ai.common.security.DeviceRequestSigner 
+import okio.Buffer
 
 /**
  * Open-source request interceptor.
@@ -28,5 +30,30 @@ class RequestSecurityInterceptor(
         }
     }
 
-    override fun intercept(chain: Interceptor.Chain): Response = chain.proceed(chain.request())
+    override fun intercept(chain: Interceptor.Chain): Response {
+    val request = chain.request()
+    if (!shouldSignRequest(request)) {
+        return chain.proceed(request)
+    }
+    val signed = runCatching {
+        val payload = request.body?.let { body ->
+            val buffer = Buffer()
+            body.writeTo(buffer)
+            buffer.readByteArray()
+        } ?: request.url.toString().toByteArray(Charsets.UTF_8)
+        DeviceRequestSigner.sign(payload)
+    }.getOrNull()
+
+    val finalRequest = if (signed != null) {
+        request.newBuilder()
+            .addHeader("X-Device-Signature", signed.signature)
+            .addHeader("X-Device-Key-Id", signed.keyId)
+            .addHeader("X-Device-Id", signed.deviceId)
+            .addHeader("X-Signature-Algorithm", DeviceRequestSigner.SIGNATURE_ALGORITHM)
+            .build()
+    } else {
+        request
+    }
+    return chain.proceed(finalRequest)
+    }
 }
