@@ -60,14 +60,6 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.groupchat.GroupChatViewModel
 import com.lianyu.ai.feature.groupchat.GroupChatViewModelFactory
-import com.lianyu.ai.uicommon.component.liquidGlass
-import com.lianyu.ai.uicommon.theme.ThemeViewModel
-import com.lianyu.ai.uicommon.utils.isCompactDevice
-import com.lianyu.ai.uicommon.utils.isExpandedDevice
-import com.lianyu.ai.uicommon.utils.isMediumDevice
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.layout.widthIn
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,8 +72,7 @@ fun GroupDetailScreen(
     val viewModel: GroupChatViewModel = viewModel(
     factory = GroupChatViewModelFactory(context.applicationContext as Application, groupId)
 )
-val themeViewModel: ThemeViewModel = viewModel()
-val isDark by themeViewModel.isDarkTheme.collectAsStateWithLifecycle()
+
 val groupData by viewModel.groupData.collectAsState()
     val companions by viewModel.allCompanions.collectAsState()
 
