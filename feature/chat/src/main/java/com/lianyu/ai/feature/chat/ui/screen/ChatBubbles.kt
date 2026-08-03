@@ -275,7 +275,7 @@ fun ChatBubble(
     isUser: Boolean,
     userAvatar: String?,
     userName: String,
-    onVoiceClick: () -> Unit = {},
+    
     onRecall: ((ChatMessage) -> Unit)? = null,
     onRegenerate: ((ChatMessage) -> Unit)? = null,
     adaptiveSizing: AdaptiveSizing,
