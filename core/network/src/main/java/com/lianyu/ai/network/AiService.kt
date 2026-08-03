@@ -580,15 +580,24 @@ class AiService(context: Context) : AiServiceProvider {
             CompanionRole.BOYFRIEND -> "占有欲"
             CompanionRole.GIRLFRIEND -> "占有欲、吃醋"
         }
+        val hasUsageData = manager?.let {
+            it.buildYandereModeSystemPrompt(role).isNotBlank()
+        } ?: false
         val yanderePrompt = manager?.buildYandereModeSystemPrompt(role)?.takeIf { it.isNotBlank() }
             ?: "=== 病娇模式附加信息 ===\n用户已经很久没有回复/联系你了，请以略带${possessiveWord}、委屈、担心交织的方式追问。"
+
+        val usageHint = if (hasUsageData) {
+            "\n5. 如果上面的\"病娇模式附加信息\"里有应用使用数据，优先结合他这段时间到底在用哪个应用来质问/吃醋" +
+                "（比如发现他一直在刷某个App却没回你消息，就直接点出来，例如\"是不是又在刷抖音呀，都不理我\"），" +
+                "比泛泛地说\"担心\"更有针对性、更真实"
+        } else ""
 
         return generateProactiveMessage(
             companion = companion,
             recentMessages = recentMessages,
             settings = null,
             extraSystemPrompt = yanderePrompt,
-            instructionOverride = "以${companion.name}的身份，因为用户一直没有回复/没有联系，主动发一条带${possessiveWord}情绪的追问消息。要求：\n1. 15-50字，像真人聊天一样自然\n2. 语气要体现出因为对方不回应而产生的不安、委屈或担心\n3. 带语气词（呀/呢/啦/嘛/哼/嘿嘿/诶/呜呜/嘤）\n4. 禁止括号，禁止AI感词汇，禁止说教"
+            instructionOverride = "以${companion.name}的身份，因为用户一直没有回复/没有联系，主动发一条带${possessiveWord}情绪的追问消息。要求：\n1. 15-50字，像真人聊天一样自然\n2. 语气要体现出因为对方不回应而产生的不安、委屈或担心\n3. 带语气词（呀/呢/啦/嘛/哼/嘿嘿/诶/呜呜/嘤）\n4. 禁止括号，禁止AI感词汇，禁止说教$usageHint"
         )
     }
 
