@@ -31,7 +31,7 @@ class YandereModeManager(private val context: Context) {
 
     companion object {
         private const val CACHE_FILE_NAME = "yandere_mode_cache.json"
-        private const val CACHE_EXPIRE_HOURS = 6L
+        private const val CACHE_EXPIRE_HOURS = 1L  // 唯一消费者是病娇追问场景，数据太旧没有意义
         private const val TOP_USAGE_APPS = 10
         
 
