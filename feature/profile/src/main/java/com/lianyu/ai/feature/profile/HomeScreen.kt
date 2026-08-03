@@ -548,8 +548,6 @@ fun EmptyHomeState() {
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .glowPulse(color = PinkPrimary, durationMillis = 2400)
-                .floatAnimation(amplitude = 6f, durationMillis = 2200)
                 .clip(CircleShape)
                 .background(Color(0xFFE0E0E0)),
             contentAlignment = Alignment.Center
