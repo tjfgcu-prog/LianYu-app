@@ -57,7 +57,7 @@ import com.lianyu.ai.uicommon.theme.PetalOnPrimaryContainer
 import com.lianyu.ai.uicommon.theme.PetalSurface
 import com.lianyu.ai.uicommon.theme.PetalGreen
 import com.lianyu.ai.uicommon.theme.PetalError
-import com.lianyu.ai.uicommon.component.shimmerEffect
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
