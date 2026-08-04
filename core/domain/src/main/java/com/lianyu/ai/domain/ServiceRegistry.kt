@@ -34,6 +34,9 @@ object ServiceRegistry {
     /** 单例实例缓存 */
     private val singletons = ConcurrentHashMap<Class<*>, Any>()
 
+    /** 单例创建锁：允许工厂函数内部递归解析其他尚未创建的单例，避免 ConcurrentHashMap.computeIfAbsent 的重入限制 */
+    private val singletonCreationLock = Any()
+
     /**
      * 注册中心初始化完成状态。
      * 在 [LianYuApplication.registerServiceProviders] 完成后标记为 true，
@@ -84,10 +87,18 @@ object ServiceRegistry {
         singletons[type]?.let { return it as T }
         // 2. 单例工厂：首次创建并缓存
         singletonFactories[type]?.let { factory ->
-            val instance = singletons.computeIfAbsent(type) {
-                factory.invoke() ?: throw NullPointerException("Singleton factory returned null for ${type.name}")
+            // [FIX] 不用 ConcurrentHashMap.computeIfAbsent —— 它禁止在计算函数内部
+            // 递归修改同一个 map（即使是不同 key），否则会抛 IllegalStateException:
+            // Recursive update。而这里的工厂函数（如 AiService 的构造函数）经常需要
+            // 在内部再次调用 ServiceRegistry.get() 解析其他尚未创建的单例依赖，
+            // 必然触发这种嵌套调用。改用手动双重检查加锁，语义等价但允许递归创建。
+            synchronized(singletonCreationLock) {
+                singletons[type]?.let { return it as T }
+                val instance = factory.invoke()
+                    ?: throw NullPointerException("Singleton factory returned null for ${type.name}")
+                singletons[type] = instance
+                return instance as T
             }
-            return instance as T
         }
         // 3. 工厂模式：每次新建
         return factories[type]?.invoke() as? T
