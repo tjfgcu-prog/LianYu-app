@@ -1495,6 +1495,26 @@ $chatText
                 }
 
                 if (content.isBlank()) {
+                    // [BUGFIX] 部分推理模型偶尔只输出 <think>...</think>，正文为空，这是模型生成的
+                    // 偶发抖动，跟当前 Key 是否可用无关——同一个 Key 原样重发这份请求往往就能拿到
+                    // 正常回复。之前的实现会直接抛异常，被外层 catch 当成"该 Key 失败"处理并
+                    // markKeyFailed(currentKey) 让 Key 进入冷却，单 Key 场景下没有下一个 Key
+                    // 可切换，请求直接失败，只能靠用户手动重发。这里先原地重试一次，仍为空才真正失败。
+                    SecureLog.w("AiService", "Key #${keyIndex + 1}/${allKeys.size} 仅返回思考过程，正文为空，原地重试一次")
+                    val retryResponse = executeAdaptive(config, requestBuilder.build(), client)
+                    val retryBody = retryResponse.body?.string().orEmpty()
+                    if (retryResponse.isSuccessful && retryBody.trimStart().startsWith("{")) {
+                        val retryContent = runCatching { json.decodeFromString<ChatCompletionResponse>(retryBody) }
+                            .getOrNull()
+                            ?.choices?.firstOrNull()?.message?.content
+                            ?.let { stripThinkingContent(it) }
+                        if (!retryContent.isNullOrBlank()) {
+                            content = retryContent
+                        }
+                    }
+                }
+
+                if (content.isBlank()) {
                     throw Exception("模型仅返回了思考过程，未生成实际回复，请重试")
                 }
 
