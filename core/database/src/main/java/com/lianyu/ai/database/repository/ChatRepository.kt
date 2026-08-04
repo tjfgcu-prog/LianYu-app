@@ -54,10 +54,16 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
 
     suspend fun getAiMessageCount(companionId: Long): Int = chatMessageDao.getAiMessageCount(companionId)
 
+    // [BUGFIX] chatMessageDao.getRecentMessagesSync 按 timestamp DESC（新→旧）查询，
+    // 但本函数此前直接把 DESC 结果返回给调用方，只把 reversed() 之后的正序副本存进了
+    // UI 内存缓存（recentCache）。而 ChatContextResolver.getHistoryForAi()/
+    // getShortHistoryForAi()、以及最终喂给 AiPromptBuilder 的历史消息列表都假设本函数
+    // 返回时间正序（旧→新，与 getMessagesForCompanion/getMessagesBefore 的约定一致）。
     suspend fun getRecentMessagesSync(companionId: Long, limit: Int): List<ChatMessage> =
         chatMessageDao.getRecentMessagesSync(companionId, limit)
             .map { ChatMessageCrypto.decryptFromStorage(it) }
-            .also { recentCache[companionId] = it.reversed() }
+            .reversed()
+            .also { recentCache[companionId] = it }
 
     suspend fun getMessagesBeforeSync(companionId: Long, beforeTimestamp: Long, limit: Int): List<ChatMessage> =
         chatMessageDao.getMessagesBeforeSync(companionId, beforeTimestamp, limit)
