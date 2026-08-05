@@ -60,10 +60,7 @@
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config">
 
-        <uses-native-library android:name="libvndksupport.so"
-            android:required="false"
-            tools:ignore="TypoInNamespace" />
-        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        
 
         <provider
             android:name="androidx.startup.InitializationProvider"
