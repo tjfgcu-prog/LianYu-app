@@ -425,7 +425,7 @@ private fun GroupMemberItem(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            if (companion.personality != null) {
+            if (companion.personality.isNotBlank()) {
                 Text(
                     text = companion.personality,
                     fontSize = 12.sp,
