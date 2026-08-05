@@ -74,7 +74,11 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
         super.onCreate()
         instance = this
         initBusiness(this)
-    }
+        // 冷启动清空媒体解密临时缓存，避免明文副本无限堆积（源文件一直是加密的，清空不丢数据）
+        try {
+            java.io.File(cacheDir, "media_plain").deleteRecursively()
+        } catch (_: Exception) { }
+        }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
