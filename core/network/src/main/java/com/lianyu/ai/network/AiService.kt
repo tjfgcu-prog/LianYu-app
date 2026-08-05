@@ -174,7 +174,7 @@ class AiService(context: Context) : AiServiceProvider {
         private val okHttpClient: OkHttpClient by lazy {
             val builder = OkHttpClient.Builder()
 
-            if (false) {
+            if (BuildConfig.DEBUG) {
                 builder.addInterceptor(
                     HttpLoggingInterceptor(RedactingLogger()).apply {
                         level = HttpLoggingInterceptor.Level.HEADERS
