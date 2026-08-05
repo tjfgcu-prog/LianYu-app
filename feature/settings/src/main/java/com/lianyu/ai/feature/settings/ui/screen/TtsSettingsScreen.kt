@@ -458,7 +458,7 @@ private fun LocalModeCard(
         }
 
         if (isEnabled || isReady) {
-            Divider(color = textSecondaryColor.copy(alpha = 0.15f))
+            HorizontalDivider(color = textSecondaryColor.copy(alpha = 0.15f))
 
             // 拖动时只更新本地草稿值（即时显示数字），松手才真正下发 onSidChange/onSpeedChange，
             // 避免拖动过程中每帧都触发保存+引擎参数更新，导致听感上"调了跟没调一样"。
