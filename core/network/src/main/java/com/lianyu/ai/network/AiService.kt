@@ -1377,7 +1377,8 @@ $chatText
     private suspend fun callOpenAiCompatibleWithTools(
         config: ApiConfig,
         messages: List<Message>,
-        toolsJson: String?
+        toolsJson: String?,
+        allowTransientRetry: Boolean = true
     ): Tuple4<String, String?, List<com.lianyu.ai.domain.AiToolCall>?, String?> {
         val safeTemp = config.temperature.coerceIn(0.1f, 1.5f)
         val baseUrl = normalizeOpenAiBaseUrl(config.baseUrl)
@@ -1527,7 +1528,19 @@ $chatText
             }
         }
 
-        throw lastException ?: Exception("所有 API Key 均请求失败")
+        val finalException = lastException ?: Exception("所有 API Key 均请求失败")
+
+        // [FIX] 对已知的瞬时性失败（限流 / 模型只返回思考过程）自动重试一次，
+        // 避免用户每次都要手动重发；只重试一次（allowTransientRetry=false），防止无限递归。
+        val isTransient = finalException.message?.let {
+            it.contains("Too many requests") || it.contains("模型仅返回了思考过程")
+        } ?: false
+        if (allowTransientRetry && isTransient) {
+            SecureLog.w("AiService", "检测到瞬时性失败，1.5秒后自动重试一次: ${finalException.message}")
+            kotlinx.coroutines.delay(1500)
+            return callOpenAiCompatibleWithTools(config, messages, toolsJson, allowTransientRetry = false)
+        }
+        throw finalException
     }
 
     /** 简易四元组（Kotlin 无内置 Tuple4） */
