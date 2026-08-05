@@ -46,6 +46,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class GroupChatViewModel(
     application: Application,
     private val groupId: Long
