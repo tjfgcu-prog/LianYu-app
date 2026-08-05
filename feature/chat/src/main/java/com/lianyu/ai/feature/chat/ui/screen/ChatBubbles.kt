@@ -80,6 +80,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import kotlin.math.abs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 
 @Composable
 fun TypingIndicatorBubble(
@@ -351,9 +354,16 @@ fun ChatBubble(
                 )
             } else if (message.type == MessageType.IMAGE) {
                 val imageFile = java.io.File(message.linkString.ifBlank { message.content })
-                if (imageFile.exists()) {
+                val mediaContext = LocalContext.current
+                var displayFile by remember(imageFile.absolutePath) { mutableStateOf<java.io.File?>(null) }
+                LaunchedEffect(imageFile.absolutePath) {
+                    displayFile = withContext(Dispatchers.IO) {
+                        com.lianyu.ai.common.EncryptedFileHelper.decryptToPlainCache(mediaContext, imageFile)
+                    }
+                }
+                if (displayFile != null) {
                     AsyncImage(
-                        model = imageFile,
+                        model = displayFile,
                         contentDescription = "图片",
                         modifier = Modifier
                             .widthIn(max = 220.dp)
@@ -577,6 +587,32 @@ internal fun copyUriToCache(context: android.content.Context, uri: Uri): String?
             }
         }
         cacheFile.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
+ * Copy URI content to app cache directory, encrypting it at rest.
+ * Used for user photo/video sends (private content) — unlike
+ * [copyUriToCache] which is only used for transient sticker-pack zips.
+ */
+internal fun copyMediaUriToEncryptedCache(context: android.content.Context, uri: Uri): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+        val extension = when (context.contentResolver.getType(uri)) {
+            "image/png" -> "png"
+            "image/jpeg" -> "jpg"
+            "image/gif" -> "gif"
+            "image/webp" -> "webp"
+            "video/mp4" -> "mp4"
+            "video/3gpp" -> "3gp"
+            else -> "tmp"
+        }
+        val destFile = java.io.File(context.cacheDir, "media_${System.currentTimeMillis()}.$extension")
+        val ok = com.lianyu.ai.common.EncryptedFileHelper.encrypt(context, inputStream, destFile)
+        if (ok) destFile.absolutePath else null
     } catch (e: Exception) {
         e.printStackTrace()
         null
