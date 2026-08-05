@@ -945,6 +945,7 @@ fun ApiConfigEditDialog(
     var maxTokens by remember { mutableStateOf(config.maxTokens?.toString() ?: "") }
     var showModelDropdown by remember { mutableStateOf(false) }
     var skipCertVerify by remember { mutableStateOf(config.skipCertVerify) }
+    var showSkipCertConfirm by remember { mutableStateOf(false) }
     var formatHint by remember { mutableStateOf(config.formatHint) }
     var lastFetchedParams by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -1304,7 +1305,9 @@ fun ApiConfigEditDialog(
                         }
                         Switch(
                             checked = skipCertVerify,
-                            onCheckedChange = { skipCertVerify = it },
+                            onCheckedChange = { turnedOn ->
+                                if (turnedOn) showSkipCertConfirm = true else skipCertVerify = false
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = PetalOrange,
                                 checkedTrackColor = PetalOrange.copy(alpha = 0.3f),
@@ -1314,6 +1317,26 @@ fun ApiConfigEditDialog(
                         )
                     }
                 }
+
+        if (showSkipCertConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showSkipCertConfirm = false },
+                        title = { Text("确认跳过证书验证？") },
+                        text = {
+                            Text("开启后将不再校验该服务器的 SSL 证书链和域名，任何中间人都可能截获或篡改请求内容（包括你的 API Key 和聊天内容）。仅建议连接你自己搭建、且信任网络环境的服务器时开启。")
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                skipCertVerify = true
+                                showSkipCertConfirm = false
+                            }) { Text("我了解风险，继续", color = PetalOrange) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showSkipCertConfirm = false }) { Text("取消") }
+                        }
+                    )
+        }
+           
             }
         },
         confirmButton = {
