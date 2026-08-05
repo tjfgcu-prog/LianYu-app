@@ -695,13 +695,18 @@ fun GroupImageMessageBubble(
     imagePath: String,
     modifier: Modifier = Modifier
 ) {
-    // TODO(C3): Use EncryptedFileHelper for transparent decryption of media files
-    // val helper = EncryptedFileHelper(context)
+    val mediaContext = LocalContext.current
     val imageFile = remember(imagePath) { File(imagePath) }
+    var displayFile by remember(imagePath) { mutableStateOf<File?>(null) }
+    LaunchedEffect(imagePath) {
+        displayFile = withContext(Dispatchers.IO) {
+            com.lianyu.ai.common.EncryptedFileHelper.decryptToPlainCache(mediaContext, imageFile)
+        }
+    }
 
-    if (imageFile.exists()) {
+    if (displayFile != null) {
         AsyncImage(
-            model = imageFile.absolutePath,
+            model = displayFile,
             contentDescription = "图片",
             modifier = modifier
                 .widthIn(max = 200.dp)
@@ -748,12 +753,17 @@ private fun copyUriToCache(context: android.content.Context, uri: Uri, prefix: S
             else -> "tmp"
         }
         val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
-        // TODO(C3): Use EncryptedFileHelper for transparent encryption of media on write
-        // val helper = EncryptedFileHelper(context)
         val cacheFile = File(context.cacheDir, fileName)
-        inputStream.use { input ->
-            cacheFile.outputStream().use { output ->
-                input.copyTo(output)
+        if (prefix == "image") {
+            // User photo sends are private content — encrypt at rest.
+            val ok = com.lianyu.ai.common.EncryptedFileHelper.encrypt(context, inputStream, cacheFile)
+            if (!ok) return null
+        } else {
+            // Sticker-pack zip imports stay plaintext (not sensitive, read by StickerManager).
+            inputStream.use { input ->
+                cacheFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
             }
         }
         cacheFile.absolutePath
