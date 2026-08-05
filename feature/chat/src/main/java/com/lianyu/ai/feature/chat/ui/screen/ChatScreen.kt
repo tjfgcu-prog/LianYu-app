@@ -165,7 +165,7 @@ fun ChatScreen(
         uri?.let {
             scope.launch {
                 try {
-                    val path = copyUriToCache(context, it)
+                    val imagePath = copyMediaUriToEncryptedCache(context, it)
                     if (path != null) {
                         val count = stickerManager.importStickerZip(path)
                         snackbarHostState.showSnackbar("成功导入 $count 个表情包")
@@ -210,7 +210,7 @@ fun ChatScreen(
             showExtensionPanel = false
             scope.launch {
                 try {
-                    val videoPath = copyUriToCache(context, it)
+                    val videoPath = copyMediaUriToEncryptedCache(context, it)
                     if (videoPath != null) {
                         viewModel.sendVideoMessage(videoPath)
                     } else {
