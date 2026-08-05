@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val companionRepository: CompanionRepository
     private val chatRepository: ChatRepository
