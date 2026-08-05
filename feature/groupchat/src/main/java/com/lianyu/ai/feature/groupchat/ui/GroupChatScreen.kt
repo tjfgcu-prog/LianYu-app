@@ -62,7 +62,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.AlternateEmail
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CircularProgressIndicator
@@ -491,7 +491,7 @@ fun GroupChatScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Send,
+                                imageVector = Icons.AutoMirrored.Filled.Send,
                                 contentDescription = "发送",
                                 tint = if (canSend) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
