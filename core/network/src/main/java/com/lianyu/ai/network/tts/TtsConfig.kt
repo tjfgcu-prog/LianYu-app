@@ -7,6 +7,7 @@ data class TtsConfig(
     // Local offline TTS (sherpa-onnx)
     val localTtsSpeed: Float = 1.0f,
     val localTtsSid: Int = 0,
+    val localTtsNumSpeakers: Int = 1,
     // MiniMax Audio (唯一云端供应商)
     val minimaxApiKey: String = "",
     val minimaxGroupId: String = "",
