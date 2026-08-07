@@ -104,8 +104,7 @@ fun TtsSettingsScreen(
     val textPrimaryColor = colorScheme.onSurface
     val textSecondaryColor = colorScheme.onSurfaceVariant
     val cardBg = colorScheme.surfaceVariant
-
-    fun saveSettings() {
+    
         fun saveSettings() {
         val newConfig = TtsConfig(
             localTtsSpeed = localTtsSpeed,
