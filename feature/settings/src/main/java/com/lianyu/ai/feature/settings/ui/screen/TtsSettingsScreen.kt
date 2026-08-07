@@ -111,6 +111,9 @@ fun TtsSettingsScreen(
             localTtsSid = localTtsSid,
             localTtsNumSpeakers = localTtsNumSpeakers,
             minimaxApiKey = minimaxApiKey,
+            minimaxGroupId = minimaxGroupId,
+            minimaxVoiceId = minimaxVoiceId
+        )
         TtsConfig.saveToSharedPreferences(context, newConfig)
         ttsService.updateConfig(newConfig)
         val prefs = context.getSharedPreferences("tts_settings", Context.MODE_PRIVATE)
