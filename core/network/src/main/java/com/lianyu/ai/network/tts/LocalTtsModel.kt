@@ -4,178 +4,36 @@ import android.content.Context
 import java.io.File
 
 /**
- * 本地离线 TTS 模型元数据。多文件支持（VITS 需 model.onnx + tokens.txt + lexicon.txt）。
+ * 本地离线 TTS 模型（sherpa-onnx VITS 格式）。
  *
- * 镜像 [com.lianyu.ai.feature.localmodel.LocalModel] 的 sealed class 模式，
- * 但 sherpa-onnx 一个模型由多个文件组成，故用 [files] 列表。
- *
- * @property id 唯一标识，用于 DataStore key
- * @property displayName UI 展示名
- * @property files 模型文件列表（model.onnx / tokens.txt / lexicon.txt 等）
- * @property numSpeakers 说话人数量（aishell3=174，单音色=1）
- * @property modelType sherpa OfflineTts 子模型类型
+ * 不提供任何内置可下载模型：所有模型文件都由用户通过系统文件选择器
+ * 手动导入（跟 GGUF 本地模型一样）。固定存放位置
+ * `<filesDir>/models/tts/custom/`，固定文件名 model.onnx / tokens.txt / lexicon.txt。
  */
-sealed class LocalTtsModel(
-    val id: String,
-    val displayName: String,
-    val files: List<LocalTtsModelFile>,
-    val numSpeakers: Int,
-    val modelType: LocalTtsModelType
-) {
-    /**
-     * 模型存储目录：`<filesDir>/models/tts/<id>/`
-     * 与 [com.lianyu.ai.feature.localmodel.LocalModel.modelFile] 同根（`models/` 子目录），
-     * 但额外加 `tts/` 前缀避免与 LLM 模型文件混淆。
-     */
-    fun modelDir(context: Context): File {
-    return File(File(context.filesDir, "models"), "tts/$id").also { it.mkdirs() }
-}
+object LocalTtsModel {
+    const val MODEL_FILE_NAME = "model.onnx"
+    const val TOKENS_FILE_NAME = "tokens.txt"
+    const val LEXICON_FILE_NAME = "lexicon.txt"
 
-/**
- * 下载用的外部临时目录：DownloadManager 只能写外部存储，不能直接写 filesDir。
- * 下载+校验通过后会被复制进 [modelDir]，再删掉临时文件。
- */
-fun stagingDir(context: Context): File {
-    val root = context.externalCacheDir ?: context.cacheDir
-    return File(File(root, "tts_staging"), id).also { it.mkdirs() }
-}
+    private const val MIN_VALID_FILE_BYTES = 64L
 
-fun stagingFile(context: Context, fileName: String): File = File(stagingDir(context), fileName)
+    fun modelDir(context: Context): File =
+        File(File(context.filesDir, "models"), "tts/custom").also { it.mkdirs() }
 
-    /** 取模型目录下某个文件的绝对路径 */
-    fun file(context: Context, fileName: String): File = File(modelDir(context), fileName)
+    fun modelFile(context: Context): File = File(modelDir(context), MODEL_FILE_NAME)
+    fun tokensFile(context: Context): File = File(modelDir(context), TOKENS_FILE_NAME)
+    fun lexiconFile(context: Context): File = File(modelDir(context), LEXICON_FILE_NAME)
 
-    /** 所有文件是否都已存在（不校验内容） */
-    fun isAllFilesPresent(context: Context): Boolean =
-        files.all { file(context, it.fileName).exists() }
+    /** 主模型 + tokens 是必需的；lexicon 视模型而定，允许缺失（部分 sherpa VITS 模型不需要词典） */
+    fun isReady(context: Context): Boolean =
+        isValid(modelFile(context)) && isValid(tokensFile(context))
 
-    /** model.onnx 的文件名（约定 [files] 第一个元素是主模型） */
-    val modelFileName: String get() = files.first { it.isMainModel }.fileName
+    fun hasLexicon(context: Context): Boolean = isValid(lexiconFile(context))
 
-    /** tokens.txt 文件名 */
-    val tokensFileName: String get() = files.first { it.role == LocalTtsFileRole.TOKENS }.fileName
+    fun delete(context: Context) {
+        modelDir(context).deleteRecursively()
+    }
 
-    /** lexicon.txt 文件名（可能不存在，如 Kokoro 用 dictDir） */
-    val lexiconFileName: String? get() = files.firstOrNull { it.role == LocalTtsFileRole.LEXICON }?.fileName
-
-    
-    
-
-    /**
-     * 角色音模型（漫剧风格），794 说话人，sherpa-onnx 官方 HuggingFace 直链，可自动下载。
-     */
-    data object AnimeVoice : LocalTtsModel(
-        id = "vits_zh_hf_eula",
-        displayName = "VITS 角色音·漫剧风格 (804音色)",
-        numSpeakers = 804,
-        modelType = LocalTtsModelType.VITS,
-        files = listOf(
-            LocalTtsModelFile(
-                fileName = "eula.onnx",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/eula.onnx",
-                sha256 = "",
-                expectedBytes = 116_000_000L,
-                role = LocalTtsFileRole.MAIN_MODEL,
-                isMainModel = true
-            ),
-            LocalTtsModelFile(
-                fileName = "tokens.txt",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/tokens.txt",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.TOKENS,
-                isMainModel = false
-            ),
-            LocalTtsModelFile(
-                fileName = "lexicon.txt",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/lexicon.txt",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.LEXICON,
-                isMainModel = false
-            )
-        )
-    )
-
-    /**
-     * 自定义模型兜底：用户手动放置任意 sherpa-onnx VITS 模型文件。
-     * 文件放入 `<filesDir>/models/tts/custom/` 后 refresh 即可启用。
-     * 单音色。
-     */
-    data object Custom : LocalTtsModel(
-        id = "custom",
-        displayName = "自定义 VITS 模型",
-        numSpeakers = 1,
-        modelType = LocalTtsModelType.VITS,
-        files = listOf(
-            LocalTtsModelFile(
-                fileName = "model.onnx",
-                downloadUrl = "",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.MAIN_MODEL,
-                isMainModel = true
-            ),
-            LocalTtsModelFile(
-                fileName = "tokens.txt",
-                downloadUrl = "",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.TOKENS,
-                isMainModel = false
-            ),
-            LocalTtsModelFile(
-                fileName = "lexicon.txt",
-                downloadUrl = "",
-                sha256 = "",
-                expectedBytes = 0L,
-                role = LocalTtsFileRole.LEXICON,
-                isMainModel = false
-            )
-        )
-    )
-}
-
-/** sherpa OfflineTts 子模型类型，决定用哪个 ModelConfig */
-enum class LocalTtsModelType {
-    VITS,    // OfflineTtsVitsModelConfig
-    MATCHA,  // OfflineTtsMatchaModelConfig
-    KOKORO   // OfflineTtsKokoroModelConfig
-}
-
-/** 模型文件在推理 config 中的角色 */
-enum class LocalTtsFileRole {
-    MAIN_MODEL,  // model.onnx / acousticModel
-    TOKENS,      // tokens.txt
-    LEXICON,     // lexicon.txt
-    VOCODER,     // matcha 的 vocoder.onnx
-    VOICES,      // kokoro 的 voices.bin
-    DATA_DIR     // espeak-ng-data 目录
-}
-
-/**
- * 单个模型文件的元数据。
- *
- * @property fileName 文件名（相对 modelDir）
- * @property downloadUrl 下载 URL；空串 = 不自动下载，靠手动放置
- * @property sha256 期望 SHA-256；空串 = 跳过 SHA 校验（仅检查大小）
- * @property expectedBytes 期望文件大小（字节）；0 = 跳过大小校验
- * @property role 在推理 config 中的角色
- * @property isMainModel 是否是主模型文件（model.onnx）
- */
-data class LocalTtsModelFile(
-    val fileName: String,
-    val downloadUrl: String,
-    val sha256: String,
-    val expectedBytes: Long,
-    val role: LocalTtsFileRole = LocalTtsFileRole.MAIN_MODEL,
-    val isMainModel: Boolean = false
-)
-
-object LocalTtsCatalog {
-    val default: LocalTtsModel = LocalTtsModel.AnimeVoice
-    val all: List<LocalTtsModel> = listOf(LocalTtsModel.AnimeVoice, LocalTtsModel.Custom)
-
-    fun findById(modelId: String): LocalTtsModel =
-        all.find { it.id == modelId } ?: default
+    private fun isValid(file: File): Boolean =
+        file.exists() && file.length() >= MIN_VALID_FILE_BYTES
 }
