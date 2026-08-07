@@ -27,6 +27,7 @@ data class TtsConfig(
             return TtsConfig(
                 localTtsSpeed = prefs.getFloat("local_tts_speed", 1.0f),
                 localTtsSid = prefs.getInt("local_tts_sid", 0),
+                localTtsNumSpeakers = prefs.getInt("local_tts_num_speakers", 1),
                 minimaxApiKey = prefs.getString("minimax_api_key", "") ?: "",
                 minimaxGroupId = prefs.getString("minimax_group_id", "") ?: "",
                 minimaxVoiceId = prefs.getString("minimax_voice_id", "female-shaonv") ?: "female-shaonv"
@@ -38,6 +39,7 @@ data class TtsConfig(
             prefs.edit().apply {
                 putFloat("local_tts_speed", config.localTtsSpeed)
                 putInt("local_tts_sid", config.localTtsSid)
+                putInt("local_tts_num_speakers", config.localTtsNumSpeakers)
                 putString("minimax_api_key", config.minimaxApiKey)
                 putString("minimax_group_id", config.minimaxGroupId)
                 putString("minimax_voice_id", config.minimaxVoiceId)
