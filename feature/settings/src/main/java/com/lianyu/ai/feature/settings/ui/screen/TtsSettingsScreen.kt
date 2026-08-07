@@ -22,7 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudQueue
-import androidx.compose.material.icons.filled.Download
+
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -42,6 +42,10 @@ import com.lianyu.ai.network.tts.*
 import com.lianyu.ai.uicommon.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun TtsSettingsScreen(
@@ -77,6 +81,7 @@ fun TtsSettingsScreen(
     var minimaxVoiceId by remember { mutableStateOf(config.minimaxVoiceId) }
     var localTtsSpeed by remember { mutableStateOf(config.localTtsSpeed) }
     var localTtsSid by remember { mutableStateOf(config.localTtsSid) }
+    var localTtsNumSpeakers by remember { mutableStateOf(config.localTtsNumSpeakers) }
 
     val localTtsManager = remember { ttsService.localTtsManager }
     val localTtsState by localTtsManager.state.collectAsState()
@@ -101,13 +106,12 @@ fun TtsSettingsScreen(
     val cardBg = colorScheme.surfaceVariant
 
     fun saveSettings() {
+        fun saveSettings() {
         val newConfig = TtsConfig(
             localTtsSpeed = localTtsSpeed,
             localTtsSid = localTtsSid,
+            localTtsNumSpeakers = localTtsNumSpeakers,
             minimaxApiKey = minimaxApiKey,
-            minimaxGroupId = minimaxGroupId,
-            minimaxVoiceId = minimaxVoiceId
-        )
         TtsConfig.saveToSharedPreferences(context, newConfig)
         ttsService.updateConfig(newConfig)
         val prefs = context.getSharedPreferences("tts_settings", Context.MODE_PRIVATE)
@@ -254,11 +258,11 @@ fun TtsSettingsScreen(
                                         onSpeedChange = { localTtsSpeed = it; saveSettings() },
                                         localTtsSid = localTtsSid,
                                         onSidChange = { localTtsSid = it; saveSettings() },
-                                        onDownload = { scope.launch { localTtsManager.startDownload(localTtsState.modelId) } },
-                                        onCancelDownload = { scope.launch { localTtsManager.cancelDownload() } },
+                                        localTtsNumSpeakers = localTtsNumSpeakers,
+                                        onNumSpeakersChange = { localTtsNumSpeakers = it; saveSettings() },
                                         onEnable = { scope.launch { localTtsManager.enable() } },
                                         onDisable = { scope.launch { localTtsManager.disable() } },
-                                        onDelete = { scope.launch { localTtsManager.deleteDownloadedModel() } },
+                                        onDelete = { scope.launch { localTtsManager.deleteModel() } },
                                         cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor,
                                         context = context
                                     )
@@ -382,93 +386,170 @@ private fun LocalModeCard(
     localTtsState: LocalTtsUiState,
     localTtsSpeed: Float, onSpeedChange: (Float) -> Unit,
     localTtsSid: Int, onSidChange: (Int) -> Unit,
-    onDownload: () -> Unit, onCancelDownload: () -> Unit,
+    localTtsNumSpeakers: Int, onNumSpeakersChange: (Int) -> Unit,
     onEnable: () -> Unit, onDisable: () -> Unit, onDelete: () -> Unit,
     cardBg: Color, textPrimaryColor: Color, textSecondaryColor: Color, context: Context
 ) {
-    val model = localTtsState.model
     val status = localTtsState.status
-    val isDownloading = status == LocalTtsUiStatus.DOWNLOADING
     val isReady = status == LocalTtsUiStatus.READY
     val isEnabled = status == LocalTtsUiStatus.ENABLED
+    val scope = rememberCoroutineScope()
+
+    fun currentFileState() = mapOf(
+        LocalTtsModel.MODEL_FILE_NAME to LocalTtsModel.modelFile(context).exists(),
+        LocalTtsModel.TOKENS_FILE_NAME to LocalTtsModel.tokensFile(context).exists(),
+        LocalTtsModel.LEXICON_FILE_NAME to LocalTtsModel.lexiconFile(context).exists()
+    )
+    var fileState by remember { mutableStateOf(currentFileState()) }
+    var isImporting by remember { mutableStateOf(false) }
+
+    fun importFile(uri: android.net.Uri?, destFile: java.io.File) {
+        if (uri == null) return
+        isImporting = true
+        scope.launch(Dispatchers.IO) {
+            try {
+                destFile.parentFile?.mkdirs()
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    destFile.outputStream().use { output -> input.copyTo(output, bufferSize = 1024 * 1024) }
+                }
+            } catch (_: Exception) {
+            } finally {
+                withContext(Dispatchers.Main) {
+                    isImporting = false
+                    fileState = currentFileState()
+                }
+            }
+        }
+    }
+
+    val modelPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        importFile(uri, LocalTtsModel.modelFile(context))
+    }
+    val tokensPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        importFile(uri, LocalTtsModel.tokensFile(context))
+    }
+    val lexiconPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        importFile(uri, LocalTtsModel.lexiconFile(context))
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(cardBg).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 状态卡：颜色区分三种状态
         val (statusText, statusColor, statusBg) = when (status) {
-            LocalTtsUiStatus.NOT_DOWNLOADED -> Triple("尚未下载 · ${model.displayName}", textSecondaryColor, textSecondaryColor.copy(alpha = 0.08f))
-            LocalTtsUiStatus.DOWNLOADING -> Triple("下载中 ${localTtsState.progressPercent}% (${localTtsState.currentFileIndex + 1}/${localTtsState.totalFiles})", PetalPrimary, PetalPrimaryContainer.copy(alpha = 0.4f))
-            LocalTtsUiStatus.READY -> Triple("已下载 · 点击启用", PetalPrimary, PetalPrimaryContainer.copy(alpha = 0.4f))
-            LocalTtsUiStatus.ENABLED -> Triple("已启用 · ${model.displayName}", PetalGreen, PetalGreen.copy(alpha = 0.12f))
+            LocalTtsUiStatus.NOT_IMPORTED -> Triple("尚未导入模型文件", textSecondaryColor, textSecondaryColor.copy(alpha = 0.08f))
+            LocalTtsUiStatus.READY -> Triple("已导入 · 点击启用", PetalPrimary, PetalPrimaryContainer.copy(alpha = 0.4f))
+            LocalTtsUiStatus.ENABLED -> Triple("已启用", PetalGreen, PetalGreen.copy(alpha = 0.12f))
             LocalTtsUiStatus.FAILED -> Triple("失败: ${localTtsState.errorMessage ?: "未知"}", PetalError, PetalError.copy(alpha = 0.1f))
         }
         Row(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(statusBg).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isDownloading) {
-                CircularProgressIndicator(
-                    progress = { localTtsState.progressPercent / 100f },
-                    modifier = Modifier.size(20.dp), color = statusColor, strokeWidth = 2.dp
-                )
-                Spacer(Modifier.width(10.dp))
-            }
             Text(statusText, fontSize = 14.sp, color = statusColor, fontWeight = FontWeight.Medium)
         }
 
-        // 只显示当前能点的那一个主按钮
-        when {
-            status == LocalTtsUiStatus.NOT_DOWNLOADED && model.files.any { it.downloadUrl.isNotBlank() } ->
-                Button(onClick = onDownload, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalPrimaryContainer, contentColor = PetalOnPrimaryContainer)) {
-                    Icon(Icons.Filled.Download, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("下载漫剧女声模型（约110MB）")
+        Text(
+            "跟 GGUF 本地模型一样，从手机存储里直接选文件导入，不用联网下载。需要 sherpa-onnx 格式的 VITS 模型文件：",
+            fontSize = 12.sp, color = textSecondaryColor
+        )
+
+        @Composable
+        fun ImportRow(label: String, fileName: String, imported: Boolean, required: Boolean, onClick: () -> Unit) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(label + if (required) "" else "（可选）", fontSize = 13.sp, color = textPrimaryColor)
+                    Text(fileName, fontSize = 11.sp, color = textSecondaryColor)
                 }
-            isDownloading ->
-                Button(onClick = onCancelDownload, modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PetalError.copy(alpha = 0.15f), contentColor = PetalError)) { Text("取消下载") }
-            isReady || isEnabled ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = onDisable, enabled = isEnabled,
-                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, if (isEnabled) PetalPrimary else textSecondaryColor.copy(alpha = 0.25f)),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = PetalPrimary,
-                            disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    ) { Text("禁用", fontSize = 13.sp) }
-                    OutlinedButton(
-                        onClick = onEnable, enabled = isReady,
-                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, if (isReady) PetalGreen else textSecondaryColor.copy(alpha = 0.25f)),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = PetalGreen,
-                            disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    ) { Text("启用", fontSize = 13.sp) }
-                    OutlinedButton(
-                        onClick = onDelete,
-                        modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, PetalError),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)
-                    ) { Text("删除", fontSize = 13.sp) }
+                OutlinedButton(
+                    onClick = onClick,
+                    enabled = !isImporting,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (imported) PetalGreen else PetalPrimary
+                    ),
+                    border = BorderStroke(1.dp, if (imported) PetalGreen else PetalPrimary)
+                ) {
+                    Text(if (imported) "已导入 · 重新选择" else "选择文件", fontSize = 12.sp)
                 }
+            }
+        }
+
+        ImportRow("主模型 model.onnx", LocalTtsModel.MODEL_FILE_NAME, fileState[LocalTtsModel.MODEL_FILE_NAME] == true, required = true) {
+            modelPicker.launch(arrayOf("*/*"))
+        }
+        ImportRow("音素表 tokens.txt", LocalTtsModel.TOKENS_FILE_NAME, fileState[LocalTtsModel.TOKENS_FILE_NAME] == true, required = true) {
+            tokensPicker.launch(arrayOf("*/*"))
+        }
+        ImportRow("词典 lexicon.txt", LocalTtsModel.LEXICON_FILE_NAME, fileState[LocalTtsModel.LEXICON_FILE_NAME] == true, required = false) {
+            lexiconPicker.launch(arrayOf("*/*"))
+        }
+
+        if (isImporting) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = PetalPrimary)
+                Spacer(Modifier.width(8.dp))
+                Text("正在复制文件…", fontSize = 12.sp, color = textSecondaryColor)
+            }
+        }
+
+        if (isReady || isEnabled) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onDisable, enabled = isEnabled,
+                    modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, if (isEnabled) PetalPrimary else textSecondaryColor.copy(alpha = 0.25f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = PetalPrimary,
+                        disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
+                    )
+                ) { Text("禁用", fontSize = 13.sp) }
+                OutlinedButton(
+                    onClick = onEnable, enabled = isReady,
+                    modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, if (isReady) PetalGreen else textSecondaryColor.copy(alpha = 0.25f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = PetalGreen,
+                        disabledContentColor = textSecondaryColor.copy(alpha = 0.4f)
+                    )
+                ) { Text("启用", fontSize = 13.sp) }
+                OutlinedButton(
+                    onClick = {
+                        onDelete()
+                        fileState = mapOf(
+                            LocalTtsModel.MODEL_FILE_NAME to false,
+                            LocalTtsModel.TOKENS_FILE_NAME to false,
+                            LocalTtsModel.LEXICON_FILE_NAME to false
+                        )
+                    },
+                    modifier = Modifier.weight(1f).height(42.dp), shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, PetalError),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PetalError)
+                ) { Text("删除", fontSize = 13.sp) }
+            }
         }
 
         if (isEnabled || isReady) {
             HorizontalDivider(color = textSecondaryColor.copy(alpha = 0.15f))
 
-            // 拖动时只更新本地草稿值（即时显示数字），松手才真正下发 onSidChange/onSpeedChange，
-            // 避免拖动过程中每帧都触发保存+引擎参数更新，导致听感上"调了跟没调一样"。
+            Text("说话人数量: $localTtsNumSpeakers", fontSize = 13.sp, color = textSecondaryColor)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = { if (localTtsNumSpeakers > 1) onNumSpeakersChange(localTtsNumSpeakers - 1) }) { Text("-") }
+                Text("$localTtsNumSpeakers", fontSize = 14.sp, color = textPrimaryColor)
+                OutlinedButton(onClick = { onNumSpeakersChange(localTtsNumSpeakers + 1) }) { Text("+") }
+            }
+            Text("单音色模型填 1，多说话人模型按模型实际数量填", fontSize = 10.sp, color = textSecondaryColor)
+
             var draftSid by remember(localTtsSid) { mutableFloatStateOf(localTtsSid.toFloat()) }
-            Text("音色: ${draftSid.toInt()} / ${model.numSpeakers - 1}", fontSize = 13.sp, color = textSecondaryColor)
+            Text("音色: ${draftSid.toInt()} / ${(localTtsNumSpeakers - 1).coerceAtLeast(0)}", fontSize = 13.sp, color = textSecondaryColor)
             Slider(
                 value = draftSid,
                 onValueChange = { draftSid = it },
                 onValueChangeFinished = { onSidChange(draftSid.toInt()) },
-                valueRange = 0f..(model.numSpeakers - 1).toFloat(), modifier = Modifier.fillMaxWidth(),
+                valueRange = 0f..(localTtsNumSpeakers - 1).coerceAtLeast(0).toFloat(), modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(thumbColor = PetalPrimary, activeTrackColor = PetalPrimary)
             )
 
