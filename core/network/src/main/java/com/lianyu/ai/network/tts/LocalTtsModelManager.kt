@@ -5,7 +5,7 @@ import com.lianyu.ai.common.SecureLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -126,9 +126,7 @@ class LocalTtsModelManager private constructor(private val context: Context) {
         }
     }
 
-    fun close() {
-        scope.cancel()
-    }
+    
 
     companion object {
         private const val TAG = "LocalTtsModelManager"
