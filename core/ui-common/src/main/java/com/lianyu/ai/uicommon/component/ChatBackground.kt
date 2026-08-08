@@ -119,12 +119,17 @@ fun chatBackgroundOptions(context: Context): List<ChatBackgroundOption> {
 }
 
 private const val CHAT_BG_PREF = "chat_background"
+private const val APP_BG_PREF = "app_background"
 private const val CUSTOM_BG_PREFIX = "custom_"
 private const val CUSTOM_BG_DIR = "chat_backgrounds"
 private const val MAX_CUSTOM_BG_BYTES = 8L * 1024L * 1024L
 private val CUSTOM_BG_FILE_REGEX = Regex("^bg_[0-9a-fA-F-]{36}\\.jpg$")
 private val CUSTOM_BG_TEMP_FILE_REGEX = Regex("^\\.tmp_bg_[0-9a-fA-F-]{36}\\.part$")
 
+/**
+ * 聊天背景（默认值）：作为所有未单独设置背景的聊天页面的默认背景。
+ * 每个人物可在其聊天页内单独覆盖，见 [com.lianyu.ai.feature.chat.data.CompanionChatDetailSettings]。
+ */
 fun getChatBackgroundKey(context: Context): String {
     return context.getSharedPreferences("chat_prefs", Context.MODE_PRIVATE)
         .getString(CHAT_BG_PREF, "default") ?: "default"
@@ -136,6 +141,24 @@ fun setChatBackgroundKey(context: Context, key: String) {
         .putString(CHAT_BG_PREF, key)
         .apply()
     // 设置背景时预加载到内存缓存
+    if (isCustomBackground(key)) {
+        ChatBackgroundCache.preload(context, key)
+    }
+}
+
+/**
+ * 总背景：应用内除聊天页面外，所有页面（首页/联系人/我的/设置等）使用的背景。
+ */
+fun getAppBackgroundKey(context: Context): String {
+    return context.getSharedPreferences("chat_prefs", Context.MODE_PRIVATE)
+        .getString(APP_BG_PREF, "default") ?: "default"
+}
+
+fun setAppBackgroundKey(context: Context, key: String) {
+    context.getSharedPreferences("chat_prefs", Context.MODE_PRIVATE)
+        .edit()
+        .putString(APP_BG_PREF, key)
+        .apply()
     if (isCustomBackground(key)) {
         ChatBackgroundCache.preload(context, key)
     }
@@ -243,6 +266,12 @@ fun getChatBackground(context: Context, isDark: Boolean): Pair<Color, Brush?> {
     return getChatBackgroundByKey(context, key, isDark)
 }
 
+/** 总背景：应用内除聊天页面外所有页面使用的背景（颜色/渐变）。自定义图片走 [isCustomBackground] 分支单独绘制。 */
+fun getAppBackground(context: Context, isDark: Boolean): Pair<Color, Brush?> {
+    val key = getAppBackgroundKey(context)
+    return getChatBackgroundByKey(context, key, isDark)
+}
+
 fun getChatBackgroundByKey(context: Context, key: String, isDark: Boolean): Pair<Color, Brush?> {
     if (isCustomBackground(key)) {
         val fallback = if (isDark) Color(0xFF1A1216) else Color(0xFFF5F5F5)
@@ -258,15 +287,23 @@ fun getCustomBackgroundUri(context: Context, key: String): Uri? {
     return Uri.fromFile(file)
 }
 
+/**
+ * 可复用的背景选择宫格：预设背景 + 自定义背景图片 + 添加按钮。
+ * 不含容器（无 Dialog/AlertDialog），可直接嵌入设置页的某个分区中，
+ * 也可以像 [ChatBackgroundPickerDialog] 一样包一层 AlertDialog 使用。
+ *
+ * @param persistKey 选中一个背景时如何持久化保存（总背景传 [setAppBackgroundKey]，
+ *   聊天背景传 [setChatBackgroundKey]，人物独立背景可传自定义的存储函数）。
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChatBackgroundPickerDialog(
+fun BackgroundOptionsGrid(
     currentKey: String,
-    onDismiss: () -> Unit,
+    persistKey: (Context, String) -> Unit,
     onSelect: (String) -> Unit
 ) {
     val context = LocalContext.current
-    var selectedKey by remember { mutableStateOf(currentKey) }
+    var selectedKey by remember(currentKey) { mutableStateOf(currentKey) }
     var customKeys by remember {
         mutableStateOf(loadCustomBackgroundKeys(context))
     }
@@ -279,13 +316,72 @@ fun ChatBackgroundPickerDialog(
             key?.let { newKey ->
                 customKeys = customKeys + newKey
                 selectedKey = newKey
-                setChatBackgroundKey(context, newKey)
+                persistKey(context, newKey)
+                onSelect(newKey)
             }
         }
     }
 
     val options = chatBackgroundOptions(context)
 
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // 预设背景
+        options.forEach { option ->
+            val isSelected = option.key == selectedKey
+            BackgroundOptionItem(
+                name = option.name,
+                isSelected = isSelected,
+                color = option.color,
+                gradient = option.gradient,
+                onClick = {
+                    selectedKey = option.key
+                    persistKey(context, option.key)
+                    onSelect(option.key)
+                }
+            )
+        }
+
+        // 自定义背景图片
+        customKeys.forEach { key ->
+            val isSelected = key == selectedKey
+            val uri = getCustomBackgroundUri(context, key)
+            CustomBackgroundItem(
+                uri = uri,
+                isSelected = isSelected,
+                onClick = {
+                    selectedKey = key
+                    persistKey(context, key)
+                    onSelect(key)
+                },
+                onDelete = {
+                    deleteCustomBackground(context, key)
+                    customKeys = customKeys - key
+                    if (selectedKey == key) {
+                        selectedKey = "default"
+                        persistKey(context, "default")
+                        onSelect("default")
+                    }
+                }
+            )
+        }
+
+        // 添加自定义背景按钮
+        AddCustomBackgroundItem {
+            imagePicker.launch("image/*")
+        }
+    }
+}
+
+@Composable
+fun ChatBackgroundPickerDialog(
+    currentKey: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit,
+    persistKey: (Context, String) -> Unit = { ctx, key -> setChatBackgroundKey(ctx, key) }
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -306,55 +402,11 @@ fun ChatBackgroundPickerDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // 预设背景
-                    options.forEach { option ->
-                        val isSelected = option.key == selectedKey
-                        BackgroundOptionItem(
-                            name = option.name,
-                            isSelected = isSelected,
-                            color = option.color,
-                            gradient = option.gradient,
-                            onClick = {
-                                selectedKey = option.key
-                                setChatBackgroundKey(context, option.key)
-                                onSelect(option.key)
-                            }
-                        )
-                    }
-
-                    // 自定义背景图片
-                    customKeys.forEach { key ->
-                        val isSelected = key == selectedKey
-                        val uri = getCustomBackgroundUri(context, key)
-                        CustomBackgroundItem(
-                            uri = uri,
-                            isSelected = isSelected,
-                            onClick = {
-                                selectedKey = key
-                                setChatBackgroundKey(context, key)
-                                onSelect(key)
-                            },
-                            onDelete = {
-                                deleteCustomBackground(context, key)
-                                customKeys = customKeys - key
-                                if (selectedKey == key) {
-                                    selectedKey = "default"
-                                    setChatBackgroundKey(context, "default")
-                                    onSelect("default")
-                                }
-                            }
-                        )
-                    }
-
-                    // 添加自定义背景按钮
-                    AddCustomBackgroundItem {
-                        imagePicker.launch("image/*")
-                    }
-                }
+                BackgroundOptionsGrid(
+                    currentKey = currentKey,
+                    persistKey = persistKey,
+                    onSelect = onSelect
+                )
             }
         },
         confirmButton = {
