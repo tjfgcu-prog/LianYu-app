@@ -179,7 +179,7 @@ fun MainScreen(mainActivity: Activity) {
     ) { paddingValues ->
         // 总背景：除聊天/群聊页面外，所有页面共用的背景（聊天/群聊页面会在自己的 Box 内绘制
         // 独立背景并铺满全屏，天然盖住这里的总背景，因此无需按路由排除）。
-        val appBgKey = remember(isDark) { com.lianyu.ai.uicommon.component.getAppBackgroundKey(context) }
+        val appBgKey = com.lianyu.ai.uicommon.component.rememberAppBackgroundKey()
         val (appBgColor, appBgGradient) = com.lianyu.ai.uicommon.component.getChatBackgroundByKey(context, appBgKey, isDark)
         val isCustomAppBg = com.lianyu.ai.uicommon.component.isCustomBackground(appBgKey)
         val appBgPainter = if (isCustomAppBg) {
