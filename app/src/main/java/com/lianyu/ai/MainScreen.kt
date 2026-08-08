@@ -2,14 +2,6 @@ package com.lianyu.ai
 
 import android.app.Activity
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -214,23 +206,7 @@ fun MainScreen(mainActivity: Activity) {
             }
             NavHost(
                 navController = navController,
-                startDestination = "home",
-                enterTransition = {
-                    fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
-                        slideInHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), initialOffsetX = { it / 4 })
-                },
-                exitTransition = {
-                    fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
-                        slideOutHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), targetOffsetX = { -it / 6 })
-                },
-                popEnterTransition = {
-                    fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
-                        slideInHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), initialOffsetX = { -it / 4 })
-                },
-                popExitTransition = {
-                    fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
-                        slideOutHorizontally(animationSpec = tween(300, easing = FastOutSlowInEasing), targetOffsetX = { it / 4 })
-                }
+                startDestination = "home"
             ) {
                 // === 主页 Pager ===
                 composable(MainRoute.Home.route) {
@@ -251,11 +227,7 @@ fun MainScreen(mainActivity: Activity) {
                                 else -> false
                             }
                         }
-                        AnimatedVisibility(
-                            visible = visible,
-                            enter = fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) + scaleIn(initialScale = 0.94f, animationSpec = tween(300, easing = FastOutSlowInEasing)),
-                            exit = fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing))
-                        ) {
+                        if (visible) {
                             when (page) {
                                 0 -> HomeScreen(
                                     onCompanionClick = { openCompanionChat(it) },
