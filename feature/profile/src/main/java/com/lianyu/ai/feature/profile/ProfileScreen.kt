@@ -3,10 +3,6 @@ package com.lianyu.ai.feature.profile
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -39,7 +35,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.feature.profile.R
-import kotlinx.coroutines.delay
 
 /**
  * 个人中心主页面 — 固定为 3 个卡片，位置不再随设置项数量变化：
@@ -83,7 +77,6 @@ fun ProfileScreen(
     val userBanner by viewModel.userBanner.collectAsState()
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
-    var isVisible by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -97,11 +90,6 @@ fun ProfileScreen(
         uri?.let { viewModel.updateUserBanner(it.toString()) }
     }
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
-
     Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -109,20 +97,16 @@ fun ProfileScreen(
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
             // === 卡片 1：顶部封面大图 — 占满剩余空间，把下方"我"和"总设置"顶到贴近底部导航栏 ===
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 },
-                modifier = Modifier.weight(1f)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(colorScheme.surface)
+                    .clickable { bannerPicker.launch("image/*") },
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(colorScheme.surface)
-                        .clickable { bannerPicker.launch("image/*") },
-                    contentAlignment = Alignment.Center
-                ) {
                 if (userBanner != null) {
                     AsyncImage(
                         model = userBanner,
@@ -147,16 +131,11 @@ fun ProfileScreen(
                     }
                 }
             }
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // === 卡片 2：个人资料卡（头像 + 昵称） ===
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn(tween(200, delayMillis = 60)) + slideInVertically(tween(200, delayMillis = 60)) { it / 4 }
-        ) {
-            Column(
+        Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -248,7 +227,7 @@ fun ProfileScreen(
             items = listOf(
                 MenuItemData(Icons.Filled.Settings, stringResource(R.string.general_settings), stringResource(R.string.general_settings_desc), onGeneralSettingsClick)
             ),
-            isVisible = isVisible, delayMillis = 120
+            isVisible = true, delayMillis = 0
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -269,23 +248,20 @@ internal data class MenuItemData(
 
 @Composable
 internal fun SolidMenuGroup(items: List<MenuItemData>, isVisible: Boolean, delayMillis: Int) {
+    // 保留 isVisible 作为"是否渲染"的开关，去掉入场淡入/滑入动画（delayMillis 不再使用，
+    // 仅为保持外部调用方签名不变而保留参数）。
+    if (!isVisible) return
     val colorScheme = MaterialTheme.colorScheme
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(200, delayMillis = delayMillis)) +
-                slideInVertically(tween(200, delayMillis = delayMillis)) { it / 4 }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(colorScheme.surfaceVariant)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            items.forEachIndexed { index, item ->
-                SolidMenuItem(item.icon, item.title, item.subtitle, item.onClick, index < items.size - 1, item.emojiIcon)
-            }
+        items.forEachIndexed { index, item ->
+            SolidMenuItem(item.icon, item.title, item.subtitle, item.onClick, index < items.size - 1, item.emojiIcon)
         }
     }
 }
