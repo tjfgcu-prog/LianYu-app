@@ -2,14 +2,6 @@
 
 package com.lianyu.ai.feature.settings.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -239,18 +231,13 @@ fun SettingsScreen(
                 
             }
 
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_hint),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = textTertiaryColor,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
-                )
-            }
+            Text(
+                text = stringResource(R.string.settings_hint),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Normal,
+                color = textTertiaryColor,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -278,12 +265,7 @@ fun SettingsScreen(
             
 
 // ====== Vision Model Settings Section ======
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200, delayMillis = 100)) +
-        slideInVertically(tween(200, delayMillis = 100)) { it / 4 }
-            ) {
-                Row(
+            Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
@@ -333,7 +315,7 @@ fun SettingsScreen(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-            }
+            
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -589,15 +571,11 @@ private fun ApiCardsSection(
     connectionStatus: Map<String, SettingsViewModel.ConnectionResult>,
     testedConfigs: Map<String, ApiConfig>
 ) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(400, delayMillis = 150)) +
-                slideInVertically(tween(400, delayMillis = 150)) { it / 4 }
+    if (!isVisible) return
+    Column(
+        modifier = Modifier.padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
             
 
             configs.filter { it.provider != ApiProvider.PARTNER }.forEach { config ->
@@ -640,37 +618,7 @@ private fun ApiCardsSection(
     }
 }
 
-@Composable
-private fun VisionModelSection(
-    isVisible: Boolean,
-    visionEnabled: Boolean,
-    visionModel: String,
-    isDarkTheme: Boolean,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color,
-    onVisionEnabledChanged: (Boolean) -> Unit,
-    onVisionModelChanged: (String) -> Unit
-) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(400, delayMillis = 200)) +
-                slideInVertically(tween(400, delayMillis = 200)) { it / 4 }
-    ) {
-        VisionModelSettingsCard(
-            visionEnabled = visionEnabled,
-            visionModel = visionModel,
-            isDarkTheme = isDarkTheme,
-            textPrimaryColor = textPrimaryColor,
-            textSecondaryColor = textSecondaryColor,
-            onVisionEnabledChanged = onVisionEnabledChanged,
-            onVisionModelChanged = onVisionModelChanged
-        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ApiTutorialCard(isDarkTheme, textPrimaryColor, textSecondaryColor)
-    }
-}
 // ==================== GGUF 本地大模型（自定义导入）====================
 
 @Composable
@@ -729,12 +677,8 @@ private fun GgufLocalModelSection(
         }
     }
 
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(400, delayMillis = 260)) +
-                slideInVertically(tween(400, delayMillis = 260)) { it / 4 }
-    ) {
-        Column {
+    if (!isVisible) return
+    Column {
         var showLogDialog by remember { mutableStateOf(false) }
         var logContent by remember { mutableStateOf("") }
 
@@ -914,7 +858,7 @@ private fun GgufLocalModelSection(
                     }
                 )
             }
-        }
+        
     }
 }
 // ==================== Reused Components (unchanged logic) ====================
