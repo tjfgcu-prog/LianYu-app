@@ -31,6 +31,7 @@ sealed class MainRoute(val route: String) {
     object TtsSettings : MainRoute("tts_settings")
     object TokenUsage : MainRoute("token_usage")
     object Theme : MainRoute("theme")
+    object BackgroundSettings : MainRoute("background_settings")
     
     object FrameRate : MainRoute("frame_rate")
     object YandereMode : MainRoute("yandere_mode")
@@ -65,6 +66,7 @@ sealed class MainRoute(val route: String) {
             route == "memory" -> Memory
             route == "context_memory" -> ContextMemory
             route == "theme" -> Theme
+            route == "background_settings" -> BackgroundSettings
             
             route == "frame_rate" -> FrameRate
             route == "yandere_mode" -> YandereMode
