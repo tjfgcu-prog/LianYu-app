@@ -352,6 +352,9 @@ fun ChatDetailScreen(
         ChatBackgroundPickerDialog(
             currentKey = currentKey,
             onDismiss = { showBgPicker = false },
+            // 该弹窗用于设置"当前人物独立背景"，持久化交给下方 onSelect 的 store.updateSettings，
+            // 不应写入全局聊天背景（否则会影响所有未单独设置背景的人物）
+            persistKey = { _, _ -> },
             onSelect = { key ->
                 scope.launch {
                     store.updateSettings(companionId) { it.copy(backgroundKey = key, useGlobalBackground = false) }
