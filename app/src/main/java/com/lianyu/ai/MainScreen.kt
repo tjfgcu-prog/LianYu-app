@@ -185,9 +185,33 @@ fun MainScreen(mainActivity: Activity) {
             }
         }
     ) { paddingValues ->
+        // 总背景：除聊天/群聊页面外，所有页面共用的背景（聊天/群聊页面会在自己的 Box 内绘制
+        // 独立背景并铺满全屏，天然盖住这里的总背景，因此无需按路由排除）。
+        val appBgKey = remember(isDark) { com.lianyu.ai.uicommon.component.getAppBackgroundKey(context) }
+        val (appBgColor, appBgGradient) = com.lianyu.ai.uicommon.component.getChatBackgroundByKey(context, appBgKey, isDark)
+        val isCustomAppBg = com.lianyu.ai.uicommon.component.isCustomBackground(appBgKey)
+        val appBgPainter = if (isCustomAppBg) {
+            com.lianyu.ai.uicommon.component.rememberBackgroundBitmap(appBgKey)
+        } else null
+
         Box(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (isCustomAppBg && appBgPainter != null) Modifier
+                    else if (!isDark && appBgGradient != null) Modifier.background(appBgGradient)
+                    else Modifier.background(if (isCustomAppBg) MaterialTheme.colorScheme.background else appBgColor)
+                )
+                .padding(paddingValues)
         ) {
+            if (isCustomAppBg && appBgPainter != null) {
+                androidx.compose.foundation.Image(
+                    painter = appBgPainter,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+            }
             NavHost(
                 navController = navController,
                 startDestination = "home",
@@ -290,6 +314,7 @@ fun MainScreen(mainActivity: Activity) {
                 composable(MainRoute.TokenUsage.route) { TokenUsageScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.Memory.route) { MemoryScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.Theme.route) { ThemeScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
+                composable(MainRoute.BackgroundSettings.route) { BackgroundSettingsScreen(onNavigateBack = { navController.popBackStack() }) }
                 composable(MainRoute.FrameRate.route) { FrameRateScreen(onNavigateBack = { navController.popBackStack() }, activity = mainActivity) }
                 composable(MainRoute.YandereMode.route) {
                     val manager = ServiceRegistry.get(YandereModeManager::class.java)
@@ -309,6 +334,7 @@ fun MainScreen(mainActivity: Activity) {
                         // AI与外观
                         onSettingsClick = { navController.navigate(MainRoute.Settings.route) },
                         onThemeClick = { navController.navigate(MainRoute.Theme.route) },
+                        onBackgroundClick = { navController.navigate(MainRoute.BackgroundSettings.route) },
                         onFrameRateClick = { navController.navigate(MainRoute.FrameRate.route) },
                         onTtsSettingsClick = { navController.navigate(MainRoute.TtsSettings.route) },
                         onTokenUsageClick = { navController.navigate(MainRoute.TokenUsage.route) },
