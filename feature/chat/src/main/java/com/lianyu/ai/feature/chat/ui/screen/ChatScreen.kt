@@ -55,7 +55,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -497,10 +497,16 @@ fun ChatScreen(
                         }
                     }
                 }
-                items(
+                itemsIndexed(
                     items = messages,
-                    key = { it.id }
-                ) { message ->
+                    key = { _, message -> message.id }
+                ) { index, message ->
+                    // 顶部时间分隔：首条消息始终显示；此后仅当与上一条消息间隔超过 5 分钟才再次显示
+                    val showTimeDivider = index == 0 ||
+                        (message.timestamp - messages[index - 1].timestamp) > com.lianyu.ai.common.ChatConstants.CHAT_TIME_DIVIDER_GAP_MS
+                    if (showTimeDivider) {
+                        ChatTimeDivider(timestampMillis = message.timestamp)
+                    }
                     ChatBubble(
                         message = message,
                         companionData = companionData,
