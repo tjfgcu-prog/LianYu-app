@@ -75,9 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.FrameRateManager
-import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
-import com.lianyu.ai.uicommon.component.getChatBackgroundKey
-import com.lianyu.ai.uicommon.component.setChatBackgroundKey
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -101,6 +99,7 @@ fun GeneralSettingsScreen(
     onSettingsClick: () -> Unit,
     // 外观
     onThemeClick: () -> Unit,
+    onBackgroundClick: () -> Unit,
     onFrameRateClick: () -> Unit,
     onTtsSettingsClick: () -> Unit,
     onTokenUsageClick: () -> Unit,
@@ -112,7 +111,6 @@ fun GeneralSettingsScreen(
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     var isVisible by remember { mutableStateOf(false) }
-    var showBackgroundDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { delay(80); isVisible = true }
 
@@ -164,7 +162,7 @@ fun GeneralSettingsScreen(
             SolidMenuGroup(
                 items = listOf(
                     MenuItemData(Icons.Filled.Brush, stringResource(R.string.theme_mode), stringResource(R.string.theme_mode_desc), onThemeClick),
-                    MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc), onClick = { showBackgroundDialog = true })
+                    MenuItemData(Icons.Filled.Palette, stringResource(R.string.chat_background), stringResource(R.string.chat_background_desc), onClick = onBackgroundClick)
                 ),
                 isVisible = isVisible, delayMillis = 100
             )
@@ -211,13 +209,7 @@ fun GeneralSettingsScreen(
         }
     }
 
-    if (showBackgroundDialog) {
-        ChatBackgroundPickerDialog(
-            currentKey = getChatBackgroundKey(context),
-            onDismiss = { showBackgroundDialog = false },
-            onSelect = { key -> setChatBackgroundKey(context, key); showBackgroundDialog = false }
-        )
-    }
+    
 }
 
 // ============================================================================
