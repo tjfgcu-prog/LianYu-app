@@ -1,6 +1,7 @@
 package com.lianyu.ai.uicommon.component
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,8 +29,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -162,6 +164,29 @@ fun setAppBackgroundKey(context: Context, key: String) {
     if (isCustomBackground(key)) {
         ChatBackgroundCache.preload(context, key)
     }
+}
+
+/**
+ * 响应式读取"总背景"的 key：任何地方调用 [setAppBackgroundKey] 保存新背景后，
+ * 所有正在使用本函数的 Composable 会自动感知变化并重组，无需重启/重进 App。
+ * 原理：监听 SharedPreferences 的变更回调（[setAppBackgroundKey] 内部的 `.apply()`
+ * 会触发该回调），把最新值同步进 Compose 的 `mutableStateOf`。
+ */
+@Composable
+fun rememberAppBackgroundKey(): String {
+    val context = LocalContext.current
+    var key by remember { mutableStateOf(getAppBackgroundKey(context)) }
+    DisposableEffect(context) {
+        val prefs = context.getSharedPreferences("chat_prefs", Context.MODE_PRIVATE)
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { sp, changedKey ->
+            if (changedKey == APP_BG_PREF) {
+                key = sp.getString(APP_BG_PREF, "default") ?: "default"
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+    return key
 }
 
 fun isCustomBackground(key: String): Boolean {
