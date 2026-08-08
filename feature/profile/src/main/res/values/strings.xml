@@ -12,8 +12,12 @@
     <string name="api_settings_desc">配置AI接口</string>
     <string name="theme_mode">主题模式</string>
     <string name="theme_mode_desc">切换浅色/深色主题</string>
-    <string name="chat_background">聊天背景</string>
-    <string name="chat_background_desc">自定义聊天页面背景</string>
+    <string name="chat_background">背景</string>
+    <string name="chat_background_desc">总背景和聊天背景</string>
+    <string name="total_background">总背景</string>
+    <string name="total_background_desc">除聊天页面外，所有页面的背景</string>
+    <string name="chat_background_section">聊天背景</string>
+    <string name="chat_background_section_desc">当前聊天页面的默认背景，每个人物可在聊天页单独设置</string>
     
 
     <!-- 总设置 -->
