@@ -81,6 +81,20 @@ fun LianYuTheme(
         }
         effectiveDarkTheme -> DarkColorScheme
         else -> LightColorScheme
+    }.let { baseScheme ->
+        // 总背景（除聊天页面外所有页面的背景）：如果用户选的是纯色预设，直接覆盖主题的
+        // background 角色。这样全应用所有读取 colorScheme.background 的页面（各设置页/
+        // 首页/联系人页的 Scaffold、Box 默认背景色）都会自动联动，无需逐个页面改代码。
+        // 渐变色 / 自定义图片背景无法用一个纯色表示，这种情况维持主题默认背景，
+        // 由 MainScreen 根节点单独绘制（见 rememberAppBackgroundKey 的用法）。
+        val appBgKey = com.lianyu.ai.uicommon.component.rememberAppBackgroundKey()
+        val isCustomAppBg = com.lianyu.ai.uicommon.component.isCustomBackground(appBgKey)
+        val (appBgColor, appBgGradient) = com.lianyu.ai.uicommon.component.getChatBackgroundByKey(context, appBgKey, effectiveDarkTheme)
+        if (!isCustomAppBg && appBgGradient == null) {
+            baseScheme.copy(background = appBgColor)
+        } else {
+            baseScheme
+        }
     }
 
     val view = LocalView.current
