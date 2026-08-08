@@ -342,7 +342,8 @@ fun ChatBubble(
                     stickerName = message.content.removeSurrounding("[", "]")
                 )
             } else if (message.content.startsWith("[语音]") || (message.type == MessageType.VOICE)) {
-                val voiceDuration = extractVoiceDuration(message.content)
+                val voiceDuration = com.lianyu.ai.common.VoiceMessageCodec.extractDuration(message.content)
+                val voiceText = com.lianyu.ai.common.VoiceMessageCodec.extractText(message.content)
                 val ctx = LocalContext.current
                 val voicePath = message.linkString.ifBlank {
                     java.io.File(ctx.cacheDir, "voice_${message.id}.m4a").absolutePath
@@ -350,7 +351,8 @@ fun ChatBubble(
                 VoiceMessageBubble(
                     audioPath = voicePath,
                     duration = voiceDuration,
-                    isUser = isUser
+                    isUser = isUser,
+                    text = voiceText
                 )
             } else if (message.type == MessageType.IMAGE) {
                 val imageFile = java.io.File(message.linkString.ifBlank { message.content })
@@ -619,10 +621,6 @@ internal fun copyMediaUriToEncryptedCache(context: android.content.Context, uri:
     }
 }
 
-private fun extractVoiceDuration(content: String): Int {
-    val regex = Regex("\\[语音]\\s*(\\d+)[\"秒]")
-    return regex.find(content)?.groupValues?.get(1)?.toIntOrNull() ?: 1
-}
 
 /**
  * NestedScrollConnection that prevents horizontal scroll events from propagating
