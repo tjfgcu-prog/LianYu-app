@@ -84,6 +84,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
+/**
+ * 顶部居中的时间分隔条（如"17:46"）。
+ * 显示时机：会话中第一条消息始终显示；此后仅当与上一条已显示分隔的间隔超过
+ * [com.lianyu.ai.common.ChatConstants.CHAT_TIME_DIVIDER_GAP_MS]（5 分钟）才再次显示。
+ * 判定逻辑在调用方（ChatScreen 的消息列表）按相邻消息时间差完成，这里只负责展示。
+ */
+@Composable
+fun ChatTimeDivider(timestampMillis: Long) {
+    val label = remember(timestampMillis) {
+        val zoned = java.time.Instant.ofEpochMilli(timestampMillis).atZone(java.time.ZoneId.systemDefault())
+        val today = java.time.LocalDate.now(java.time.ZoneId.systemDefault())
+        val pattern = if (zoned.toLocalDate() == today) "HH:mm" else "MM-dd HH:mm"
+        java.time.format.DateTimeFormatter.ofPattern(pattern).format(zoned)
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
+    }
+}
+
 @Composable
 fun TypingIndicatorBubble(
     companionData: CompanionModel?,
