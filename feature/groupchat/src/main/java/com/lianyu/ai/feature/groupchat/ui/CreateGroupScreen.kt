@@ -1,9 +1,5 @@
 package com.lianyu.ai.feature.groupchat.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -57,7 +52,6 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.viewmodel.ChatGroupViewModel
 import com.lianyu.ai.database.viewmodel.CompanionListViewModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,12 +63,6 @@ fun CreateGroupScreen(
     val companions by companionListViewModel.companions.collectAsState(initial = emptyList())
     var groupName by remember { mutableStateOf("") }
     val selectedIds = remember { mutableStateListOf<Long>() }
-    var isVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
 
     Scaffold(
         topBar = {
@@ -126,11 +114,7 @@ fun CreateGroupScreen(
                 .padding(top = paddingValues.calculateTopPadding())
                 .padding(horizontal = 16.dp)
         ) {
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 3 }
-            ) {
-                OutlinedTextField(
+            OutlinedTextField(
                     value = groupName,
                     onValueChange = { groupName = it },
                     modifier = Modifier.fillMaxWidth(),
@@ -147,7 +131,6 @@ fun CreateGroupScreen(
                         unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
