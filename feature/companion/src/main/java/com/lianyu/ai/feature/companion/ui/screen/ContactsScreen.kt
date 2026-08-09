@@ -1,9 +1,5 @@
 package com.lianyu.ai.feature.companion.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +20,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +53,6 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.ChatGroup
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.viewmodel.CompanionListViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 fun ContactsScreen(
@@ -68,18 +62,10 @@ fun ContactsScreen(
     onGroupClick: (Long) -> Unit,
     onCreateGroupClick: () -> Unit,
     viewModel: CompanionListViewModel = viewModel(),
-    groups: List<com.lianyu.ai.database.model.ChatGroup> = emptyList(),
-    isVisible: Boolean = true
+    groups: List<com.lianyu.ai.database.model.ChatGroup> = emptyList()
 ) {
     val companions by viewModel.companions.collectAsState(initial = emptyList())
-    var localIsVisible by remember { mutableStateOf(false) }
-    val actualIsVisible = if (isVisible) localIsVisible else false
     val colorScheme = MaterialTheme.colorScheme
-
-    LaunchedEffect(Unit) {
-        delay(30)
-        localIsVisible = true
-    }
 
     Scaffold { paddingValues ->
         Box(
@@ -122,21 +108,11 @@ fun ContactsScreen(
                             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                         )
                         }
-                        itemsIndexed(groups) { index, group ->
-                            AnimatedVisibility(
-                                visible = actualIsVisible,
-                                enter = fadeIn(
-                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200))
-                                ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = (index * 20).coerceAtMost(200)),
-                                    initialOffsetY = { it / 3 }
-                                )
-                            ) {
-                                GroupContactItem(
-                                    group = group,
-                                    onClick = { onGroupClick(group.id) }
-                                )
-                            }
+                        items(groups) { group ->
+                            GroupContactItem(
+                                group = group,
+                                onClick = { onGroupClick(group.id) }
+                            )
                         }
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
@@ -151,22 +127,12 @@ fun ContactsScreen(
                             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                         )
                         }
-                        itemsIndexed(companions) { index, companion ->
-                            AnimatedVisibility(
-                                visible = actualIsVisible,
-                                enter = fadeIn(
-                                    animationSpec = tween(300, delayMillis = ((index + groups.size) * 20).coerceAtMost(200))
-                                ) + slideInVertically(
-                                    animationSpec = tween(300, delayMillis = ((index + groups.size) * 20).coerceAtMost(200)),
-                                    initialOffsetY = { it / 3 }
-                                )
-                            ) {
-                                ContactItem(
-                                    companion = companion,
-                                    onClick = { onCompanionClick(companion.id) },
-                                    onLongClick = { onEditClick(companion.id) }
-                                )
-                            }
+                        items(companions) { companion ->
+                            ContactItem(
+                                companion = companion,
+                                onClick = { onCompanionClick(companion.id) },
+                                onLongClick = { onEditClick(companion.id) }
+                            )
                         }
                     }
                 }
