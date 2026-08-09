@@ -124,10 +124,7 @@ fun VisionModelSettingsScreen(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
+    
 
     val backgroundColor = if (isDarkTheme) WeChatDarkBackground else PetalBackgroundStart
     val textPrimaryColor = if (isDarkTheme) WeChatDarkTextPrimary else PetalOnSurface
