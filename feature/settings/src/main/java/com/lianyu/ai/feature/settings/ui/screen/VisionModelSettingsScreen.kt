@@ -2,10 +2,6 @@
 
 package com.lianyu.ai.feature.settings.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -77,7 +73,6 @@ import com.lianyu.ai.uicommon.theme.WeChatDarkDivider
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextPrimary
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextSecondary
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextTertiary
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -91,10 +86,8 @@ fun VisionModelSettingsScreen(
     val visionProvider by viewModel.visionProvider.collectAsState()
     val visionApiUrl by viewModel.visionApiUrl.collectAsState()
     val visionApiKey by viewModel.visionApiKey.collectAsState()
-
-    var isVisible by remember { mutableStateOf(false) }
     var showModelDropdown by remember { mutableStateOf(false) }
-
+    
     var apiKeyVisible by remember { mutableStateOf(false) }
     var isTestingConnection by remember { mutableStateOf(false) }
     var testResult by remember { mutableStateOf<String?>(null) }
@@ -178,27 +171,17 @@ fun VisionModelSettingsScreen(
                 Box(modifier = Modifier.size(40.dp))
             }
 
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
-            ) {
-                Text(
-                    text = "配置图片识别的视觉AI模型及API连接信息",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = textTertiaryColor,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
-                )
-            }
+            Text(
+                text = "配置图片识别的视觉AI模型及API连接信息",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Normal,
+                color = textTertiaryColor,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200, delayMillis = 70)) +
-        slideInVertically(tween(200, delayMillis = 70)) { it / 4 }
-            ) {
-                Column(
+            Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
@@ -559,17 +542,13 @@ fun VisionModelSettingsScreen(
                             }
                         }
                     }
-                }
+                
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            AnimatedVisibility(
-                visible = isVisible && visionEnabled,
-                enter = fadeIn(tween(200, delayMillis = 130)) +
-        slideInVertically(tween(200, delayMillis = 130)) { it / 4 }
-            ) {
-                Column(
+            if (visionEnabled) {
+            Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
