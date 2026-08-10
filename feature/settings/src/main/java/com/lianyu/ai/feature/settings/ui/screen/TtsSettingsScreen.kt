@@ -5,13 +5,6 @@ package com.lianyu.ai.feature.settings.ui.screen
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lianyu.ai.network.tts.*
 import com.lianyu.ai.uicommon.theme.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,7 +49,6 @@ fun TtsSettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val ttsService = remember { TtsService.getInstance(context) }
 
-    var isVisible by remember { mutableStateOf(false) }
     var ttsEnabled by remember { mutableStateOf(false) }
     var selectedProvider by remember { mutableStateOf(TtsProvider.ANDROID) }
     var isTesting by remember { mutableStateOf(false) }
@@ -95,8 +86,6 @@ fun TtsSettingsScreen(
         ttsEnabled = prefs.getBoolean("tts_enabled", false)
         val providerName = prefs.getString("tts_provider", TtsProvider.ANDROID.name)
         selectedProvider = TtsProvider.entries.find { it.name == providerName } ?: TtsProvider.ANDROID
-        delay(30)
-        isVisible = true
     }
 
     val colorScheme = MaterialTheme.colorScheme
@@ -214,11 +203,7 @@ fun TtsSettingsScreen(
                 Box(modifier = Modifier.size(40.dp))
             }
 
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
-            ) {
-                Column(
+            Column(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -229,11 +214,7 @@ fun TtsSettingsScreen(
                         cardBg = cardBg, textPrimaryColor = textPrimaryColor, textSecondaryColor = textSecondaryColor
                     )
 
-                    AnimatedVisibility(
-                        visible = ttsEnabled,
-                        enter = expandVertically(tween(300)) + fadeIn(tween(300)),
-                        exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
-                    ) {
+                    if (ttsEnabled) {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             // ── ② 三段模式选择 ──
                             ModeSegmentedControl(
@@ -326,7 +307,7 @@ fun TtsSettingsScreen(
                         }
                     }
                 }
-            }
+            
         }
     }
 }
