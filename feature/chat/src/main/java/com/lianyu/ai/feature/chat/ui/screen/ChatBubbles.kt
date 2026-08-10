@@ -284,10 +284,6 @@ fun ChatBubble(
     adaptiveSizing: AdaptiveSizing,
     isDarkTheme: Boolean
 ) {
-    val time = remember(message.timestamp) {
-        java.time.format.DateTimeFormatter.ofPattern("HH:mm")
-            .format(java.time.Instant.ofEpochMilli(message.timestamp).atZone(java.time.ZoneId.systemDefault()))
-    }
     var showMenu by remember { mutableStateOf(false) }
 
     val isEmptyContent = message.content.isBlank() && message.type != MessageType.IMAGE &&
@@ -434,13 +430,6 @@ fun ChatBubble(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = time,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = adaptiveSizing.fontSizeCaption.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = if (isUser) TextAlign.End else TextAlign.Start
-            )
         }
 
         if (isUser) {
