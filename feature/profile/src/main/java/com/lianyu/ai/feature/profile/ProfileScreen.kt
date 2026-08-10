@@ -218,7 +218,7 @@ fun ProfileScreen(
                     color = colorScheme.onSurfaceVariant
                 )
             }
-        }
+        
 
         Spacer(modifier = Modifier.height(12.dp))
 
