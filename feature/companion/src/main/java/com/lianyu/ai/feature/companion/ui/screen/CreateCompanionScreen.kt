@@ -361,7 +361,6 @@ fun CreateCompanionScreen(
                         )
                     }
                 }
-            }
 
             Column(
                 modifier = Modifier
@@ -417,7 +416,6 @@ fun CreateCompanionScreen(
                             }
                         }
                     }
-                }
 
                 AnimatedFormField(
                     visible = true,
@@ -462,7 +460,7 @@ fun CreateCompanionScreen(
                 )
 
                 AnimatedFormField(
-                    visible = isVisible,
+                    visible = true,
                     delayMillis = 190,
                     label = stringResource(R.string.profession_label),
                     value = profession,
@@ -552,7 +550,6 @@ fun CreateCompanionScreen(
                             }
                         }
                     }
-                }
 
                 Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -710,7 +707,6 @@ fun CreateCompanionScreen(
                             )
                         }
                     }
-                }
 
                 AnimatedFormField(
                     visible = true,
@@ -809,7 +805,6 @@ fun CreateCompanionScreen(
                             }
                         }
                     }
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -1037,7 +1032,6 @@ fun AnimatedFormField(
                         }
                     }
                 }
-            }
         }
     }
 }
