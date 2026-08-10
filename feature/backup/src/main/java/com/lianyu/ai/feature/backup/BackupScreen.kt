@@ -3,10 +3,6 @@ package com.lianyu.ai.feature.backup
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -29,7 +25,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -46,9 +41,6 @@ fun BackupScreen(onNavigateBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val viewModel: BackupViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
-
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(80); isVisible = true }
 
     // 密码弹窗状态
     var showPasswordDialog by remember { mutableStateOf(false) }
@@ -171,62 +163,47 @@ fun BackupScreen(onNavigateBack: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 导出卡片
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 }
-            ) {
-                BackupCard(
-                    icon = Icons.Filled.SaveAlt,
-                    title = stringResource(R.string.backup_export_title),
-                    description = stringResource(R.string.backup_export_desc),
-                    buttonText = stringResource(R.string.backup_export_btn),
-                    buttonColor = Color(0xFF07C160),
-                    isLoading = uiState is BackupViewModel.UiState.Exporting,
-                    onClick = {
-                        passwordMode = PasswordMode.EXPORT
-                        showPasswordDialog = true
-                    }
-                )
-            }
+            BackupCard(
+                icon = Icons.Filled.SaveAlt,
+                title = stringResource(R.string.backup_export_title),
+                description = stringResource(R.string.backup_export_desc),
+                buttonText = stringResource(R.string.backup_export_btn),
+                buttonColor = Color(0xFF07C160),
+                isLoading = uiState is BackupViewModel.UiState.Exporting,
+                onClick = {
+                    passwordMode = PasswordMode.EXPORT
+                    showPasswordDialog = true
+                }
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // 导入卡片
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(400, delayMillis = 80)) + slideInVertically(tween(400, delayMillis = 80)) { it / 4 }
-            ) {
-                BackupCard(
-                    icon = Icons.Filled.FileOpen,
-                    title = stringResource(R.string.backup_import_title),
-                    description = stringResource(R.string.backup_import_desc),
-                    buttonText = stringResource(R.string.backup_import_btn),
-                    buttonColor = Color(0xFFFA5151),
-                    isLoading = uiState is BackupViewModel.UiState.Importing,
-                    onClick = { viewModel.requestImport() }
-                )
-            }
+            BackupCard(
+                icon = Icons.Filled.FileOpen,
+                title = stringResource(R.string.backup_import_title),
+                description = stringResource(R.string.backup_import_desc),
+                buttonText = stringResource(R.string.backup_import_btn),
+                buttonColor = Color(0xFFFA5151),
+                isLoading = uiState is BackupViewModel.UiState.Importing,
+                onClick = { viewModel.requestImport() }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // 说明文字
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(500, delayMillis = 160))
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            stringResource(R.string.backup_notice),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colorScheme.onSurfaceVariant,
-                            lineHeight = 20.sp
-                        )
-                    }
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        stringResource(R.string.backup_notice),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp
+                    )
                 }
             }
 
