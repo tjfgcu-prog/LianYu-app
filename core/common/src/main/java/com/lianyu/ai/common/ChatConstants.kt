@@ -368,5 +368,39 @@ object ChatConstants {
 
     /** 低贴纸概率阈值（%） */
     const val STICKER_PROBABILITY_LOW = 20
+
+    /** 语音消息停止聊天多久后，再次开口需重新显示顶部时间分隔（毫秒） */
+    const val CHAT_TIME_DIVIDER_GAP_MS = 5 * 60 * 1000L
+}
+
+/**
+ * 语音消息 content 编码工具。
+ *
+ * 语音消息落库时既要保留时长（用于气泡展示），又要保留原始文字（用于气泡内文字展示，
+ * 如同时展示"语音条 + 转写文字"）。使用不可见分隔符把两者编码进同一个 content 字段，
+ * 避免额外的数据库字段迁移。
+ */
+object VoiceMessageCodec {
+    /** content 中时长与原文之间的分隔符，选用普通文本不会出现的控制字符 */
+    private const val SEPARATOR = "\u0002"
+
+    /** 构建语音消息的 content：`[语音] <duration>"<SEPARATOR><原文文字>` */
+    fun encode(duration: Int, text: String): String {
+        return "[语音] ${duration}\"$SEPARATOR$text"
+    }
+
+    /** 从 content 中提取语音时长（秒），提取失败时返回 1 */
+    fun extractDuration(content: String): Int {
+        val head = content.substringBefore(SEPARATOR)
+        val regex = Regex("\\[语音]\\s*(\\d+)[\"秒]")
+        return regex.find(head)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+    }
+
+    /** 从 content 中提取语音对应的原始文字，没有则返回 null */
+    fun extractText(content: String): String? {
+        if (!content.contains(SEPARATOR)) return null
+        val text = content.substringAfter(SEPARATOR)
+        return text.ifBlank { null }
+    }
 }
 
