@@ -3,13 +3,9 @@ package com.lianyu.ai.feature.companion.ui.screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -96,7 +92,6 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.companion.ui.viewmodel.CreateCompanionViewModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -119,7 +114,6 @@ fun CreateCompanionScreen(
     var rawPrompt by remember { mutableStateOf("") }
     var systemPrompt by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<String?>(null) }
-    var isVisible by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showImportErrorDialog by remember { mutableStateOf(false) }
     var importErrorMessage by remember { mutableStateOf("") }
@@ -195,8 +189,6 @@ fun CreateCompanionScreen(
         if (isEditMode) {
             companionId?.let { viewModel.loadCompanion(it) }
         }
-        delay(30)
-        isVisible = true
     }
 
     LaunchedEffect(existingCompanion) {
@@ -303,11 +295,7 @@ fun CreateCompanionScreen(
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { it / 3 }
-            ) {
-                Box(
+            Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 24.dp),
@@ -384,12 +372,7 @@ fun CreateCompanionScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 // 角色类型选择
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(200, delayMillis = 40)) +
-        slideInVertically(tween(200, delayMillis = 40)) { it / 3 }
-                ) {
-                    Card(
+                Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -437,7 +420,7 @@ fun CreateCompanionScreen(
                 }
 
                 AnimatedFormField(
-                    visible = isVisible,
+                    visible = true,
                     delayMillis = 100,
                     label = stringResource(R.string.name_label),
                     value = name,
@@ -451,7 +434,7 @@ fun CreateCompanionScreen(
                 )
 
                 AnimatedFormField(
-                    visible = isVisible,
+                    visible = true,
                     delayMillis = 130,
                     label = stringResource(R.string.age_label),
                     value = age,
@@ -463,7 +446,7 @@ fun CreateCompanionScreen(
                 )
 
                 AnimatedFormField(
-                    visible = isVisible,
+                    visible = true,
                     delayMillis = 160,
                     label = stringResource(R.string.body_type_label),
                     value = bodyType,
@@ -495,12 +478,7 @@ fun CreateCompanionScreen(
                 )
 
                 // 性格标签
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(200, delayMillis = 110)) +
-        slideInVertically(tween(200, delayMillis = 110)) { it / 3 }
-                ) {
-                    Card(
+                Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -576,12 +554,7 @@ fun CreateCompanionScreen(
                     }
                 }
 
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(200, delayMillis = 130)) +
-        slideInVertically(tween(200, delayMillis = 130)) { it / 3 }
-                ) {
-                    Card(
+                Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -740,7 +713,7 @@ fun CreateCompanionScreen(
                 }
 
                 AnimatedFormField(
-                    visible = isVisible,
+                    visible = true,
                     delayMillis = 300,
                     label = stringResource(R.string.system_prompt),
                     value = systemPrompt,
@@ -753,12 +726,7 @@ fun CreateCompanionScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(500, delayMillis = 350)) +
-                            slideInVertically(tween(500, delayMillis = 350)) { it / 2 }
-                ) {
-                    Button(
+                Button(
                         onClick = {
                             if (isFormValid) {
                                 val companion = CompanionEntity(
@@ -982,11 +950,7 @@ fun AnimatedFormField(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(tween(200, delayMillis = delayMillis)) +
-        slideInVertically(tween(200, delayMillis = delayMillis)) { it / 3 }
-    ) {
+    if (!visible) return
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
