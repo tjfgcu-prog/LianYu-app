@@ -285,7 +285,11 @@ class AiResponseFinalizer(
                 val result = chatTtsController.synthesizeVoiceReply(text)
                 if (result != null) {
                     val (path, duration) = result
-                    chatRepository.updateMessageAsVoice(messageId, "[语音] $duration\"", path)
+                    chatRepository.updateMessageAsVoice(
+                        messageId,
+                        com.lianyu.ai.common.VoiceMessageCodec.encode(duration, text),
+                        path
+                    )
                 } else {
                     SecureLog.w("ChatViewModel", "voice synthesis failed, message stays as text (id=$messageId)")
                 }
