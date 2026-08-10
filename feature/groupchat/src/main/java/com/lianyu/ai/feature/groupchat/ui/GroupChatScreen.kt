@@ -50,7 +50,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.lianyu.ai.uicommon.component.rememberHorizontalSwipeGuard
@@ -99,7 +99,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import com.lianyu.ai.feature.groupchat.R
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -115,6 +115,8 @@ import com.lianyu.ai.uicommon.component.getChatBackground
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
 import com.lianyu.ai.uicommon.component.isCustomBackground
 import com.lianyu.ai.uicommon.component.rememberBackgroundBitmap
+import com.lianyu.ai.uicommon.component.ChatTimeDivider
+import com.lianyu.ai.common.ChatConstants
 import com.lianyu.ai.feature.groupchat.GroupChatViewModel
 import com.lianyu.ai.feature.groupchat.GroupChatViewModelFactory
 import com.lianyu.ai.common.HardwareInfo
@@ -124,9 +126,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -336,7 +335,12 @@ fun GroupChatScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    items(messages, key = { it.id }) { message ->
+                    itemsIndexed(messages, key = { _, message -> message.id }) { index, message ->
+                        val showTimeDivider = index == 0 ||
+                            (message.timestamp - messages[index - 1].timestamp) >= ChatConstants.CHAT_TIME_DIVIDER_GAP_MS
+                        if (showTimeDivider) {
+                            ChatTimeDivider(timestampMillis = message.timestamp)
+                        }
                         val companion = companions.find { it.id == message.companionId }
                         GroupChatBubble(
                             message = message, companion = companion,
@@ -875,9 +879,6 @@ fun GroupChatBubble(
     userAvatar: String?,
     userName: String
 ) {
-    val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-    val time = remember(message.timestamp) { dateFormat.format(Date(message.timestamp)) }
-
     val userBubbleColor = MaterialTheme.colorScheme.primary
     val aiBubbleColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
 
@@ -984,13 +985,6 @@ fun GroupChatBubble(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = time,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = if (isUser) TextAlign.End else TextAlign.Start
-            )
         }
 
         if (isUser) {
