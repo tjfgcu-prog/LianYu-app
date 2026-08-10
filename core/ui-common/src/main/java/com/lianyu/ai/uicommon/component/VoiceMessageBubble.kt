@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,7 @@ fun VoiceMessageBubble(
     audioPath: String,
     duration: Int,
     isUser: Boolean,
+    text: String? = null,
     onPlayComplete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -118,9 +120,9 @@ fun VoiceMessageBubble(
         }
     }
 
-    Box(
+    Column(
         modifier = modifier
-            .widthIn(max = 190.dp)
+            .widthIn(max = 230.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -166,6 +168,17 @@ fun VoiceMessageBubble(
                 fontSize = 12.sp,
                 color = iconColor.copy(alpha = 0.7f),
                 maxLines = 1
+            )
+        }
+
+        // 语音转文字内容：与语音条一并展示在同一气泡内，如参考样式所示
+        if (!text.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = text,
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+                color = iconColor
             )
         }
     }
