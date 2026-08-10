@@ -354,12 +354,7 @@ fun YandereModeScreen(
 @Composable
 private fun AnimatedSettingsGroup(isVisible: Boolean, content: @Composable () -> Unit) {
     if (!isVisible) return
-    androidx.compose.animation.AnimatedVisibility(
-        visible = isVisible,
-        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 4 }
-    ) {
-        content()
-    }
+    content()
 }
 
 @Composable
