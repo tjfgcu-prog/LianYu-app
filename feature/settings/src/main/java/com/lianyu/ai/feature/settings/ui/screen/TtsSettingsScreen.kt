@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lianyu.ai.network.tts.*
 import com.lianyu.ai.uicommon.theme.*
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.launch
 
 @Composable
@@ -53,7 +53,7 @@ fun TtsSettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val ttsService = remember { TtsService.getInstance(context) }
 
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var ttsEnabled by remember { mutableStateOf(false) }
     var selectedProvider by remember { mutableStateOf(TtsProvider.ANDROID) }
     var isTesting by remember { mutableStateOf(false) }
@@ -90,8 +90,6 @@ fun TtsSettingsScreen(
         ttsEnabled = prefs.getBoolean("tts_enabled", false)
         val providerName = prefs.getString("tts_provider", TtsProvider.ANDROID.name)
         selectedProvider = TtsProvider.entries.find { it.name == providerName } ?: TtsProvider.ANDROID
-        delay(30)
-        isVisible = true
     }
 
     val colorScheme = MaterialTheme.colorScheme
