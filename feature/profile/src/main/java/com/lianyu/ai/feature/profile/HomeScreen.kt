@@ -61,7 +61,7 @@ import com.lianyu.ai.uicommon.theme.PinkPrimary
 import com.lianyu.ai.uicommon.theme.AdaptiveSizing
 import com.lianyu.ai.uicommon.theme.rememberAdaptiveSizing
 import com.lianyu.ai.database.viewmodel.ChatGroupViewModel
-import kotlinx.coroutines.delay
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,15 +82,12 @@ fun HomeScreen(
 ) {
     val chatList by viewModel.chatList.collectAsState(initial = emptyList())
     val groups by groupViewModel.groups.collectAsState(initial = emptyList())
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(HomeTab.ALL) }
     val adaptiveSizing = rememberAdaptiveSizing()
     val colorScheme = MaterialTheme.colorScheme
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
+    
 
     Box(
         modifier = Modifier
