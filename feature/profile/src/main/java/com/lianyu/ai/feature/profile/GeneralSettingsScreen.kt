@@ -78,7 +78,7 @@ import com.lianyu.ai.common.FrameRateManager
 import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
 import com.lianyu.ai.uicommon.component.setChatBackgroundKey
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.launch
 
 /**
@@ -111,10 +111,10 @@ fun GeneralSettingsScreen(
 ) {
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var showBackgroundDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { delay(80); isVisible = true }
+    
 
     Scaffold(
         modifier = Modifier.fillMaxSize().background(colorScheme.background).windowInsetsPadding(WindowInsets.statusBars),
