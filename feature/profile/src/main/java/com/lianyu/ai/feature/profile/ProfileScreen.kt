@@ -83,7 +83,7 @@ fun ProfileScreen(
     val userBanner by viewModel.userBanner.collectAsState()
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -97,10 +97,7 @@ fun ProfileScreen(
         uri?.let { viewModel.updateUserBanner(it.toString()) }
     }
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
+    
 
     Column(
             modifier = Modifier
