@@ -134,7 +134,7 @@ fun SettingsScreen(
     val visionEnabled by viewModel.visionEnabled.collectAsState()
     val visionModel by viewModel.visionModel.collectAsState()
     var expandedProvider by remember { mutableStateOf<ApiProvider?>(null) }
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var newConfigDialog by remember { mutableStateOf<ApiConfig?>(null) }
     var showProviderPicker by remember { mutableStateOf(false) }
     var showVisionModelSettings by remember { mutableStateOf(false) }
@@ -169,11 +169,8 @@ fun SettingsScreen(
     val cardBackground = colorScheme.surfaceVariant
 
     LaunchedEffect(Unit) {
-        
         viewModel.refreshConnectionStatus()
         viewModel.refreshPartnerQuota()
-        delay(30)
-        isVisible = true
     }
 
     LaunchedEffect(Unit) {
