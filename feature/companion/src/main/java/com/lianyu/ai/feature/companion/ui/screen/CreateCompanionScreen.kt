@@ -96,7 +96,7 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.companion.ui.viewmodel.CreateCompanionViewModel
-import kotlinx.coroutines.delay
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -119,7 +119,7 @@ fun CreateCompanionScreen(
     var rawPrompt by remember { mutableStateOf("") }
     var systemPrompt by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<String?>(null) }
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showImportErrorDialog by remember { mutableStateOf(false) }
     var importErrorMessage by remember { mutableStateOf("") }
@@ -195,8 +195,6 @@ fun CreateCompanionScreen(
         if (isEditMode) {
             companionId?.let { viewModel.loadCompanion(it) }
         }
-        delay(30)
-        isVisible = true
     }
 
     LaunchedEffect(existingCompanion) {
