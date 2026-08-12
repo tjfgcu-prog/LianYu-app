@@ -58,7 +58,7 @@ import com.lianyu.ai.uicommon.theme.PetalSurface
 import com.lianyu.ai.uicommon.theme.PetalGreen
 import com.lianyu.ai.uicommon.theme.PetalError
 
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -72,7 +72,7 @@ fun TokenUsageScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var todayUsage: TokenUsage? by remember { mutableStateOf(null) }
     var weekStats: TokenUsageDao.TotalStats? by remember { mutableStateOf(null) }
     var monthStats: TokenUsageDao.TotalStats? by remember { mutableStateOf(null) }
@@ -102,8 +102,6 @@ fun TokenUsageScreen(
 
     LaunchedEffect(Unit) {
         loadData()
-        delay(30)
-        isVisible = true
     }
 
     val colorScheme = MaterialTheme.colorScheme
