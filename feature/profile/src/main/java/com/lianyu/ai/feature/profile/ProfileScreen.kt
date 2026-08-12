@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.feature.profile.R
-import kotlinx.coroutines.delay
+
 
 /**
  * 个人中心主页面 — 固定为 3 个卡片，位置不再随设置项数量变化：
