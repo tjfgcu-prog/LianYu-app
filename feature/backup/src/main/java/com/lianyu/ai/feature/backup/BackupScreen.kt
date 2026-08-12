@@ -29,7 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.launch
 
 /**
@@ -47,8 +47,8 @@ fun BackupScreen(onNavigateBack: () -> Unit) {
     val viewModel: BackupViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(80); isVisible = true }
+    var isVisible by remember { mutableStateOf(true) }
+    
 
     // 密码弹窗状态
     var showPasswordDialog by remember { mutableStateOf(false) }
