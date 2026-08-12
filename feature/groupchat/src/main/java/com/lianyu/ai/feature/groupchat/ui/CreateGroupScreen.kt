@@ -57,7 +57,7 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.viewmodel.ChatGroupViewModel
 import com.lianyu.ai.database.viewmodel.CompanionListViewModel
-import kotlinx.coroutines.delay
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,12 +69,9 @@ fun CreateGroupScreen(
     val companions by companionListViewModel.companions.collectAsState(initial = emptyList())
     var groupName by remember { mutableStateOf("") }
     val selectedIds = remember { mutableStateListOf<Long>() }
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
+    
 
     Scaffold(
         topBar = {
