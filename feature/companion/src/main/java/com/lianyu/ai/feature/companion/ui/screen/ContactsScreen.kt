@@ -58,7 +58,7 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.ChatGroup
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.viewmodel.CompanionListViewModel
-import kotlinx.coroutines.delay
+
 
 @Composable
 fun ContactsScreen(
@@ -72,14 +72,11 @@ fun ContactsScreen(
     isVisible: Boolean = true
 ) {
     val companions by viewModel.companions.collectAsState(initial = emptyList())
-    var localIsVisible by remember { mutableStateOf(false) }
+    var localIsVisible by remember { mutableStateOf(true) }
     val actualIsVisible = if (isVisible) localIsVisible else false
     val colorScheme = MaterialTheme.colorScheme
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        localIsVisible = true
-    }
+    
 
     Scaffold { paddingValues ->
         Box(
