@@ -77,7 +77,7 @@ import com.lianyu.ai.uicommon.theme.WeChatDarkDivider
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextPrimary
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextSecondary
 import com.lianyu.ai.uicommon.theme.WeChatDarkTextTertiary
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.launch
 
 
@@ -92,7 +92,7 @@ fun VisionModelSettingsScreen(
     val visionApiUrl by viewModel.visionApiUrl.collectAsState()
     val visionApiKey by viewModel.visionApiKey.collectAsState()
 
-    var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     var showModelDropdown by remember { mutableStateOf(false) }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
@@ -124,10 +124,7 @@ fun VisionModelSettingsScreen(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    LaunchedEffect(Unit) {
-        delay(30)
-        isVisible = true
-    }
+    
 
     val backgroundColor = if (isDarkTheme) WeChatDarkBackground else PetalBackgroundStart
     val textPrimaryColor = if (isDarkTheme) WeChatDarkTextPrimary else PetalOnSurface
