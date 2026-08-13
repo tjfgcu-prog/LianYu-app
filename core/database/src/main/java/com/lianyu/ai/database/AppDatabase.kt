@@ -67,9 +67,16 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        // 数据库是否已经打开好，供 MainActivity 的启动加载圈判断是否可以进主界面。
+        private val _isReady = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val isReady: kotlinx.coroutines.flow.StateFlow<Boolean> = _isReady
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(LOCK) {
-                INSTANCE ?: buildDatabase(context.applicationContext).also { INSTANCE = it }
+                INSTANCE ?: buildDatabase(context.applicationContext).also {
+                    INSTANCE = it
+                    _isReady.value = true
+                }
             }
         }
 
