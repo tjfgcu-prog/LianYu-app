@@ -173,42 +173,4 @@ fun WeChatTopBar(
     }
 }
 
-/** 首页顶部栏操作按钮 */
-@Composable
-fun HomeTopBarActions(navController: NavHostController) {
-    val iconBgColor = MaterialTheme.colorScheme.surfaceVariant
-    val iconTint = MaterialTheme.colorScheme.onBackground
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(iconBgColor)
-                .clickable { navController.navigate("contacts") },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Group,
-                contentDescription = stringResource(R.string.nav_contacts),
-                modifier = Modifier.size(20.dp),
-                tint = iconTint
-            )
-        }
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(iconBgColor)
-                .clickable { navController.navigate("profile") },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.PersonOutline,
-                contentDescription = stringResource(R.string.nav_profile),
-                modifier = Modifier.size(20.dp),
-                tint = iconTint
-            )
-        }
-    }
-}
