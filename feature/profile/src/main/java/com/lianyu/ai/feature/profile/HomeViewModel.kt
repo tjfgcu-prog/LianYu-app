@@ -9,43 +9,48 @@ import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.repository.ChatRepository
 import com.lianyu.ai.database.repository.CompanionRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val companionRepository: CompanionRepository
-    private val chatRepository: ChatRepository
+    private val companionRepository: CompanionRepository by lazy {
+        CompanionRepository(AppDatabase.getDatabase(getApplication()).companionDao())
+    }
+    private val chatRepository: ChatRepository by lazy {
+        ChatRepository(AppDatabase.getDatabase(getApplication()).chatMessageDao())
+    }
     private val prefs = application.getSharedPreferences("message_read_status", android.content.Context.MODE_PRIVATE)
     private val readTimeTriggers = mutableMapOf<Long, MutableStateFlow<Long>>()
 
     val chatList: Flow<List<ChatListItem>>
 
     init {
-        val database = AppDatabase.getDatabase(application)
-        companionRepository = CompanionRepository(database.companionDao())
-        chatRepository = ChatRepository(database.chatMessageDao())
-
         viewModelScope.launch {
             ReadStatusManager.readEvents.collect { (id, timestamp) ->
                 readTimeTriggers[id]?.value = timestamp
             }
         }
 
-        chatList = companionRepository.getAllCompanions()
+        chatList = flow { emitAll(companionRepository.getAllCompanions()) }
+            .flowOn(Dispatchers.IO)
             .flatMapLatest { companions ->
                 if (companions.isEmpty()) {
                     flowOf(emptyList())
                 } else {
                     // 预热：为每个 companion 加载最近一页消息到 ChatRepository 内存缓存
-                    viewModelScope.launch {
+                    viewModelScope.launch(Dispatchers.IO) {
                         companions.forEach { companion ->
                             if (chatRepository.getCachedRecent(companion.id) == null) {
                                 runCatching {
