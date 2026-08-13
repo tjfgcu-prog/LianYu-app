@@ -113,10 +113,11 @@ class MainActivity : ComponentActivity() {
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
 
             val isServiceReady by ServiceRegistry.initialized.collectAsStateWithLifecycle()
+            val isDbReady by com.lianyu.ai.database.AppDatabase.isReady.collectAsStateWithLifecycle()
 
             LianYuTheme(themeMode = themeMode) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    if (!isServiceReady) {
+                    if (!isServiceReady || !isDbReady) {
                         // 等待跨模块依赖注册中心就绪，避免冷启动后快速进入
                         // 创建人设等页面时 ServiceRegistry.getOrThrow 抛异常导致闪退。
                         Box(
