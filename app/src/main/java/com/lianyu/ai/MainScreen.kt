@@ -210,7 +210,6 @@ fun MainScreen(mainActivity: Activity) {
             ) {
                 // === 主页 Pager ===
                 composable(MainRoute.Home.route) {
-                    val pagerOffset by remember { derivedStateOf { pagerState.currentPageOffsetFraction } }
                     HorizontalPager(
                         state = pagerState,
                         beyondViewportPageCount = 1,
@@ -218,19 +217,13 @@ fun MainScreen(mainActivity: Activity) {
                         modifier = Modifier.fillMaxSize()
                             .nestedScroll(angleNestedScrollConnection)
                     ) { page ->
-                        val cp = pagerState.currentPage
-                        val visible = remember(page, cp, pagerOffset) {
-                            when {
-                                page == cp -> pagerOffset in -0.6f..0.6f
-                                page == cp + 1 -> pagerOffset > 0.3f
-                                page == cp - 1 -> pagerOffset < -0.3f
-                                else -> false
-                            }
-                        }
-                        AnimatedVisibility(
-                            visible = visible,
-                            enter = fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) + scaleIn(initialScale = 0.94f, animationSpec = tween(300, easing = FastOutSlowInEasing)),
-                            exit = fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        // 🔒 性能修复：原来这里在 Pager 自带的滑动位移之上，又叠加了一层
+                        // 淡入淡出+缩放动画，且每一帧滚动都要重新计算三个页面各自的动画状态，
+                        // 快速来回切换时这部分计算叠加起来就会卡顿。Pager 的滑动本身已经足够
+                        // 表达"切换"这个动作，这里去掉多余的那层动画，只保留是否渲染的判断。
+                        if (page == pagerState.currentPage ||
+                            page == pagerState.currentPage - 1 ||
+                            page == pagerState.currentPage + 1
                         ) {
                             when (page) {
                                 0 -> HomeScreen(
