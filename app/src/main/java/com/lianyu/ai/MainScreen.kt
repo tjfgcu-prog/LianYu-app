@@ -179,7 +179,7 @@ fun MainScreen(mainActivity: Activity) {
     currentIndex = pagerState.currentPage,
                     onItemClick = { index ->
                         lastTabPage = index
-                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                        coroutineScope.launch { pagerState.scrollToPage(index) }
                     }
                 )
             }
