@@ -14,7 +14,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 13
-        versionName = "9.9.9"
+        versionName = "0.0.1"
 
         // Force multi-DEX output
         multiDexEnabled = true
