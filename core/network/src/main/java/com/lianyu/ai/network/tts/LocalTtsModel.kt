@@ -72,7 +72,7 @@ fun stagingFile(context: Context, fileName: String): File = File(stagingDir(cont
         files = listOf(
             LocalTtsModelFile(
                 fileName = "eula.onnx",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/eula.onnx",
+                downloadUrl = "https://hf-mirror.com/csukuangfj/vits-zh-hf-eula/resolve/main/eula.onnx",
                 sha256 = "",
                 expectedBytes = 116_000_000L,
                 role = LocalTtsFileRole.MAIN_MODEL,
@@ -80,7 +80,7 @@ fun stagingFile(context: Context, fileName: String): File = File(stagingDir(cont
             ),
             LocalTtsModelFile(
                 fileName = "tokens.txt",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/tokens.txt",
+                downloadUrl = "https://hf-mirror.com/csukuangfj/vits-zh-hf-eula/resolve/main/tokens.txt",
                 sha256 = "",
                 expectedBytes = 0L,
                 role = LocalTtsFileRole.TOKENS,
@@ -88,7 +88,7 @@ fun stagingFile(context: Context, fileName: String): File = File(stagingDir(cont
             ),
             LocalTtsModelFile(
                 fileName = "lexicon.txt",
-                downloadUrl = "https://huggingface.co/csukuangfj/vits-zh-hf-eula/resolve/main/lexicon.txt",
+                downloadUrl = "https://hf-mirror.com/csukuangfj/vits-zh-hf-eula/resolve/main/lexicon.txt",
                 sha256 = "",
                 expectedBytes = 0L,
                 role = LocalTtsFileRole.LEXICON,
