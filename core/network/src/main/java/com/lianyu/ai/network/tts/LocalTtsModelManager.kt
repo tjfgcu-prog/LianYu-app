@@ -494,7 +494,7 @@ class LocalTtsModelManager private constructor(private val context: Context) {
 
     companion object {
         private const val TAG = "LocalTtsModelManager"
-        private val ALLOWED_HOSTS = setOf("huggingface.co", "modelscope.cn", "github.com")
+        private val ALLOWED_HOSTS = setOf("hf-mirror.com", "huggingface.co", "modelscope.cn", "github.com")
         private const val MIN_VALID_FILE_BYTES = 64L
 
         @Volatile
