@@ -33,14 +33,6 @@ object PermissionManager {
         return ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
     }
 
-    fun getCameraPermissions(): Array<String> {
-        return arrayOf(CAMERA)
-    }
-
-    fun getAudioPermissions(): Array<String> {
-        return arrayOf(RECORD_AUDIO)
-    }
-
     fun getImagePickPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(READ_MEDIA_IMAGES)
@@ -48,43 +40,6 @@ object PermissionManager {
             arrayOf(READ_EXTERNAL_STORAGE)
         } else {
             emptyArray()
-        }
-    }
-
-    fun getVideoPickPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(READ_MEDIA_VIDEO)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            arrayOf(READ_EXTERNAL_STORAGE)
-        } else {
-            emptyArray()
-        }
-    }
-
-    fun getAllRequiredPermissionsForMedia(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE)
-        } else {
-            emptyArray()
-        }
-    }
-
-    fun createPermissionLauncher(
-        activity: FragmentActivity,
-        onGranted: () -> Unit,
-        onDenied: (List<String>) -> Unit
-    ): ActivityResultLauncher<Array<String>> {
-        return activity.registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            val deniedPermissions = permissions.filter { !it.value }.keys.toList()
-            if (deniedPermissions.isEmpty()) {
-                onGranted()
-            } else {
-                onDenied(deniedPermissions)
-            }
         }
     }
 
@@ -102,26 +57,6 @@ object PermissionManager {
                 onDenied()
             }
         }
-    }
-
-    fun requestCameraPermission(
-        launcher: ActivityResultLauncher<String>,
-        onAlreadyGranted: (() -> Unit)? = null
-    ) {
-        launcher.launch(CAMERA)
-    }
-
-    fun requestAudioPermission(
-        launcher: ActivityResultLauncher<String>,
-        onAlreadyGranted: (() -> Unit)? = null
-    ) {
-        launcher.launch(RECORD_AUDIO)
-    }
-
-    fun requestImagePickPermission(
-        launcher: ActivityResultLauncher<Array<String>>
-    ) {
-        launcher.launch(getImagePickPermissions())
     }
 
     fun getPermissionDescription(permission: String): String {
@@ -149,10 +84,6 @@ object PermissionManager {
     }
 
     fun canPickImageWithoutPermission(): Boolean {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-    }
-
-    fun canRecordAudioWithoutPermission(): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
     }
 }
