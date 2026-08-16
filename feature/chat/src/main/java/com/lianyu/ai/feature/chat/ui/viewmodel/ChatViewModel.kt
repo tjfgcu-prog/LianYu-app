@@ -1004,21 +1004,23 @@ class ChatViewModel(
                         ChatDebugLog.log("[VISION] TIMEOUT - sendMessageWithImage returned null after ${TimeoutBudgets.CHAT_VM_VISION_TIMEOUT_MS}ms")
                         throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
                     }
-                    ChatDebugLog.log("[VISION] aiResponse received, length=${aiResponse.content.length}")
+                    ChatDebugLog.log("[VISION] aiResponse received, length=${aiResponse.content.length}, content=${aiResponse.content}")
 
                     // Handle [TOAST] prefix — show as toast, don't store as chat message
                     val aiContent = aiResponse.content
                     if (aiContent.startsWith("[TOAST]")) {
                         val toastMsg = aiContent.removePrefix("[TOAST]")
-                        _events.tryEmit(ChatUiEvent.Error(toastMsg))
+                        ChatDebugLog.log("[VISION] TOAST branch hit, tryEmit result=${_events.tryEmit(ChatUiEvent.Error(toastMsg))}")
                         SecureLog.w("ChatViewModel", "AI image response is a toast: $toastMsg")
                     } else {
+                        ChatDebugLog.log("[VISION] normal reply branch, calling finalizeResponse")
                         responseFinalizer.finalizeResponse(
                             aiContent = aiContent,
                             reasoning = aiResponse.reasoningContent,
                             userContentForMemory = "[图片]",
                             logMessage = "AI image response received"
                         )
+                        ChatDebugLog.log("[VISION] finalizeResponse returned")
                     }
                 } else {
                     ChatDebugLog.log("[VISION] SKIPPED - companion is null, no AI call made!")
