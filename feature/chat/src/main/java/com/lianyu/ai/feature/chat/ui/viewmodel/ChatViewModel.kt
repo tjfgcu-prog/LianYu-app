@@ -1005,9 +1005,6 @@ class ChatViewModel(
                         throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
                     }
                     ChatDebugLog.log("[VISION] aiResponse received, length=${aiResponse.content.length}")
-                } else {
-                    ChatDebugLog.log("[VISION] SKIPPED - companion is null, no AI call made!")
-                }
 
                     // Handle [TOAST] prefix — show as toast, don't store as chat message
                     val aiContent = aiResponse.content
@@ -1023,6 +1020,8 @@ class ChatViewModel(
                             logMessage = "AI image response received"
                         )
                     }
+                } else {
+                    ChatDebugLog.log("[VISION] SKIPPED - companion is null, no AI call made!")
                 }
             } catch (e: CancellationException) {
                 SecureLog.e("ChatViewModel", "Image API call cancelled", e)
