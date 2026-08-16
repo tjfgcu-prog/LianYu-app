@@ -1893,7 +1893,7 @@ $chatText
                     val errorMessage = when {
                         e.message?.contains("vision", ignoreCase = true) == true ||
                         e.message?.contains("image", ignoreCase = true) == true ->
-                            "[TOAST]当前模型不支持视觉功能，请在「视觉识别设置」中选择支持图片识别的模型"
+                            "[TOAST]当前模型不支持视觉功能 [原始错误: ${e.message}]"
                         e.message?.contains("timeout", ignoreCase = true) == true ||
                         e.message?.contains("timed out", ignoreCase = true) == true ->
                             "[TOAST]图片识别请求超时，请尝试发送更小的图片"
