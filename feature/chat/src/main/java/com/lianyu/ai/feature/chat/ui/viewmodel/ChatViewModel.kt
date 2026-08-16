@@ -959,12 +959,14 @@ class ChatViewModel(
      * 视觉处理独立于messageQueue（因为需要特殊参数），但通过cancel保证互斥。
      */
     fun sendImageMessage(imagePath: String) {
+        ChatDebugLog.log("[VISION] sendImageMessage CALLED, imagePath=$imagePath")
         SecureLog.i("VISION", "========== sendImageMessage CALLED ==========")
         SecureLog.i("VISION", "imagePath=$imagePath")
         // [P0 FIX] 取消正在进行的AI请求（可能是队列消费者正在处理的文本消息）
         // 这确保视觉请求不会与过时的文本回复并发，避免"答非所问"
         val previousJob = turnState.sendMessageJob
         if (previousJob != null && previousJob.isActive) {
+            ChatDebugLog.log("[VISION] Cancelling previous AI job before vision processing")
             SecureLog.i("VISION", "Cancelling previous AI job before vision processing")
             previousJob.cancel("Image message sent, cancelling previous AI request")
         }
@@ -972,6 +974,7 @@ class ChatViewModel(
         // [P0 FIX] 视觉请求运行在应用级作用域，退出聊天后仍能完成。
         turnState.sendMessageJob = chatBackgroundScope.launch {
             try {
+                ChatDebugLog.log("[VISION] sendImageMessage: Starting coroutine, path=$imagePath")
                 SecureLog.i("VISION", "sendImageMessage: Starting coroutine, path=$imagePath")
                 enterLoading()
 
@@ -990,12 +993,21 @@ class ChatViewModel(
                 // [P1 FIX] 图片理解使用用户设置的上下文条数，不再写死 50
                 val history = contextResolver.getHistoryForAi(companionId)
                 val companion = _companionData.value
+                ChatDebugLog.log("[VISION] companion loaded? ${companion != null}")
 
                 if (companion != null) {
                     val settings = chatDetailSettingsStore.getSettings(companionId)
+                    ChatDebugLog.log("[VISION] calling aiService.sendMessageWithImage, timeout=${TimeoutBudgets.CHAT_VM_VISION_TIMEOUT_MS}ms")
                     val aiResponse = withTimeoutOrNull(TimeoutBudgets.CHAT_VM_VISION_TIMEOUT_MS) {
                         aiService.sendMessageWithImage(companion.toAiCompanionInfo(), history.toAiChatMessages(), imagePath, settings.stickerProbability, settings.ntpTimeEnabled)
-                    } ?: throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
+                    } ?: run {
+                        ChatDebugLog.log("[VISION] TIMEOUT - sendMessageWithImage returned null after ${TimeoutBudgets.CHAT_VM_VISION_TIMEOUT_MS}ms")
+                        throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
+                    }
+                    ChatDebugLog.log("[VISION] aiResponse received, length=${aiResponse.content.length}")
+                } else {
+                    ChatDebugLog.log("[VISION] SKIPPED - companion is null, no AI call made!")
+                }
 
                     // Handle [TOAST] prefix — show as toast, don't store as chat message
                     val aiContent = aiResponse.content
@@ -1015,6 +1027,7 @@ class ChatViewModel(
             } catch (e: CancellationException) {
                 SecureLog.e("ChatViewModel", "Image API call cancelled", e)
             } catch (e: Exception) {
+                ChatDebugLog.log("[VISION] EXCEPTION: ${e.javaClass.simpleName}: ${e.message}")
                 SecureLog.e("ChatViewModel", "sendImageMessage failed", e)
                 val rawMessage = e.message ?: "发送失败"
                 if (rawMessage.startsWith("[TOAST]")) {
