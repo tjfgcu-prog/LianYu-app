@@ -849,7 +849,60 @@ private fun GgufLocalModelSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        
+        // 卡片2：上下文长度设置（对应 GgufLocalModel 里的 contextLength）
+        var ggufContextLength by remember {
+            mutableStateOf(prefs.getInt("gguf_context_length", 8192))
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "上下文长度（Context Length）",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = textPrimaryColor
+            )
+            Text(
+                text = "越大能记住的聊天/角色设定越长，但更吃内存、加载更慢。改完下次生成回复时生效，无需重启。",
+                fontSize = 11.sp,
+                color = textSecondaryColor
+            )
+            val contextOptions = listOf(4096, 8192, 12288, 16384, 32768)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                contextOptions.forEach { option ->
+                    val selected = ggufContextLength == option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selected) PetalPrimary else MaterialTheme.colorScheme.surface
+                            )
+                            .clickable {
+                                ggufContextLength = option
+                                prefs.edit().putInt("gguf_context_length", option).commit()
+                            }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${option / 1024}K",
+                            fontSize = 12.sp,
+                            color = if (selected) Color.White else textSecondaryColor
+                        )
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
