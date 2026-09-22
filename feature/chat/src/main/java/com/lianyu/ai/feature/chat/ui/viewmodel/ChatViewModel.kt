@@ -552,7 +552,22 @@ class ChatViewModel(
         val speakingStyle = companion.speakingStyle?.take(100) ?: ""
         val backstory = companion.backstory?.take(200) ?: ""
 
-        val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, 3).take(500)
+        // [FIX 3] 记忆条数从 3 提到 8，字符预算从 500 提到 1500。
+        // MemoryManager 内部本来就有短期/中期/长期分层 + importance 排序 + 分类（事实/情感/偏好/事件/习惯/关系），
+        // 瓶颈只在这里的 limit 和 take() 太小，架构不用改。
+        val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, 8).take(1500)
+
+        // [FIX 2] 核心修复：之前这里完全没用到 sortedHistory，只取了 lastUserMessage 传给模型，
+        // 导致模型看不到之前几轮聊了什么。现在把最近若干轮对话拼成文本一起传进去。
+        // 20条消息 + 2500字符双重限制，避免长角色卡场景把 context 挤爆（8192 token 下留给
+        // 系统提示词、记忆、回复本身的空间也要够）。
+        val recentTurns = sortedHistory.takeLast(20)
+        val historyText = buildString {
+            recentTurns.forEach { msg ->
+                val role = if (msg.isFromUser) "用户" else name
+                appendLine("$role：${msg.content}")
+            }
+        }.take(2500)
 
         val role = userRepository?.selectedRole?.value ?: CompanionRole.GIRLFRIEND
         val systemPrompt = buildString {
@@ -606,8 +621,10 @@ class ChatViewModel(
 
         val localProvider = ServiceRegistry.get(LocalModelProvider::class.java)
             ?: throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
+        // [FIX 2] prompt 不再只传最后一句用户消息，而是传"最近对话记录 + 明确指令"，
+        // 让 GgufLocalModel 拼出来的 <|im_start|>user...<|im_end|> 块里包含完整上下文。
         return localProvider.generateResponse(
-            prompt = lastUserMessage.take(2000),
+            prompt = "$historyText\n请以${name}的身份，直接针对用户最后一句话自然地回复，不要重复历史内容。",
             context = systemPrompt
         )
     }
