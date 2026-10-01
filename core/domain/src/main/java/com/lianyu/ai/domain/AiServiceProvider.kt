@@ -208,4 +208,9 @@ interface AiServiceProvider {
      * 使用当前活跃 API 配置，不依赖特定 provider。
      */
     suspend fun callGeneration(prompt: String): String
+    /**
+     * 轻量 AI 调用：用于剧情滚动摘要。
+     * 使用当前活跃 API 配置；无可用配置或调用失败时返回空串。
+     */
+    suspend fun callSummary(prompt: String): String
 }
