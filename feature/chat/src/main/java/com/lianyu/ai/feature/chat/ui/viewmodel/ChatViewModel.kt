@@ -556,7 +556,8 @@ class ChatViewModel(
         // MemoryManager 内部本来就有短期/中期/长期分层 + importance 排序 + 分类（事实/情感/偏好/事件/习惯/关系），
         // 瓶颈只在这里的 limit 和 take() 太小，架构不用改。
         val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, 8).take(1500)
-
+        val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
+        
         // [FIX 2] 核心修复：之前这里完全没用到 sortedHistory，只取了 lastUserMessage 传给模型，
         // 导致模型看不到之前几轮聊了什么。现在把最近若干轮对话拼成文本一起传进去。
         // 20条消息 + 2500字符双重限制，避免长角色卡场景把 context 挤爆（8192 token 下留给
@@ -567,7 +568,7 @@ class ChatViewModel(
                 val role = if (msg.isFromUser) "用户" else name
                 appendLine("$role：${msg.content}")
             }
-        }.take(2500)
+        }.takeLast(2500)
 
         val role = userRepository?.selectedRole?.value ?: CompanionRole.GIRLFRIEND
         val systemPrompt = buildString {
@@ -583,6 +584,9 @@ class ChatViewModel(
             }
             if (memoryContext.isNotBlank()) {
                 appendLine("\n关于用户的记忆：$memoryContext")
+            }
+            if (storyContext.isNotBlank()) {
+                appendLine("\n$storyContext")
             }
             appendLine()
             appendLine("回复规则：")
@@ -885,6 +889,7 @@ class ChatViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 chatRepository.clearChatHistory(companionId)
+                memoryProvider.clearStoryContext(companionId)
                 _olderMessages.value = emptyList()
                 _reachedEnd = false
                 SecureLog.i("ChatViewModel", "Chat history cleared for companion=$companionId")
