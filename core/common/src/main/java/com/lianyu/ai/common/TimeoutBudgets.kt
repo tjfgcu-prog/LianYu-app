@@ -27,6 +27,8 @@ object TimeoutBudgets {
     const val CHAT_VM_VISION_TIMEOUT_MS = 60_000L   // ChatViewModel 视觉调用超时
     const val CHAT_VM_SAFETY_CLASSIFY_MS = 30_000L  // ChatViewModel 安全分类超时
     const val CHAT_VM_MEMORY_EXTRACT_MS = 5_000L    // ChatViewModel 记忆提取超时
+    const val STORY_SUMMARY_LOCAL_MS = 120_000L     // 剧情摘要（本地模型；须小于 CHAT_VM_LOCAL_MODEL_TIMEOUT_MS）
+    const val STORY_SUMMARY_API_MS = 60_000L        // 剧情摘要（云端模型）
     const val CHAT_VM_TTS_SYNTH_MS = 10_000L        // ChatViewModel TTS 超时
     const val CHAT_VM_BATCH_WINDOW_MS = 2_500L      // ChatViewModel 批量合并窗口
     // [P1 FIX] 散落在 ChatViewModel 的硬编码超时归一至此
