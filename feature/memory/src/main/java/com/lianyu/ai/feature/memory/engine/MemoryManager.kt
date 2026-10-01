@@ -81,6 +81,9 @@ class MemoryManager private constructor(
     // 写入锁（按作用域）
     private val writeLocks = ConcurrentHashMap<String, Mutex>()
 
+    // 剧情状态缓存（按 companionId）
+    private val storyCache = ConcurrentHashMap<Long, StoryState>()
+    
     // 是否已初始化
     @Volatile
     private var initialized = false
@@ -748,8 +751,41 @@ class MemoryManager private constructor(
         indexCache.remove(key)
         longTermIndex.remove(key)
         store.deleteScope(scope, id)
+        if (scope == MemoryScope.COMPANION) storyCache.remove(id)
     }
 
+// ── 剧情状态 ──
+
+    private fun loadStory(id: Long): StoryState? =
+        storyCache[id] ?: store.loadStoryState(MemoryScope.COMPANION, id)?.also { storyCache[id] = it }
+
+    override suspend fun getStoryContext(companionId: Long): String = withContext(Dispatchers.IO) {
+        val state = loadStory(companionId) ?: return@withContext ""
+        if (state.summary.isBlank()) "" else "【剧情摘要】\n${state.summary}"
+    }
+
+    override suspend fun recordStoryTurn(companionId: Long) {
+        runCatching {
+            getLock(MemoryScope.COMPANION, companionId).withLock {
+                withContext(Dispatchers.IO) {
+                    val old = loadStory(companionId) ?: StoryState(companionId)
+                    val next = old.copy(turnCount = old.turnCount + 1, updatedAt = System.currentTimeMillis())
+                    storyCache[companionId] = next
+                    store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+                }
+            }
+        }.onFailure { Log.e(TAG, "记录剧情轮数失败", it) }
+    }
+
+    override suspend fun clearStoryContext(companionId: Long) {
+        runCatching {
+            getLock(MemoryScope.COMPANION, companionId).withLock {
+                storyCache.remove(companionId)
+                withContext(Dispatchers.IO) { store.deleteStoryState(MemoryScope.COMPANION, companionId) }
+            }
+        }.onFailure { Log.e(TAG, "清除剧情状态失败", it) }
+    }
+    
     /**
      * 从对话中提取并保存记忆
      *
