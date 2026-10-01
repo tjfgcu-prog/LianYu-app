@@ -11,6 +11,7 @@ import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.common.ImageUtils
 import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.domain.ServiceRegistry
+import com.lianyu.ai.domain.MemoryProvider
 import androidx.core.content.edit
 import com.lianyu.ai.common.SecureLog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,6 +107,7 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
                     .edit { putBoolean("deleted_by_user", true) }
             }
             repository.deleteCompanion(companion)
+            ServiceRegistry.get(MemoryProvider::class.java)?.clearStoryContext(companion.id)
         }
     }
 
