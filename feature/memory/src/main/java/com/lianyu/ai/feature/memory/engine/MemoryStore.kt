@@ -102,6 +102,28 @@ class MemoryStore(private val context: Context, private val deviceId: String) {
         }
     }
 
+    private fun storyFile(scope: MemoryScope, id: Long): File {
+        return File(scopeDir(scope, id), "story_state.json")
+    }
+
+    fun loadStoryState(scope: MemoryScope, id: Long): StoryState? {
+        val file = storyFile(scope, id)
+        if (!file.exists()) return null
+        return runCatching {
+            json.decodeFromString<StoryState>(file.readText())
+        }.getOrNull()
+    }
+
+    fun saveStoryState(scope: MemoryScope, id: Long, state: StoryState) {
+        runCatching {
+            storyFile(scope, id).writeText(json.encodeToString(state))
+        }
+    }
+
+    fun deleteStoryState(scope: MemoryScope, id: Long) {
+        storyFile(scope, id).delete()
+    }
+    
     /**
      * 删除整个作用域目录
      */
