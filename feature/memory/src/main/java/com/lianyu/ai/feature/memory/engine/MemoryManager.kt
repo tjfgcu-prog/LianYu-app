@@ -3,11 +3,16 @@ package com.lianyu.ai.feature.memory.engine
 import android.content.Context
 import android.util.Log
 import com.lianyu.ai.common.DeviceIdProvider
+import com.lianyu.ai.common.TimeoutBudgets
 import com.lianyu.ai.domain.MemoryProvider
+import com.lianyu.ai.domain.AiServiceProvider
+import com.lianyu.ai.domain.LocalModelProvider
+import com.lianyu.ai.domain.ServiceRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -41,7 +46,12 @@ class MemoryManager private constructor(
         private const val CLEANUP_INTERVAL_MS = 5L * 60 * 1000 // 5分钟清理一次
         private const val SYNC_IMPORTANCE_THRESHOLD = 0.7f
         private const val DEDUP_SIMILARITY_THRESHOLD = 0.6f
-
+        private const val STORY_SUMMARY_EVERY_TURNS = 10
+        private const val STORY_PENDING_MAX = 30
+        private const val STORY_SUMMARY_MAX_CHARS = 600
+        private const val STORY_SUMMARY_RETRY_COOLDOWN_MS = 5L * 60 * 1000
+        private const val STORY_SUMMARY_SYSTEM = "你是剧情记录员，只输出摘要正文，不要解释。"
+        
         @Volatile
         private var instance: MemoryManager? = null
 
@@ -83,6 +93,12 @@ class MemoryManager private constructor(
 
     // 剧情状态缓存（按 companionId）
     private val storyCache = ConcurrentHashMap<Long, StoryState>()
+
+    // 正在做滚动摘要的角色（同一角色不并发摘要）
+    private val summarizing = ConcurrentHashMap.newKeySet<Long>()
+
+    // 摘要失败后的冷却截止时间
+    private val summaryRetryAt = ConcurrentHashMap<Long, Long>()
     
     // 是否已初始化
     @Volatile
@@ -764,17 +780,103 @@ class MemoryManager private constructor(
         if (state.summary.isBlank()) "" else "【剧情摘要】\n${state.summary}"
     }
 
-    override suspend fun recordStoryTurn(companionId: Long) {
+    override suspend fun recordStoryTurn(
+        companionId: Long,
+        companionName: String,
+        userInput: String,
+        aiResponse: String
+    ) {
         runCatching {
-            getLock(MemoryScope.COMPANION, companionId).withLock {
+            val turn = "用户：${userInput.take(150)}\n$companionName：${aiResponse.take(200)}"
+            val shouldSummarize = getLock(MemoryScope.COMPANION, companionId).withLock {
                 withContext(Dispatchers.IO) {
                     val old = loadStory(companionId) ?: StoryState(companionId)
-                    val next = old.copy(turnCount = old.turnCount + 1, updatedAt = System.currentTimeMillis())
+                    val next = old.copy(
+                        turnCount = old.turnCount + 1,
+                        pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX),
+                        updatedAt = System.currentTimeMillis()
+                    )
                     storyCache[companionId] = next
                     store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+                    next.pendingTurns.size >= STORY_SUMMARY_EVERY_TURNS
                 }
             }
+            if (shouldSummarize) launchStorySummary(companionId, companionName)
         }.onFailure { Log.e(TAG, "记录剧情轮数失败", it) }
+    }
+
+    private fun launchStorySummary(companionId: Long, companionName: String) {
+        if (System.currentTimeMillis() < (summaryRetryAt[companionId] ?: 0L)) return
+        if (!summarizing.add(companionId)) return
+        ioScope.launch {
+            try {
+                summarizeStory(companionId, companionName)
+            } finally {
+                summarizing.remove(companionId)
+            }
+        }
+    }
+
+    private suspend fun summarizeStory(companionId: Long, companionName: String) {
+        val snapshot = loadStory(companionId) ?: return
+        val batch = snapshot.pendingTurns
+        if (batch.isEmpty()) return
+
+        val prompt = buildString {
+            appendLine("请把【旧摘要】和【新对话】合并成一份新的剧情摘要，300字以内。")
+            appendLine("要求：")
+            appendLine("1. 用第三人称，称呼双方为「用户」和「$companionName」。")
+            appendLine("2. 保留：发生过的重要事件、两人关系的变化、双方的约定、还没解决的事。")
+            appendLine("3. 删掉：寒暄、重复内容、没有后续影响的细节。")
+            appendLine("4. 只输出摘要正文，不要标题、列表或解释。")
+            appendLine()
+            appendLine("【旧摘要】")
+            appendLine(snapshot.summary.ifBlank { "（无）" })
+            appendLine()
+            appendLine("【新对话】")
+            batch.forEach { appendLine(it) }
+            appendLine()
+            append("新摘要：")
+        }
+
+        val local = ServiceRegistry.get(LocalModelProvider::class.java)?.takeIf { it.isAvailable() }
+        val raw = runCatching {
+            if (local != null) {
+                withTimeoutOrNull(TimeoutBudgets.STORY_SUMMARY_LOCAL_MS) {
+                    local.generateResponse(prompt, STORY_SUMMARY_SYSTEM)
+                }
+            } else {
+                val api = ServiceRegistry.get(AiServiceProvider::class.java)
+                withTimeoutOrNull(TimeoutBudgets.STORY_SUMMARY_API_MS) { api?.callSummary(prompt) }
+            }
+        }.getOrNull()
+
+        val cleaned = raw.orEmpty()
+            .replace(Regex("(?is)<think[^>]*>[\\s\\S]*?</think\\s*>"), "")
+            .trim()
+            .removePrefix("新摘要：").removePrefix("新摘要:")
+            .trim()
+            .take(STORY_SUMMARY_MAX_CHARS)
+        if (cleaned.length < 20) {
+            summaryRetryAt[companionId] = System.currentTimeMillis() + STORY_SUMMARY_RETRY_COOLDOWN_MS
+            Log.w(TAG, "剧情摘要失败或过短，冷却后重试 companion=$companionId")
+            return
+        }
+
+        getLock(MemoryScope.COMPANION, companionId).withLock {
+            withContext(Dispatchers.IO) {
+                val current = loadStory(companionId) ?: return@withContext
+                // 摘要期间如果剧情被清空/重新开始，待摘要轮次已变，丢弃这份过期摘要
+                if (current.pendingTurns.take(batch.size) != batch) return@withContext
+                val next = current.copy(
+                    summary = cleaned,
+                    pendingTurns = current.pendingTurns.drop(batch.size),
+                    updatedAt = System.currentTimeMillis()
+                )
+                storyCache[companionId] = next
+                store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+            }
+        }
     }
 
     override suspend fun clearStoryContext(companionId: Long) {
