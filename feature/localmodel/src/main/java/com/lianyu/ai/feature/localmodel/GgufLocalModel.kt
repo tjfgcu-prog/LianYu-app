@@ -13,6 +13,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.nehuatl.llamacpp.LlamaHelper
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * 对 llamacpp-kotlin 库的简单封装，负责加载用户选择的 .gguf 文件并生成回复。
@@ -40,7 +42,10 @@ class GgufLocalModel(context: Context) {
 
     @Volatile private var loadedUri: String? = null
     @Volatile private var loadedContextLength: Int = -1
-
+    
+    // 本地模型同一时刻只能跑一次推理：聊天回复与后台剧情摘要共用 llmFlow，不加锁事件会串台。
+    private val generateMutex = Mutex()
+    
     // [FIX 1/6] contextLength 不再写死 2048，由调用方传入（来自设置里的用户选择）。
     // 同时把 contextLength 纳入"是否需要重新加载"的判断条件：
     // 之前只比较 modelUri，用户在设置里改了上下文长度也不会生效，直到换模型或重启 App。
@@ -85,10 +90,11 @@ class GgufLocalModel(context: Context) {
             append("<think>\n\n</think>\n\n")
         }
         logD("generate: called, chatMlPrompt.length=${chatMlPrompt.length}")
+        return generateMutex.withLock {
         ensureLoaded(modelUri, contextLength)
         logD("generate: ensureLoaded returned, about to predict")
         val builder = StringBuilder()
-        return suspendCancellableCoroutine { cont ->
+        suspendCancellableCoroutine<String> { cont ->
             lateinit var collectJob: Job
             collectJob = scope.launch {
                 llmFlow.collect { event ->
@@ -117,5 +123,6 @@ class GgufLocalModel(context: Context) {
             logD("generate: calling llamaHelper.predict()")
             scope.launch { llamaHelper.predict(chatMlPrompt) }
         }
+    }
     }
 }
