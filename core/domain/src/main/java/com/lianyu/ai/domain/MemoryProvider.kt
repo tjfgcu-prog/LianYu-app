@@ -50,8 +50,8 @@ interface MemoryProvider {
     /** 获取剧情上下文（单聊）。无剧情摘要时返回空串。 */
     suspend fun getStoryContext(companionId: Long): String
 
-    /** 每完成一轮对话记一次轮数（供滚动摘要判断触发时机）。 */
-    suspend fun recordStoryTurn(companionId: Long)
+    /** 记录一轮对话；累积到阈值后在后台生成滚动剧情摘要。 */
+    suspend fun recordStoryTurn(companionId: Long, companionName: String, userInput: String, aiResponse: String)
 
     /** 清除某角色的剧情状态（清空聊天记录/删除角色时调用）。 */
     suspend fun clearStoryContext(companionId: Long)
