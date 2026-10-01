@@ -467,6 +467,7 @@ class AiService(context: Context) : AiServiceProvider {
                 val keepRatio = appSettingsStore.getCompressionKeepRatio()
                 val minKeep = appSettingsStore.getCompressionMinKeep()
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
+                val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
                 val stickerManager = StickerManager.getInstance(appContext)
                 val availableStickers = stickerManager.getAllStickers().mapNotNull { sticker ->
                     val displayName = sticker.description?.takeIf {
@@ -475,7 +476,7 @@ class AiService(context: Context) : AiServiceProvider {
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
                 val role = userRepository.selectedRole.value
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext)
                 val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
@@ -1105,9 +1106,6 @@ class AiService(context: Context) : AiServiceProvider {
 
         return "API调用失败：$message"
     }
-
-    fun buildSystemPromptForLocal(companion: CompanionModel, memoryContext: String = "", lastUserMessage: String = "", availableStickers: List<String> = emptyList(), stickerProbability: Int = 30, innerThoughtEnabled: Boolean = false, ntpTimeEnabled: Boolean = false, role: CompanionRole = CompanionRole.GIRLFRIEND): String =
-        AiPromptBuilder.buildSystemPromptForLocal(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled, role)
 
     // [P2-1] buildProactiveSystemPrompt 副本签名与 AiPromptBuilder 不同（含 settings: ProactiveMessageSettings?），
     // AiPromptBuilder 版用 role 参数。保留此副本避免行为漂移，仅内部调用委托到 AiContextTools/AiPromptBuilder。
@@ -1845,6 +1843,7 @@ $chatText
                 val contextLimit = appSettingsStore.getContextLimit()
                 val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
+                val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
                 val stickerManager = StickerManager.getInstance(appContext)
                 val availableStickers = stickerManager.getAllStickers().mapNotNull { sticker ->
                     val displayName = sticker.description?.takeIf {
@@ -1852,7 +1851,7 @@ $chatText
                     } ?: sticker.name.removePrefix("sticker_").removeSuffix(".png").takeIf { it.isNotBlank() && it.length <= 20 }
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND, storyContext = storyContext)
                 val systemPrompt = baseSystemPrompt
 
                 SecureLog.api("VISION", "provider=${config.provider}, model=${config.model}, image=$imagePath")
@@ -2230,8 +2229,9 @@ $chatText
                 val keepRatio = appSettingsStore.getCompressionKeepRatio()
                 val minKeep = appSettingsStore.getCompressionMinKeep()
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
+                val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
                 val role = userRepository.selectedRole.value
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext)
                 val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
@@ -2446,5 +2446,17 @@ $chatText
     override suspend fun callGeneration(prompt: String): String {
         return callOpenAiCompatibleForGeneration(prompt)
     }
-
+    override suspend fun callSummary(prompt: String): String {
+        val config = resolveConfig() ?: return ""
+        val messages = listOf(
+            Message("system", "你是剧情记录员，只输出摘要正文。"),
+            Message("user", prompt)
+        )
+        return try {
+            callOpenAiCompatibleLight(config, messages, temperature = 0.3, maxTokens = 600)
+        } catch (e: Exception) {
+            SecureLog.w("AiService", "Summary call failed after all keys: ${e.message}")
+            ""
+        }
+    }
 }
