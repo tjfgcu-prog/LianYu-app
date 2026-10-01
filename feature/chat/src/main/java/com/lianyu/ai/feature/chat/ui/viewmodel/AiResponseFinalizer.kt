@@ -171,8 +171,8 @@ class AiResponseFinalizer(
         if (userContentForMemory != null && aiContent.isNotBlank()) {
             runCatching {
                 withTimeoutOrNull(TimeoutBudgets.CHAT_VM_MEMORY_EXTRACT_MS) {
+                    memoryProvider.recordStoryTurn(companionId)
                     memoryProvider.extractAndSaveFromConversation(userContentForMemory, aiContent, companionId, groupId = null)
-                }
             }.onFailure {
                 SecureLog.e("ChatViewModel", "Memory save failed: ${it.message}")
             }
