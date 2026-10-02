@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 data class StoryState(
     val companionId: Long,
     val summary: String = "",
-    val turnCount: Int = 0,
-    val pendingTurns: List<String> = emptyList(),
-    val updatedAt: Long = 0L
+    
+    val pendingTurns: List<String> = emptyList()
+    
 )
