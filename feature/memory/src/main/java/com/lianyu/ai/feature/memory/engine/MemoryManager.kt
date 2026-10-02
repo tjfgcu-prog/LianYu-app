@@ -792,9 +792,9 @@ class MemoryManager private constructor(
                 withContext(Dispatchers.IO) {
                     val old = loadStory(companionId) ?: StoryState(companionId)
                     val next = old.copy(
-                        turnCount = old.turnCount + 1,
-                        pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX),
-                        updatedAt = System.currentTimeMillis()
+                        
+                        pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX)
+                    
                     )
                     storyCache[companionId] = next
                     store.saveStoryState(MemoryScope.COMPANION, companionId, next)
@@ -870,8 +870,8 @@ class MemoryManager private constructor(
                 if (current.pendingTurns.take(batch.size) != batch) return@withContext
                 val next = current.copy(
                     summary = cleaned,
-                    pendingTurns = current.pendingTurns.drop(batch.size),
-                    updatedAt = System.currentTimeMillis()
+                    pendingTurns = current.pendingTurns.drop(batch.size)
+                    
                 )
                 storyCache[companionId] = next
                 store.saveStoryState(MemoryScope.COMPANION, companionId, next)
