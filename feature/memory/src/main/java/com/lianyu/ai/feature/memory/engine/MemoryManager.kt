@@ -46,7 +46,7 @@ class MemoryManager private constructor(
         private const val CLEANUP_INTERVAL_MS = 5L * 60 * 1000 // 5分钟清理一次
         private const val SYNC_IMPORTANCE_THRESHOLD = 0.7f
         private const val DEDUP_SIMILARITY_THRESHOLD = 0.6f
-        private const val STORY_SUMMARY_EVERY_TURNS = 10
+        private const val STORY_SUMMARY_EVERY_TURNS = 5
         private const val STORY_PENDING_MAX = 30
         private const val STORY_SUMMARY_MAX_CHARS = 600
         private const val STORY_SUMMARY_RETRY_COOLDOWN_MS = 5L * 60 * 1000
