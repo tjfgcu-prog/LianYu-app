@@ -174,6 +174,7 @@ class AiResponseFinalizer(
                     val companionName = companionInfoProvider?.invoke()?.name ?: "角色"
                     memoryProvider.recordStoryTurn(companionId, companionName, userContentForMemory, aiContent)
                     memoryProvider.extractAndSaveFromConversation(userContentForMemory, aiContent, companionId, groupId = null)
+                }
             }.onFailure {
                 SecureLog.e("ChatViewModel", "Memory save failed: ${it.message}")
             }
