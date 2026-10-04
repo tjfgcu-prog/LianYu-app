@@ -48,9 +48,10 @@ class MemoryManager private constructor(
         private const val DEDUP_SIMILARITY_THRESHOLD = 0.6f
         private const val STORY_SUMMARY_EVERY_TURNS = 5
         private const val STORY_PENDING_MAX = 30
-        private const val STORY_SUMMARY_MAX_CHARS = 600
+        private const val STORY_SUMMARY_MAX_CHARS = 400
         private const val STORY_SUMMARY_RETRY_COOLDOWN_MS = 5L * 60 * 1000
         private const val STORY_SUMMARY_SYSTEM = "你是剧情记录员，只输出摘要正文，不要解释。"
+        private val STORY_SUMMARY_BAD_MARKERS = listOf("揭示", "暗示", "探索", "还没解决", "第三人称")
         
         @Volatile
         private var instance: MemoryManager? = null
@@ -791,11 +792,7 @@ class MemoryManager private constructor(
             val shouldSummarize = getLock(MemoryScope.COMPANION, companionId).withLock {
                 withContext(Dispatchers.IO) {
                     val old = loadStory(companionId) ?: StoryState(companionId)
-                    val next = old.copy(
-                        
-                        pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX)
-                    
-                    )
+                    val next = old.copy(pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX))
                     storyCache[companionId] = next
                     store.saveStoryState(MemoryScope.COMPANION, companionId, next)
                     next.pendingTurns.size >= STORY_SUMMARY_EVERY_TURNS
@@ -823,20 +820,20 @@ class MemoryManager private constructor(
         if (batch.isEmpty()) return
 
         val prompt = buildString {
-            appendLine("请把【旧摘要】和【新对话】合并成一份新的剧情摘要，300字以内。")
-            appendLine("要求：")
-            appendLine("1. 用第三人称，称呼双方为「用户」和「$companionName」。")
-            appendLine("2. 保留：发生过的重要事件、两人关系的变化、双方的约定、还没解决的事。")
-            appendLine("3. 删掉：寒暄、重复内容、没有后续影响的细节。")
-            appendLine("4. 只输出摘要正文，不要标题、列表或解释。")
+            appendLine("把新对话并入旧摘要，写出更新后的摘要。只记录发生了什么：谁说了什么、做了什么、约定了什么。")
+            appendLine("不要评价，不要分析，不要猜测心理，200字以内。")
             appendLine()
-            appendLine("【旧摘要】")
-            appendLine(snapshot.summary.ifBlank { "（无）" })
+            appendLine("示例：")
+            appendLine("旧摘要：用户第一次来找${companionName}聊天。")
+            appendLine("新对话：")
+            appendLine("用户：我今天考试没考好。")
+            appendLine("${companionName}：别难过，我陪你。")
+            appendLine("更新后的摘要：用户第一次来找${companionName}聊天，说自己今天考试没考好，${companionName}安慰了用户，说会陪着用户。")
             appendLine()
-            appendLine("【新对话】")
+            appendLine("旧摘要：${snapshot.summary.ifBlank { "（无）" }}")
+            appendLine("新对话：")
             batch.forEach { appendLine(it) }
-            appendLine()
-            append("新摘要：")
+            append("更新后的摘要：")
         }
 
         val local = ServiceRegistry.get(LocalModelProvider::class.java)?.takeIf { it.isAvailable() }
@@ -854,10 +851,10 @@ class MemoryManager private constructor(
         val cleaned = raw.orEmpty()
             .replace(Regex("(?is)<think[^>]*>[\\s\\S]*?</think\\s*>"), "")
             .trim()
-            .removePrefix("新摘要：").removePrefix("新摘要:")
+            .removePrefix("更新后的摘要：").removePrefix("更新后的摘要:")
             .trim()
             .take(STORY_SUMMARY_MAX_CHARS)
-        if (cleaned.length < 20) {
+        if (cleaned.length < 20 || STORY_SUMMARY_BAD_MARKERS.any { cleaned.contains(it) }) {
             summaryRetryAt[companionId] = System.currentTimeMillis() + STORY_SUMMARY_RETRY_COOLDOWN_MS
             Log.w(TAG, "剧情摘要失败或过短，冷却后重试 companion=$companionId")
             return
@@ -871,7 +868,6 @@ class MemoryManager private constructor(
                 val next = current.copy(
                     summary = cleaned,
                     pendingTurns = current.pendingTurns.drop(batch.size)
-                    
                 )
                 storyCache[companionId] = next
                 store.saveStoryState(MemoryScope.COMPANION, companionId, next)
