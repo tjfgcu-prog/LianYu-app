@@ -592,7 +592,7 @@ class ChatViewModel(
             appendLine("回复规则：")
             appendLine("1. 每次回复1-5句短话，控制在15-50字。")
             appendLine("2. 活人语气，自然口语化，不要AI腔。")
-            appendLine("3. 每句话用标点结尾（。！？～…）。")
+            appendLine("3. 每句话必须说完整，用。！？～结尾，不要用省略号，不要只说半句。")
             appendLine("4. 不要重复同样的话。")
             appendLine("5. 先回应用户的消息，不要自说自话。")
             if (innerThoughtEnabled) {
