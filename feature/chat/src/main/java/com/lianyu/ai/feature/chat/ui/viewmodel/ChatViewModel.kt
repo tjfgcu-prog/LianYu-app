@@ -627,10 +627,10 @@ class ChatViewModel(
             ?: throw Exception(getApplication<Application>().getString(R.string.api_error_generic))
         // [FIX 2] prompt 不再只传最后一句用户消息，而是传"最近对话记录 + 明确指令"，
         // 让 GgufLocalModel 拼出来的 <|im_start|>user...<|im_end|> 块里包含完整上下文。
-        return localProvider.generateResponse(
-            prompt = "$historyText\n请以${name}的身份，直接针对用户最后一句话自然地回复，不要重复历史内容。",
-            context = systemPrompt
-        )
+        val localPrompt = "$historyText\n请以${name}的身份，直接针对用户最后一句话自然地回复，不要重复历史内容。"
+        val reply = localProvider.generateResponse(prompt = localPrompt, context = systemPrompt)
+        // 小模型偶尔在 prompt 处理后直接输出结束符，得到空回复；重试一次，避免用户看到"不说话"
+        return reply.ifBlank { localProvider.generateResponse(prompt = localPrompt, context = systemPrompt) }
     }
 
     /**
