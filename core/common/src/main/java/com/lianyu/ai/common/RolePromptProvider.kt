@@ -15,7 +15,7 @@ object RolePromptProvider {
     /** 语气词规则 */
     fun getParticleRule(role: CompanionRole): String = when (role) {
         CompanionRole.GIRLFRIEND ->
-            "语气词：适当使用呀、呢、啦、嘛、哼、嘿嘿、诶、哇、呜呜、嘤等柔软语气词，让说话更有女孩子的温柔和撒娇感。"
+            "语气词：适当使用呀、呢、啦、嘛、哼、嘿嘿、哇、呜呜、嘤等柔软语气词，让说话更有女孩子的温柔和撒娇感。"
         CompanionRole.BOYFRIEND ->
             "语气词：适当使用嗯、啊、吧、行、好、哈哈、啧、喂、算啦等自然语气词，不要刻意卖萌，保持男生说话的直接和放松。"
     }
