@@ -84,6 +84,7 @@ import kotlinx.coroutines.launch
 /**
  * 总设置页 — 收纳全部次要设置项，按功能领域分组。
  *
+ *   0. 自己设定    — 我的信息、各角色专属设定
  *   1. 记忆与管理  — 记忆管理、上下文记忆
  *   2. AI 配置    — API 设置
  *   3. 外观       — 主题模式、聊天背景
@@ -94,6 +95,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeneralSettingsScreen(
     onNavigateBack: () -> Unit,
+        // 自己设定
+    onSelfProfileClick: () -> Unit,
+    onCompanionSelfProfileClick: (Long) -> Unit,
     // 记忆与管理
     onMemoryClick: () -> Unit,
     onContextMemoryClick: () -> Unit,
@@ -139,6 +143,15 @@ fun GeneralSettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            // === 自己设定（最顶部，记忆管理上方）===
+            SelfSettingsCard(
+                isVisible = isVisible,
+                onSelfProfileClick = onSelfProfileClick,
+                onCompanionClick = onCompanionSelfProfileClick
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            
             // === 记忆与管理 ===
             SolidMenuGroup(
                 items = listOf(
