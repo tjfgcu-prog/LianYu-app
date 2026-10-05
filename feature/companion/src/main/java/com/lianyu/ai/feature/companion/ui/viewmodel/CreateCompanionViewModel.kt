@@ -108,6 +108,7 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
             }
             repository.deleteCompanion(companion)
             ServiceRegistry.get(MemoryProvider::class.java)?.clearStoryContext(companion.id)
+            ServiceRegistry.get(UserRepository::class.java)?.clearCompanionSelfProfile(companion.id)
         }
     }
 
