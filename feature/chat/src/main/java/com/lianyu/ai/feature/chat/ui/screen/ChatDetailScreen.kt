@@ -268,6 +268,17 @@ fun ChatDetailScreen(
                         }
                     }
                 )
+                            HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                SettingsToggleRow(
+                    title = "剧情模式",
+                    subtitle = "开启后记录每轮对话，每5轮自动生成剧情摘要；关闭后不再新增，已有摘要仍会提供给角色",
+                    checked = settings.storyModeEnabled,
+                    onCheckedChange = { checked ->
+                        scope.launch {
+                            store.updateSettings(companionId) { it.copy(storyModeEnabled = checked) }
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
