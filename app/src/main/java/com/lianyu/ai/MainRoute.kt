@@ -42,7 +42,8 @@ sealed class MainRoute(val route: String) {
     // === 个人中心 ===
     object Memory : MainRoute("memory")
     object ContextMemory : MainRoute("context_memory")
-    
+    object SelfProfile : MainRoute("self_profile")
+    data class CompanionSelfProfile(val companionId: Long) : MainRoute("companion_self_profile/$companionId") 
     
     
 
@@ -64,6 +65,7 @@ sealed class MainRoute(val route: String) {
             route == "token_usage" -> TokenUsage
             route == "memory" -> Memory
             route == "context_memory" -> ContextMemory
+            route == "self_profile" -> SelfProfile
             route == "theme" -> Theme
             
             route == "frame_rate" -> FrameRate
@@ -80,6 +82,7 @@ sealed class MainRoute(val route: String) {
             
             route?.startsWith("group_chat/") == true -> GroupChat(route.removePrefix("group_chat/").toLongOrNull() ?: 0L)
             route?.startsWith("group_detail/") == true -> GroupDetail(route.removePrefix("group_detail/").toLongOrNull() ?: 0L)
+                        route?.startsWith("companion_self_profile/") == true -> CompanionSelfProfile(route.removePrefix("companion_self_profile/").toLongOrNull() ?: 0L)
             route?.startsWith("edit/") == true -> EditCompanion(route.removePrefix("edit/").toLongOrNull() ?: 0L)
             else -> Home
         }
