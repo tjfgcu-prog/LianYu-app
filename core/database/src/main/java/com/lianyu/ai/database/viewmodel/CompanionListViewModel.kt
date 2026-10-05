@@ -7,6 +7,7 @@ import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.DefaultCompanionSeeder
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.repository.CompanionRepository
+import com.lianyu.ai.database.repository.UserRepository
 import androidx.core.content.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,7 @@ class CompanionListViewModel(application: Application) : AndroidViewModel(applic
                     .edit { putBoolean("deleted_by_user", true) }
             }
             repository.deleteCompanion(companion)
+            UserRepository(getApplication()).clearCompanionSelfProfile(companion.id)
         }
     }
 }
