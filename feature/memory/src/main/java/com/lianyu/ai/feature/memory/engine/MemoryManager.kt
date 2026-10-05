@@ -822,6 +822,7 @@ class MemoryManager private constructor(
         val prompt = buildString {
             appendLine("把新对话并入旧摘要，写出更新后的摘要。只记录发生了什么：谁说了什么、做了什么、约定了什么。")
             appendLine("不要评价，不要分析，不要猜测心理，200字以内。")
+            appendLine("不要照抄原话，不要使用引号，用自己的话概括。")
             appendLine()
             appendLine("示例：")
             appendLine("旧摘要：用户第一次来找${companionName}聊天。")
@@ -852,6 +853,8 @@ class MemoryManager private constructor(
             .replace(Regex("(?is)<think[^>]*>[\\s\\S]*?</think\\s*>"), "")
             .trim()
             .removePrefix("更新后的摘要：").removePrefix("更新后的摘要:")
+            .replace(Regex("[\"“”]"), "")
+            .substringBefore("新对话").substringBefore("旧摘要").substringBefore("\n\n")
             .trim()
             .take(STORY_SUMMARY_MAX_CHARS)
         if (cleaned.length < 20 || STORY_SUMMARY_BAD_MARKERS.any { cleaned.contains(it) }) {
