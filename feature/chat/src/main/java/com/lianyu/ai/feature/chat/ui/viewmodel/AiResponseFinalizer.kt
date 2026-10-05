@@ -172,7 +172,9 @@ class AiResponseFinalizer(
             runCatching {
                 withTimeoutOrNull(TimeoutBudgets.CHAT_VM_MEMORY_EXTRACT_MS) {
                     val companionName = companionInfoProvider?.invoke()?.name ?: "角色"
-                    memoryProvider.recordStoryTurn(companionId, companionName, userContentForMemory, aiContent)
+                                        if (settings.storyModeEnabled) {
+                        memoryProvider.recordStoryTurn(companionId, companionName, userContentForMemory, aiContent)
+                                        }
                     memoryProvider.extractAndSaveFromConversation(userContentForMemory, aiContent, companionId, groupId = null)
                 }
             }.onFailure {
