@@ -282,10 +282,17 @@ fun MainScreen(mainActivity: Activity) {
                 }
                 
                 composable(MainRoute.ContextMemory.route) { ContextMemoryScreen(onNavigateBack = { navController.popBackStack() }) }
-                
+                composable(MainRoute.SelfProfile.route) { SelfProfileScreen(onNavigateBack = { navController.popBackStack() }) }
+                composable("companion_self_profile/{companionId}", arguments = listOf(navArgument("companionId") { type = NavType.LongType })) { backStackEntry ->
+                    val companionId = backStackEntry.arguments?.getLong("companionId") ?: 0L
+                    CompanionSelfProfileScreen(companionId = companionId, onNavigateBack = { navController.popBackStack() })
+                }
                 composable(MainRoute.GeneralSettings.route) {
                     GeneralSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
+                        // 自己设定
+                        onSelfProfileClick = { navController.navigate(MainRoute.SelfProfile.route) },
+                        onCompanionSelfProfileClick = { id -> navController.navigate(MainRoute.CompanionSelfProfile(id).route) },
                         // 记忆与管理
                         onMemoryClick = { navController.navigate(MainRoute.Memory.route) },
                         onContextMemoryClick = { navController.navigate(MainRoute.ContextMemory.route) },
