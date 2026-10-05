@@ -592,7 +592,7 @@ class ChatViewModel(
             appendLine("回复规则：")
             appendLine("1. 每次回复1-5句短话，控制在15-50字。")
             appendLine("2. 活人语气，自然口语化，不要AI腔。")
-            appendLine("3. 每句话必须说完整，用。！？～结尾，不要用省略号，不要只说半句。")
+            appendLine("3. 每句话用标点结尾（。！？～）。")
             appendLine("4. 不要重复同样的话。")
             appendLine("5. 先回应用户的消息，不要自说自话。")
             if (innerThoughtEnabled) {
@@ -615,7 +615,7 @@ class ChatViewModel(
                         stickerProbability >= 20 -> "偶尔发"
                         else -> "很少发"
                     }
-                    appendLine("9. 表情包：你${probText}表情包，格式为[名称]，可用：${stickers.joinToString(" ") { "[$it]" }}")
+                    appendLine("${8 + RolePromptProvider.getLocalModelRoleLines(role).size}. 表情包：你${probText}表情包，格式为[名称]，可用：${stickers.joinToString(" ") { "[$it]" }}")
                 }
             }
             appendLine("\n记住：你不是AI，你是活人。直接回复内容，不要输出思考过程。")
@@ -628,9 +628,26 @@ class ChatViewModel(
         // [FIX 2] prompt 不再只传最后一句用户消息，而是传"最近对话记录 + 明确指令"，
         // 让 GgufLocalModel 拼出来的 <|im_start|>user...<|im_end|> 块里包含完整上下文。
         val localPrompt = "$historyText\n请以${name}的身份，直接针对用户最后一句话自然地回复，不要重复历史内容。"
-        val reply = localProvider.generateResponse(prompt = localPrompt, context = systemPrompt)
-        // 小模型偶尔在 prompt 处理后直接输出结束符，得到空回复；重试一次，避免用户看到"不说话"
-        return reply.ifBlank { localProvider.generateResponse(prompt = localPrompt, context = systemPrompt) }
+        // 临时诊断：查清模型输出异常的原因后删除这一行
+        ChatDebugLog.log("[LOCAL-PROMPT] system=\n$systemPrompt\n---user=\n$localPrompt")
+        // 小模型偶尔直接输出结束符，或只吐引号；清洗后为空就重试一次，避免用户看到"不说话"
+        val reply = cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt))
+        return reply.ifBlank { cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt)) }
+    }
+
+    /**
+     * 清洗本地模型输出：去掉小说式对白的包裹引号，丢弃只含引号的空行。
+     */
+    private fun cleanLocalReply(raw: String): String {
+        val quotes = charArrayOf('"', '“', '”')
+        return raw.lines()
+            .map { line ->
+                val s = line.trim()
+                val wrapped = s.length >= 2 && s.first() in quotes && s.last() in quotes
+                if (wrapped || s.count { it in quotes } == 1) s.trim(*quotes).trim() else s
+            }
+            .filter { it.isNotEmpty() }
+            .joinToString("\n")
     }
 
     /**
