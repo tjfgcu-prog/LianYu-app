@@ -619,8 +619,15 @@ class ChatViewModel(
                 }
             }
             appendLine("\n记住：你不是AI，你是活人。直接回复内容，不要输出思考过程。")
-            appendLine()
-            appendLine(com.lianyu.ai.network.AiContextTools.buildCurrentTimeContext(ntpTimeEnabled))
+            // 只在用户真的问时间/日期时才注入。小模型会把"当前精确时间"当成要说的内容，
+            // 无关问题也回答"今天12:15…"，再被历史放大成复读。
+            val askingTime = listOf(
+                "几点", "时间", "星期", "周几", "礼拜", "几号", "几月", "日期", "多久", "明天", "昨天", "什么时候"
+            ).any { lastUserMessage.contains(it) }
+            if (askingTime) {
+                appendLine()
+                appendLine(com.lianyu.ai.network.AiContextTools.buildCurrentTimeContext(ntpTimeEnabled))
+            }
         }
 
         val localProvider = ServiceRegistry.get(LocalModelProvider::class.java)
@@ -631,22 +638,24 @@ class ChatViewModel(
         // 临时诊断：查清模型输出异常的原因后删除这一行
         ChatDebugLog.log("[LOCAL-PROMPT] system=\n$systemPrompt\n---user=\n$localPrompt")
         // 小模型偶尔直接输出结束符，或只吐引号；清洗后为空就重试一次，避免用户看到"不说话"
-        val reply = cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt))
-        return reply.ifBlank { cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt)) }
+        val reply = cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt), name)
+        return reply.ifBlank { cleanLocalReply(localProvider.generateResponse(prompt = localPrompt, context = systemPrompt), name) }
     }
 
     /**
-     * 清洗本地模型输出：去掉小说式对白的包裹引号，丢弃只含引号的空行。
+     * 清洗本地模型输出：去掉包裹引号、模仿历史格式带出的"名字："前缀，
+     * 丢弃空行以及模型替用户续写的"用户："行。
      */
-    private fun cleanLocalReply(raw: String): String {
+    private fun cleanLocalReply(raw: String, name: String): String {
         val quotes = charArrayOf('"', '“', '”')
         return raw.lines()
             .map { line ->
                 val s = line.trim()
                 val wrapped = s.length >= 2 && s.first() in quotes && s.last() in quotes
-                if (wrapped || s.count { it in quotes } == 1) s.trim(*quotes).trim() else s
+                val unquoted = if (wrapped || s.count { it in quotes } == 1) s.trim(*quotes).trim() else s
+                unquoted.removePrefix("$name：").removePrefix("$name:").trim()
             }
-            .filter { it.isNotEmpty() }
+            .filter { it.isNotEmpty() && !it.startsWith("用户：") }
             .joinToString("\n")
     }
 
