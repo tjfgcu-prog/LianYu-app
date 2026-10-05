@@ -100,6 +100,20 @@ class MemoryManager private constructor(
 
     // 摘要失败后的冷却截止时间
     private val summaryRetryAt = ConcurrentHashMap<Long, Long>()
+
+    // 与 GgufLocalModel.logD 写同一份文件，App 内"日志"页才能看到记忆/剧情的运行情况
+    private fun dbg(msg: String) {
+        try {
+            val time = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.US).format(java.util.Date())
+            java.io.File(context.filesDir, "chatvm_debug.log").appendText("$time [MemoryManager] $msg\n")
+        } catch (_: Exception) { }
+    }
+
+    private fun logE(msg: String, t: Throwable) {
+        Log.e(TAG, msg, t)
+        dbg("ERROR $msg: ${t.javaClass.simpleName}: ${t.message}")
+    }
+
     
     // 是否已初始化
     @Volatile
@@ -121,7 +135,7 @@ class MemoryManager private constructor(
             runCatching {
                 loadPersistedMemories()
                 startCleanupTask()
-            }.onFailure { Log.e(TAG, "初始化失败", it) }
+            }.onFailure { logE("初始化失败", it) }
         }
     }
 
@@ -188,7 +202,7 @@ class MemoryManager private constructor(
                 index.deserialize(serialized, allItems)
                 indexCache[key] = index
             }
-        }.onFailure { Log.e(TAG, "加载作用域 $key 失败", it) }
+        }.onFailure { logE("加载作用域 $key 失败", it) }
     }
 
     /**
@@ -199,7 +213,7 @@ class MemoryManager private constructor(
             while (true) {
                 delay(CLEANUP_INTERVAL_MS)
                 runCatching { cleanupExpiredMemories() }
-                    .onFailure { Log.e(TAG, "清理任务失败", it) }
+                    .onFailure { logE("清理任务失败", it) }
             }
         }
     }
@@ -281,7 +295,7 @@ class MemoryManager private constructor(
             deduped.forEach { touchMemory(it) }
 
             formatMemoryContext(deduped)
-        }.onFailure { Log.e(TAG, "获取记忆上下文失败", it) }
+        }.onFailure { logE("获取记忆上下文失败", it) }
             .getOrElse { "" }
     }
 
@@ -509,7 +523,7 @@ class MemoryManager private constructor(
                 invalidateQueryCache()
 
                 item.id
-            }.onFailure { Log.e(TAG, "保存记忆失败", it) }
+            }.onFailure { logE("保存记忆失败", it) }
                 .getOrNull()
         }
     }
@@ -656,7 +670,7 @@ class MemoryManager private constructor(
                 store.saveTier(scope, id, MemoryTier.SHORT, shortItems)
                 store.saveTier(scope, id, MemoryTier.MID, midItems)
                 indexCache[key]?.let { index -> store.saveIndex(scope, id, index.serialize()) }
-            }.onFailure { Log.e(TAG, "flushAllPending 失败 key=$key", it) }
+            }.onFailure { logE("flushAllPending 失败 key=$key", it) }
         }
     }
 
@@ -677,7 +691,7 @@ class MemoryManager private constructor(
             indexCache[key]?.let { index ->
                 store.saveIndex(scope, id, index.serialize())
             }
-        }.onFailure { Log.e(TAG, "持久化失败 scope=$key", it) }
+        }.onFailure { logE("持久化失败 scope=$key", it) }
     }
 
     /**
@@ -696,7 +710,7 @@ class MemoryManager private constructor(
                 indexCache[key]?.let { index ->
                     store.saveIndex(scope, id, index.serialize())
                 }
-            }.onFailure { Log.e(TAG, "持久化失败 scope=$key", it) }
+            }.onFailure { logE("持久化失败 scope=$key", it) }
         }
     }
 
@@ -795,16 +809,23 @@ class MemoryManager private constructor(
                     val next = old.copy(pendingTurns = (old.pendingTurns + turn).takeLast(STORY_PENDING_MAX))
                     storyCache[companionId] = next
                     store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+                    dbg("[剧情] 记录一轮 待摘要=${next.pendingTurns.size}/$STORY_SUMMARY_EVERY_TURNS")
                     next.pendingTurns.size >= STORY_SUMMARY_EVERY_TURNS
                 }
             }
             if (shouldSummarize) launchStorySummary(companionId, companionName)
-        }.onFailure { Log.e(TAG, "记录剧情轮数失败", it) }
+        }.onFailure { logE("记录剧情轮数失败", it) }
     }
 
     private fun launchStorySummary(companionId: Long, companionName: String) {
-        if (System.currentTimeMillis() < (summaryRetryAt[companionId] ?: 0L)) return
-        if (!summarizing.add(companionId)) return
+        if (System.currentTimeMillis() < (summaryRetryAt[companionId] ?: 0L)) {
+            dbg("[剧情摘要] 冷却中，跳过")
+            return
+        }
+        if (!summarizing.add(companionId)) {
+            dbg("[剧情摘要] 已有摘要在进行，跳过")
+            return
+        }
         ioScope.launch {
             try {
                 summarizeStory(companionId, companionName)
@@ -838,6 +859,7 @@ class MemoryManager private constructor(
         }
 
         val local = ServiceRegistry.get(LocalModelProvider::class.java)?.takeIf { it.isAvailable() }
+        dbg("[剧情摘要] 开始 companion=$companionId 待摘要=${batch.size}轮 提示词=${prompt.length}字 通道=${if (local != null) "本地模型" else "云端API"}")
         val raw = runCatching {
             if (local != null) {
                 withTimeoutOrNull(TimeoutBudgets.STORY_SUMMARY_LOCAL_MS) {
@@ -847,7 +869,8 @@ class MemoryManager private constructor(
                 val api = ServiceRegistry.get(AiServiceProvider::class.java)
                 withTimeoutOrNull(TimeoutBudgets.STORY_SUMMARY_API_MS) { api?.callSummary(prompt) }
             }
-        }.getOrNull()
+        }.onFailure { logE("[剧情摘要] 调用异常", it) }.getOrNull()
+        if (raw == null) dbg("[剧情摘要] 无返回（超时、异常或接口不可用）")
 
         val cleaned = raw.orEmpty()
             .replace(Regex("(?is)<think[^>]*>[\\s\\S]*?</think\\s*>"), "")
@@ -857,9 +880,11 @@ class MemoryManager private constructor(
             .substringBefore("新对话").substringBefore("旧摘要").substringBefore("\n\n")
             .trim()
             .take(STORY_SUMMARY_MAX_CHARS)
-        if (cleaned.length < 20 || STORY_SUMMARY_BAD_MARKERS.any { cleaned.contains(it) }) {
+        val badMarker = STORY_SUMMARY_BAD_MARKERS.firstOrNull { cleaned.contains(it) }
+        if (cleaned.length < 20 || badMarker != null) {
             summaryRetryAt[companionId] = System.currentTimeMillis() + STORY_SUMMARY_RETRY_COOLDOWN_MS
-            Log.w(TAG, "剧情摘要失败或过短，冷却后重试 companion=$companionId")
+            val why = if (cleaned.length < 20) "过短(${cleaned.length}字)" else "含禁用词「$badMarker」"
+            dbg("[剧情摘要] 被拒绝：$why，冷却5分钟。原始输出=${raw.orEmpty().take(300)}")
             return
         }
 
@@ -867,13 +892,17 @@ class MemoryManager private constructor(
             withContext(Dispatchers.IO) {
                 val current = loadStory(companionId) ?: return@withContext
                 // 摘要期间如果剧情被清空/重新开始，待摘要轮次已变，丢弃这份过期摘要
-                if (current.pendingTurns.take(batch.size) != batch) return@withContext
+                if (current.pendingTurns.take(batch.size) != batch) {
+                    dbg("[剧情摘要] 丢弃：摘要期间剧情已被清空或变化")
+                    return@withContext
+                }
                 val next = current.copy(
                     summary = cleaned,
                     pendingTurns = current.pendingTurns.drop(batch.size)
                 )
                 storyCache[companionId] = next
                 store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+                dbg("[剧情摘要] 已保存 ${cleaned.length}字，剩余待摘要=${next.pendingTurns.size}轮：$cleaned")
             }
         }
     }
@@ -884,7 +913,7 @@ class MemoryManager private constructor(
                 storyCache.remove(companionId)
                 withContext(Dispatchers.IO) { store.deleteStoryState(MemoryScope.COMPANION, companionId) }
             }
-        }.onFailure { Log.e(TAG, "清除剧情状态失败", it) }
+        }.onFailure { logE("清除剧情状态失败", it) }
     }
     
     /**
@@ -910,7 +939,7 @@ class MemoryManager private constructor(
             extracted.forEach { (content, category, importance) ->
                 saveMemory(content, category, importance, source, sourceId, scope)
             }
-        }.onFailure { Log.e(TAG, "提取记忆失败", it) }
+        }.onFailure { logE("提取记忆失败", it) }
     }
 
     /**
