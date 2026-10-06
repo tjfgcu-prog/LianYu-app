@@ -879,6 +879,25 @@ class MemoryManager private constructor(
             }
         }.onFailure { logE("清除剧情状态失败", it) }
     }
+
+        /** 记忆管理页用：读取剧情摘要原文，没有则返回空串。 */
+    suspend fun getStorySummary(companionId: Long): String = withContext(Dispatchers.IO) {
+        loadStory(companionId)?.summary.orEmpty()
+    }
+
+    /** 记忆管理页用：手动修改剧情摘要，保留还没摘要的待处理对话。 */
+    suspend fun setStorySummary(companionId: Long, summary: String) {
+        runCatching {
+            getLock(MemoryScope.COMPANION, companionId).withLock {
+                withContext(Dispatchers.IO) {
+                    val old = loadStory(companionId) ?: StoryState(companionId)
+                    val next = old.copy(summary = summary.trim())
+                    storyCache[companionId] = next
+                    store.saveStoryState(MemoryScope.COMPANION, companionId, next)
+                }
+            }
+        }.onFailure { logE("修改剧情摘要失败", it) }
+    }
     
     /**
      * 从对话中提取并保存记忆
