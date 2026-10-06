@@ -3,6 +3,8 @@ package com.lianyu.ai.feature.memory.engine
 import android.content.Context
 import android.util.Log
 import com.lianyu.ai.common.DeviceIdProvider
+import com.lianyu.ai.common.UserSelfProfile
+import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.common.TimeoutBudgets
 import com.lianyu.ai.domain.MemoryProvider
 import com.lianyu.ai.domain.AiServiceProvider
@@ -935,7 +937,9 @@ class MemoryManager private constructor(
             val sourceId = if (groupId != null) groupId else companionId
             val source = if (groupId != null) MemorySource.GROUP_CHAT else MemorySource.CHAT
 
-            val extracted = extractMemories(userInput)
+                        // 单聊用"我的信息"+该角色专属设定合并后的结果；群聊只用"我的信息"
+            val profile = UserRepository(context).getEffectiveSelfProfile(if (groupId != null) null else companionId)
+            val extracted = extractMemories(userInput).filterNot { isCoveredByProfile(it.first, profile) }
             extracted.forEach { (content, category, importance) ->
                 saveMemory(content, category, importance, source, sourceId, scope)
             }
@@ -1017,5 +1021,18 @@ private fun isLikelyQuestion(text: String): Boolean {
         val content = if (endIdx > 0) endText.substring(0, endIdx) else endText.take(50)
         val full = "$pattern$content".trim()
         return if (full.length > pattern.length + 1) full else null
+    }
+    /**
+     * "自己设定"里已填的项，不再从聊天里提取对应内容。
+     * fact 的格式是"触发词+内容"，如"我叫小明""我是女生""我是18岁"。
+     */
+    private fun isCoveredByProfile(fact: String, p: UserSelfProfile): Boolean {
+        if (p.name.isNotBlank() && (fact.startsWith("我叫") || fact.startsWith("我的名字"))) return true
+        if (p.occupation.isNotBlank() && (fact.startsWith("我的职业") || fact.startsWith("我工作"))) return true
+        if (p.gender.isNotBlank() && fact.startsWith("我是") &&
+            listOf("女生", "男生", "女孩", "男孩", "女的", "男的", "女性", "男性", "女人", "男人").any { fact.contains(it) }
+        ) return true
+        if (p.age.isNotBlank() && fact.contains("岁")) return true
+        return false
     }
 }
