@@ -557,6 +557,7 @@ class ChatViewModel(
         // 瓶颈只在这里的 limit 和 take() 太小，架构不用改。
         val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, 8).take(1500)
         val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
+        val userProfileText = userRepository?.getEffectiveSelfProfile(companion.id)?.toPromptText().orEmpty()
         
         // [FIX 2] 核心修复：之前这里完全没用到 sortedHistory，只取了 lastUserMessage 传给模型，
         // 导致模型看不到之前几轮聊了什么。现在把最近若干轮对话拼成文本一起传进去。
@@ -581,6 +582,9 @@ class ChatViewModel(
             }
             if (backstory.isNotBlank()) {
                 appendLine("背景：$backstory")
+            }
+            if (userProfileText.isNotBlank()) {
+                appendLine("\n$userProfileText")
             }
             if (memoryContext.isNotBlank()) {
                 appendLine("\n关于用户的记忆：$memoryContext")
