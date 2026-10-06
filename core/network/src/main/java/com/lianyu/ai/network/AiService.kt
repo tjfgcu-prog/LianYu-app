@@ -476,7 +476,7 @@ class AiService(context: Context) : AiServiceProvider {
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
                 val role = userRepository.selectedRole.value
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext, userProfileText = userRepository.getEffectiveSelfProfile(companion.id).toPromptText())
                 val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
@@ -535,7 +535,7 @@ class AiService(context: Context) : AiServiceProvider {
             val contextLimit = appSettingsStore.getContextLimit()
             val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
 
-            val baseSystemPrompt = buildProactiveSystemPrompt(companion, memoryContext, settings)
+            val baseSystemPrompt = buildProactiveSystemPrompt(companion, memoryContext, settings, userRepository.getEffectiveSelfProfile(companion.id).toPromptText())
             val systemPrompt = if (extraSystemPrompt.isNullOrBlank()) baseSystemPrompt else "$baseSystemPrompt\n\n$extraSystemPrompt"
             val contextMessages = AiPromptBuilder.buildProactiveContext(sortedMessages, companion)
 
@@ -1109,7 +1109,7 @@ class AiService(context: Context) : AiServiceProvider {
 
     // [P2-1] buildProactiveSystemPrompt 副本签名与 AiPromptBuilder 不同（含 settings: ProactiveMessageSettings?），
     // AiPromptBuilder 版用 role 参数。保留此副本避免行为漂移，仅内部调用委托到 AiContextTools/AiPromptBuilder。
-    private fun buildProactiveSystemPrompt(companion: CompanionModel, memoryContext: String = "", settings: ProactiveMessageSettings? = null): String {
+        private fun buildProactiveSystemPrompt(companion: CompanionModel, memoryContext: String = "", settings: ProactiveMessageSettings? = null, userProfileText: String = ""): String {
         val role = CompanionRole.GIRLFRIEND  // 主动消息固定 GIRLFRIEND 角色（原副本行为）
         // 根据自定义设置注入话题策略（AiPromptBuilder 版无此逻辑，此处保留差异）
         val topicRule = when {
@@ -1121,7 +1121,7 @@ class AiService(context: Context) : AiServiceProvider {
             "\n注意：本次不要追加追问句，说完核心内容即可。\n"
         } else ""
         // 委托 AiPromptBuilder 构建主体，再插入 topicRule/followUpHint
-        val base = AiPromptBuilder.buildProactiveSystemPrompt(companion, memoryContext, role = role)
+                val base = AiPromptBuilder.buildProactiveSystemPrompt(companion, memoryContext, role = role, userProfileText = userProfileText)
         // AiPromptBuilder 版已含 persona+memory+timeContext+personaRules，此处需在 memory 后插入策略
         // 简化：若 topicRule/followUpHint 非空，追加到末尾（语义等价，不影响主流程）
         return if (topicRule.isNotBlank() || followUpHint.isNotBlank()) {
@@ -1851,7 +1851,7 @@ $chatText
                     } ?: sticker.name.removePrefix("sticker_").removeSuffix(".png").takeIf { it.isNotBlank() && it.length <= 20 }
                     if (displayName.isNullOrBlank() || displayName.length > 20) null else displayName
                 }.distinct()
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND, storyContext = storyContext)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, availableStickers, stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = CompanionRole.GIRLFRIEND, storyContext = storyContext, userProfileText = userRepository.getEffectiveSelfProfile(companion.id).toPromptText())
                 val systemPrompt = baseSystemPrompt
 
                 SecureLog.api("VISION", "provider=${config.provider}, model=${config.model}, image=$imagePath")
@@ -2231,7 +2231,7 @@ $chatText
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
                 val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
                 val role = userRepository.selectedRole.value
-                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext)
+                val baseSystemPrompt = AiPromptBuilder.buildSystemPrompt(companion, memoryContext, lastUserMessage, emptyList(), stickerProbability, innerThoughtEnabled, ntpTimeEnabled = false, role = role, storyContext = storyContext, userProfileText = userRepository.getEffectiveSelfProfile(companion.id).toPromptText())
                 val systemPrompt = baseSystemPrompt
                 val messages = buildMessages(sanitizedHistory, systemPrompt, lastUserMessage, contextLimit, compressionMode = compressionMode, memoryContext = memoryContext, keepRatio = keepRatio, minKeep = minKeep)
 
