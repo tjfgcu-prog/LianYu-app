@@ -293,6 +293,7 @@ object AiPromptBuilder {
 
     // === private fun buildSystemPrompt(companion: CompanionModel, memoryContext: String = "", lastUserMessage: String = "", availableStickers: List<String> = emptyList(), stickerProbability: Int = 30, innerThoughtEnabled: Boolean = false): String { ===
     internal fun buildSystemPrompt(companion: CompanionModel, memoryContext: String = "", lastUserMessage: String = "", availableStickers: List<String> = emptyList(), stickerProbability: Int = 30, innerThoughtEnabled: Boolean = false, ntpTimeEnabled: Boolean = false, role: CompanionRole = CompanionRole.GIRLFRIEND, storyContext: String = ""): String {
+        ..., role: CompanionRole = CompanionRole.GIRLFRIEND, storyContext: String = "", userProfileText: String = ""): String {
         val persona = extractPersona(companion)
 
         val metaDirective = buildString {
@@ -315,12 +316,14 @@ object AiPromptBuilder {
             }
         }
 
+                return basePrompt + userProfileSection + memorySection + storySection + timeSection + "\n" + buildPersonaRules(persona, companion.speakingStyle, availableStickers, stickerProbability, innerThoughtEnabled, role)
         val memorySection = if (memoryContext.isNotBlank()) {
             "\n\n关于用户的记忆：\n$memoryContext\n"
         } else ""
         val storySection = if (storyContext.isNotBlank()) {
             "\n\n$storyContext\n"
         } else ""
+                val userProfileSection = if (userProfileText.isNotBlank()) "\n\n$userProfileText\n" else ""
         val timeSection = "\n\n${AiContextTools.buildCurrentTimeContext(ntpTimeEnabled)}\n"
 
         return basePrompt + memorySection + storySection + timeSection + "\n" + buildPersonaRules(persona, companion.speakingStyle, availableStickers, stickerProbability, innerThoughtEnabled, role)
@@ -426,10 +429,12 @@ ${innerThoughtExamples}${RolePromptProvider.getExamples(role)}
         companion: CompanionModel,
         memoryContext: String = "",
         settings: ProactiveMessageSettings? = null,
-        role: CompanionRole = CompanionRole.GIRLFRIEND
+                role: CompanionRole = CompanionRole.GIRLFRIEND,
+        userProfileText: String = ""
     ): String {
         val persona = extractPersona(companion)
         val memorySection = if (memoryContext.isNotBlank()) {
+               val userProfileSection = if (userProfileText.isNotBlank()) "\n\n$userProfileText\n" else ""
             "\n\n=== 关于用户的记忆 ===\n$memoryContext\n"
         } else ""
 
@@ -448,6 +453,7 @@ ${innerThoughtExamples}${RolePromptProvider.getExamples(role)}
             appendLine("你们正在微信上聊天，对话还没结束，你要继续聊下去。")
             appendLine()
             appendLine(persona)
+                        append(userProfileSection)
             append(memorySection)
             append(topicRule)
             append(followUpHint)
