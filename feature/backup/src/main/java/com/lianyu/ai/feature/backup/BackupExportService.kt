@@ -6,7 +6,9 @@ import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.GroupMessage
 import com.lianyu.ai.database.repository.ChatMessageCrypto
-
+import com.lianyu.ai.database.repository.UserRepository
+import com.lianyu.ai.domain.MemoryProvider
+import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.feature.backup.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,6 +42,19 @@ class BackupExportService(private val context: Context) {
             groupMessages.addAll(raw.map { ChatMessageCrypto.decryptFromStorage(it).toSnapshot() })
         }
 
+        // 新增数据：我的信息、各角色专属设定、剧情模式开关、剧情摘要
+        val userRepository = ServiceRegistry.get(UserRepository::class.java) ?: UserRepository(context)
+        val memoryProvider = ServiceRegistry.get(MemoryProvider::class.java)
+        val storyEnabledIds = StoryModeBackupStore(context).readEnabledIds()
+        val companionExtras = companions.map { c ->
+            CompanionExtraSnapshot(
+                companionId = c.id,
+                selfProfile = userRepository.getCompanionSelfProfile(c.id),
+                storyModeEnabled = c.id in storyEnabledIds,
+                storySummary = memoryProvider?.getStorySummary(c.id).orEmpty()
+            )
+        }
+        
         BackupData(
             exportedAt = System.currentTimeMillis(),
             appVersion = context.packageManager
@@ -50,7 +65,9 @@ class BackupExportService(private val context: Context) {
             groupMessages = groupMessages,
             
             
-            tokenUsages = tokenUsages
+            tokenUsages = tokenUsages,
+            selfProfile = userRepository.getSelfProfile(),
+            companionExtras = companionExtras
         )
     }
 }
