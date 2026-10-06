@@ -6,7 +6,10 @@ import com.lianyu.ai.common.DeviceIdProvider
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.*
 import com.lianyu.ai.database.repository.ChatMessageCrypto
-
+import com.lianyu.ai.common.UserSelfProfile
+import com.lianyu.ai.database.repository.UserRepository
+import com.lianyu.ai.domain.MemoryProvider
+import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.feature.backup.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,6 +30,7 @@ class BackupImportService(private val context: Context) {
         runCatching {
             // [R3 FIX] 整个清空+插入序列包在单一 Room 事务里：
             // 原实现中途失败会留下半清半填的库，无回滚。事务保证原子性——要么全成功，要么全回滚。
+            val oldCompanionIds = db.companionDao().getAllCompanionsSync().map { it.id } 
             db.withTransaction {
                 // 1. 清空（先删子表，再删父表）
                 db.groupMessageDao().let { dao ->
@@ -108,9 +112,41 @@ class BackupImportService(private val context: Context) {
                     )
                 }
             }
+          restoreExtras(data, oldCompanionIds)
         }
     }
 
+    /** 恢复新增数据。备份里没有的项（旧备份）不改动现有数据。 */
+    private suspend fun restoreExtras(data: BackupData, oldCompanionIds: List<Long>) {
+        val userRepository = ServiceRegistry.get(UserRepository::class.java) ?: UserRepository(context)
+        val memoryProvider = ServiceRegistry.get(MemoryProvider::class.java)
+
+        data.selfProfile?.let { userRepository.updateSelfProfile(it) }
+
+        val extras = data.companionExtras ?: return
+        val extraById = extras.associateBy { it.companionId }
+        val newIds = data.companions.map { it.id }
+
+        // 备份里没有的旧角色：清掉它们的专属设定和剧情，避免残留
+        (oldCompanionIds - newIds.toSet()).forEach { id ->
+            userRepository.clearCompanionSelfProfile(id)
+            memoryProvider?.clearStoryContext(id)
+        }
+        // 备份里的角色：按备份覆盖
+        newIds.forEach { id ->
+            val extra = extraById[id]
+            userRepository.updateCompanionSelfProfile(id, extra?.selfProfile ?: UserSelfProfile())
+            memoryProvider?.clearStoryContext(id)
+            if (extra != null && extra.storySummary.isNotBlank()) {
+                memoryProvider?.setStorySummary(id, extra.storySummary)
+            }
+        }
+        StoryModeBackupStore(context).apply(
+            allIds = oldCompanionIds + newIds,
+            enabledIds = extras.filter { it.storyModeEnabled }.map { it.companionId }.toSet()
+        )
+    }
+    
     /** 安全枚举解析：无效值回退到默认 */
     private inline fun <reified T : Enum<T>> safeEnum(name: String): T {
         return try { enumValueOf<T>(name) }
