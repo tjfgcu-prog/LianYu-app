@@ -486,7 +486,6 @@ class MemoryManager private constructor(
                 // cleanupExpiredMemories() 里的"超容量淘汰最老一条"只看 lastAccessed，
                 // 不检查 tier/expireAt，如果先放进 shortTermCache、等它自然溢出才晋级，
                 // 这样核心记忆会在晋级前被淘汰，从界面上消失。
-                // 这正是"核心记忆界面消失，但AI还记得（走的是同步到全局池的另一份拷贝）"的根因。
                 if (isDurable) {
                     midTermCache.computeIfAbsent(key) { mutableListOf() }
                         .let { items -> synchronized(items) { items.add(item) } }
