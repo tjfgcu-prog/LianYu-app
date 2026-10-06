@@ -27,9 +27,9 @@ import java.util.concurrent.ConcurrentHashMap
  * 记忆管理器（单例）
  *
  * 核心职责：
- * 1. 统一管理全局/角色/群聊三种作用域的记忆
+  * 1. 统一管理角色/群聊两种作用域的记忆（互相独立）
  * 2. 分层存储：短期(内存)→中期(内存+文件)→长期(文件)
- * 3. 跨会话同步：群聊↔私聊通过全局池共享用户信息
+  * 3. 剧情摘要：按角色保存，每 5 轮自动生成
  * 4. 倒排索引检索 + LRU缓存 + TTL过期清理
  *
  * 完全独立于 Room 数据库，使用 JSON 文件持久化
@@ -46,7 +46,6 @@ class MemoryManager private constructor(
         private const val SHORT_TERM_MAX_PER_SCOPE = 50
         private const val MID_TERM_MAX_MEMORY = 500
         private const val CLEANUP_INTERVAL_MS = 5L * 60 * 1000 // 5分钟清理一次
-        private const val SYNC_IMPORTANCE_THRESHOLD = 0.7f
         private const val DEDUP_SIMILARITY_THRESHOLD = 0.6f
         private const val STORY_SUMMARY_EVERY_TURNS = 5
         private const val STORY_PENDING_MAX = 30
@@ -159,8 +158,8 @@ class MemoryManager private constructor(
      * 加载持久化记忆
      */
     private fun loadPersistedMemories() {
-        // 加载全局记忆
-        loadScopeFromDisk(MemoryScope.GLOBAL, 0L)
+        // 清理已废弃的全局记忆池目录（不迁移，直接删除）
+        java.io.File(context.filesDir, "memory/$deviceId/global").deleteRecursively()
 
         // 加载所有角色记忆（通过扫描文件系统）
         val globalDir = java.io.File(context.filesDir, "memory/$deviceId")
@@ -275,8 +274,6 @@ class MemoryManager private constructor(
         return runCatching {
             val memories = mutableListOf<MemoryItem>()
 
-            // 1. 始终查询全局记忆
-            memories.addAll(searchMemories(MemoryScope.GLOBAL, 0L, query, limit))
 
             // 2. 查询角色/群聊记忆
             when {
@@ -467,8 +464,7 @@ class MemoryManager private constructor(
                 // 事实/偏好/关系类，或重要度较高的记忆，属于"应该被长期记住"的核心信息
                 // （比如"我是女生"），不该只给 5 分钟寿命就被清理任务删掉；
                 // 直接跳过短期层，进中期存储且不设过期时间。
-                val isDurable = scope == MemoryScope.GLOBAL ||
-                    category in setOf(MemoryCategory.FACT, MemoryCategory.PREFERENCE, MemoryCategory.RELATIONSHIP) ||
+                val isDurable = category in setOf(MemoryCategory.FACT, MemoryCategory.PREFERENCE, MemoryCategory.RELATIONSHIP) ||
                     importance >= 0.7f
                 val item = MemoryItem(
                     id = UUID.randomUUID().toString(),
@@ -489,7 +485,7 @@ class MemoryManager private constructor(
                 // 永久/中期记忆直接进 midTermCache，不经过 shortTermCache：
                 // cleanupExpiredMemories() 里的"超容量淘汰最老一条"只看 lastAccessed，
                 // 不检查 tier/expireAt，如果先放进 shortTermCache、等它自然溢出才晋级，
-                // 期间完全可能在"晋级"发生之前就被当成普通短期记忆一起淘汰删掉——
+                // 这样核心记忆会在晋级前被淘汰，从界面上消失。
                 // 这正是"核心记忆界面消失，但AI还记得（走的是同步到全局池的另一份拷贝）"的根因。
                 if (isDurable) {
                     midTermCache.computeIfAbsent(key) { mutableListOf() }
@@ -510,11 +506,6 @@ class MemoryManager private constructor(
 
                 // 更新索引
                 indexCache.computeIfAbsent(key) { MemoryIndex() }.add(item)
-
-                // 同步到全局池（如果符合条件）
-                if (scope != MemoryScope.GLOBAL && shouldSyncToGlobal(category, importance)) {
-                    syncToGlobal(item)
-                }
 
                 // 立即同步持久化（不依赖任何后台协程/生命周期回调是否来得及执行，
                 // 从根本上消除"划掉后台瞬间进程被杀、写盘还没发生"的竞态）
@@ -552,35 +543,7 @@ class MemoryManager private constructor(
         }
     }
 
-    /**
-     * 判断是否应同步到全局池
-     */
-    private fun shouldSyncToGlobal(category: MemoryCategory, importance: Float): Boolean {
-        if (importance < SYNC_IMPORTANCE_THRESHOLD) return false
-        // EMOTION 和 EVENT 不同步到全局（角色/会话特定）
-        return category !in setOf(MemoryCategory.EMOTION, MemoryCategory.EVENT)
-    }
-
-    /**
-     * 同步到全局池
-     */
-    private suspend fun syncToGlobal(item: MemoryItem) {
-        val globalItem = item.copy(
-            id = UUID.randomUUID().toString(),
-            scope = MemoryScope.GLOBAL,
-            sourceId = 0L,
-            tier = MemoryTier.MID,
-            expireAt = null // 全局记忆不过期
-        )
-
-        val globalKey = scopeKey(MemoryScope.GLOBAL, 0L)
-        midTermCache.computeIfAbsent(globalKey) { mutableListOf() }
-            .let { items ->
-                synchronized(items) { items.add(globalItem) }
-            }
-        indexCache.computeIfAbsent(globalKey) { MemoryIndex() }.add(globalItem)
-        schedulePersist(MemoryScope.GLOBAL, 0L)
-    }
+    
 
     /**
      * 短期记忆晋级到中期
