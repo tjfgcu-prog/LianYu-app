@@ -12,6 +12,7 @@ import com.lianyu.ai.feature.memory.engine.MemoryManager
 import com.lianyu.ai.feature.memory.engine.MemoryScope
 import com.lianyu.ai.feature.memory.engine.MemorySource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -60,6 +61,25 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteMemoriesForCompanion(companionId: Long) {
         viewModelScope.launch {
             memoryManager.deleteAllMemories(MemoryScope.COMPANION, companionId)
+        }
+    }
+    // ── 剧情摘要 ──
+    private val storyRefresh = MutableStateFlow(0)
+
+    fun getStorySummary(companionId: Long): Flow<String> =
+        storyRefresh.map { memoryManager.getStorySummary(companionId) }
+
+    fun saveStorySummary(companionId: Long, summary: String) {
+        viewModelScope.launch {
+            memoryManager.setStorySummary(companionId, summary)
+            storyRefresh.value += 1
+        }
+    }
+
+    fun clearStory(companionId: Long) {
+        viewModelScope.launch {
+            memoryManager.clearStoryContext(companionId)
+            storyRefresh.value += 1
         }
     }
 }
