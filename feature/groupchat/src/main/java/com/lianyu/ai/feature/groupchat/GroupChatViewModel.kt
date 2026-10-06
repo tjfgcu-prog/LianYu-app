@@ -406,6 +406,7 @@ class GroupChatViewModel(
             appendLine("你叫${companion.name}。这是你的微信聊天记录，你在群里跟朋友们聊天。")
             appendLine("群里的人：你（${companion.name}）、$otherMembersNames、$currentUserName。")
             appendLine("$currentUserName 是群主/管理员，其他人是群友。")
+            userRepository.getEffectiveSelfProfile(null).toPromptText().takeIf { it.isNotBlank() }?.let { appendLine(it) }
             appendLine()
             appendLine("说话要求：")
             appendLine("- 像真人一样自然聊天，用口语、语气词、表情符号")
@@ -686,6 +687,7 @@ class GroupChatViewModel(
             appendLine("这是一个真实的微信群聊天，大家在一起开心聊天。")
             appendLine("当前群聊氛围：$groupAtmosphere")
             appendLine("群里的人：你（${companion.name}）、$otherMembersNames、$currentUserName（群主）。")
+            userRepository.getEffectiveSelfProfile(null).toPromptText().takeIf { it.isNotBlank() }?.let { appendLine(it) }
             if (emotionalContext.isNotBlank()) {
                 appendLine()
                 appendLine("=== 当前情绪感知 ===")
