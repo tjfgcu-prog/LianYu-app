@@ -1,6 +1,9 @@
 package com.lianyu.ai.common
 
+import kotlinx.serialization.Serializable
+
 /** 角色眼中的"我"。空字符串表示未填。 */
+@Serializable
 data class UserSelfProfile(
     val name: String = "",
     val gender: String = "",
