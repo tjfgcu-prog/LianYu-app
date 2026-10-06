@@ -321,7 +321,8 @@ object AiPromptBuilder {
         } else ""
         val storySection = if (storyContext.isNotBlank()) {
             "\n\n$storyContext\n"
-        } else ""        val userProfileSection = if (userProfileText.isNotBlank()) "\n\n$userProfileText\n" else ""
+        } else ""        
+        val userProfileSection = if (userProfileText.isNotBlank()) "\n\n$userProfileText\n" else ""
         val timeSection = "\n\n${AiContextTools.buildCurrentTimeContext(ntpTimeEnabled)}\n"
 
                 return basePrompt + userProfileSection + memorySection + storySection + timeSection + "\n" + buildPersonaRules(persona, companion.speakingStyle, availableStickers, stickerProbability, innerThoughtEnabled, role)
