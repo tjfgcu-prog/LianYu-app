@@ -881,12 +881,12 @@ class MemoryManager private constructor(
     }
 
         /** 记忆管理页用：读取剧情摘要原文，没有则返回空串。 */
-    suspend fun getStorySummary(companionId: Long): String = withContext(Dispatchers.IO) {
+        override suspend fun getStorySummary(companionId: Long): String = withContext(Dispatchers.IO) {
         loadStory(companionId)?.summary.orEmpty()
     }
 
     /** 记忆管理页用：手动修改剧情摘要，保留还没摘要的待处理对话。 */
-    suspend fun setStorySummary(companionId: Long, summary: String) {
+    override suspend fun setStorySummary(companionId: Long, summary: String) {
         runCatching {
             getLock(MemoryScope.COMPANION, companionId).withLock {
                 withContext(Dispatchers.IO) {
