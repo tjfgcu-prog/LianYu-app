@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -190,12 +192,26 @@ fun MemoryScreen(
                         )
                             }
                         )
-
+                        Tab(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
+                            text = {
+                                Text(
+                                    "剧情",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 13.sp,
+                                        fontWeight = if (selectedTab == 2) FontWeight.Medium else FontWeight.Normal
+                                    ),
+                                    color = if (selectedTab == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        )
                     }
 
                     when (selectedTab) {
                         0 -> CoreMemoryTab(companionId = companion.id, viewModel = viewModel)
                         1 -> TempMemoryTab(companionId = companion.id, viewModel = viewModel)
+                        2 -> StoryTab(companionId = companion.id, viewModel = viewModel)
                     }
                 } ?: run {
                     Box(
@@ -457,6 +473,118 @@ fun TempMemoryTab(companionId: Long, viewModel: MemoryViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun StoryTab(companionId: Long, viewModel: MemoryViewModel) {
+    val summary by viewModel.getStorySummary(companionId).collectAsState(initial = "")
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "剧情模式开启后，每5轮对话自动生成一次摘要。关闭后不再新增，已有摘要仍会提供给角色。",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        if (summary.isBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "暂无剧情摘要",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                    modifier = Modifier.padding(14.dp)
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = { showEditDialog = true }) {
+                Text(if (summary.isBlank()) "手动添加" else "修改")
+            }
+            if (summary.isNotBlank()) {
+                TextButton(onClick = { showClearDialog = true }) {
+                    Text("清空", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+    }
+
+    if (showEditDialog) {
+        var draft by remember { mutableStateOf(summary) }
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("修改剧情摘要") },
+            text = {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it.take(1200) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4,
+                    maxLines = 10,
+                    supportingText = { Text("${draft.length}/1200") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.saveStorySummary(companionId, draft)
+                    showEditDialog = false
+                }) { Text("保存") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("清空剧情摘要") },
+            text = { Text("将清空这个角色的剧情摘要和还没来得及摘要的对话，清空后无法恢复。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearStory(companionId)
+                    showClearDialog = false
+                }) { Text("清空", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text("取消") }
+            }
+        )
     }
 }
 
