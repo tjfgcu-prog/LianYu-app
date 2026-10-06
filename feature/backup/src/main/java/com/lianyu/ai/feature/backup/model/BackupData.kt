@@ -1,7 +1,7 @@
 package com.lianyu.ai.feature.backup.model
 
+import com.lianyu.ai.common.UserSelfProfile
 import com.lianyu.ai.database.model.FileFormat
-
 import com.lianyu.ai.database.model.MessageType
 import kotlinx.serialization.Serializable
 
@@ -20,6 +20,8 @@ import kotlinx.serialization.Serializable
 
 
  * @param tokenUsages Token 使用统计
+ * @param selfProfile 我的信息（null 表示备份里没有，导入时不改动）
+ * @param companionExtras 各角色的专属设定、剧情模式开关、剧情摘要（null 同上）
  */
 @Serializable
 data class BackupData(
@@ -32,7 +34,9 @@ data class BackupData(
     val groupMessages: List<GroupMessageSnapshot>,
 
     
-    val tokenUsages: List<TokenUsageSnapshot>
+    val tokenUsages: List<TokenUsageSnapshot>,
+    val selfProfile: UserSelfProfile? = null,
+    val companionExtras: List<CompanionExtraSnapshot>? = null
 )
 
 @Serializable
@@ -102,4 +106,13 @@ data class TokenUsageSnapshot(
     val requestCount: Int = 0,
     val timestamp: Long,
     val deviceId: String = ""
+)
+
+/** 单个角色的新增数据：专属设定、剧情模式开关、剧情摘要。 */
+@Serializable
+data class CompanionExtraSnapshot(
+    val companionId: Long,
+    val selfProfile: UserSelfProfile = UserSelfProfile(),
+    val storyModeEnabled: Boolean = false,
+    val storySummary: String = ""
 )
