@@ -12,11 +12,11 @@ enum class MemorySource { CHAT, GROUP_CHAT, MANUAL }
 enum class MemoryTier { SHORT, MID, LONG }
 
 @Serializable
-enum class MemoryScope { GLOBAL, COMPANION, GROUP }
+enum class MemoryScope { COMPANION, GROUP }
 
 /**
  * 记忆条目数据模型
- * 支持全局/角色/群聊三种作用域，短期/中期/长期三层存储
+ * 支持角色/群聊两种作用域，短期/中期/长期三层存储
  */
 @Serializable
 data class MemoryItem(
