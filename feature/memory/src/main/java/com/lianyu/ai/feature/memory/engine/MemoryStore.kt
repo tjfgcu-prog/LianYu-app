@@ -11,11 +11,6 @@ import java.io.File
  *
  * 文件结构:
  * memory/{deviceId}/
- *   ├── global/
- *   │   ├── index.json
- *   │   ├── short.json
- *   │   ├── mid.json
- *   │   └── long.json
  *   ├── companion_{id}/
  *   │   ├── index.json
  *   │   ├── short.json
@@ -37,7 +32,7 @@ class MemoryStore(private val context: Context, private val deviceId: String) {
      */
     private fun scopeDir(scope: MemoryScope, id: Long): File {
         val dirName = when (scope) {
-            MemoryScope.GLOBAL -> "global"
+            
             MemoryScope.COMPANION -> "companion_$id"
             MemoryScope.GROUP -> "group_$id"
         }
