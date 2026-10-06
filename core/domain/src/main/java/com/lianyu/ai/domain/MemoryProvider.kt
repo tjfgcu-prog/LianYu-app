@@ -55,5 +55,12 @@ interface MemoryProvider {
 
     /** 清除某角色的剧情状态（清空聊天记录/删除角色时调用）。 */
     suspend fun clearStoryContext(companionId: Long)
+
+    /** 读取某角色的剧情摘要原文，没有则返回空串（备份导出用）。 */
+    suspend fun getStorySummary(companionId: Long): String
+
+    /** 写入某角色的剧情摘要（备份导入用）。 */
+    suspend fun setStorySummary(companionId: Long, summary: String)
+    
 }
 
