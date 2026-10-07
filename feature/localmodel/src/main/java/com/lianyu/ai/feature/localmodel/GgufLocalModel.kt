@@ -1,20 +1,24 @@
 package com.lianyu.ai.feature.localmodel
 
-import kotlinx.coroutines.Job
 import android.content.Context
+import com.lianyu.ai.domain.LocalModelStatus
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.nehuatl.llamacpp.LlamaHelper
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * 对 llamacpp-kotlin 库的简单封装，负责加载用户选择的 .gguf 文件并生成回复。
@@ -36,34 +40,116 @@ class GgufLocalModel(context: Context) {
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    private val llamaHelper by lazy {
-        LlamaHelper(appContext.contentResolver, scope, llmFlow)
-    }
+    // 卸载后丢弃旧实例、下次加载时新建一个：
+    // 库文档只说明 release() 用于清理，没有说明释放后能否继续复用同一个实例。
+    @Volatile private var helper: LlamaHelper? = null
+    private fun obtainHelper(): LlamaHelper =
+        helper ?: LlamaHelper(appContext.contentResolver, scope, llmFlow).also { helper = it }
 
     @Volatile private var loadedUri: String? = null
     @Volatile private var loadedContextLength: Int = -1
-    
+    @Volatile private var loadMs: Long = 0L
+
+    /** 当前真实状态，供设置页显示。 */
+    @Volatile
+    var status: LocalModelStatus = LocalModelStatus.Unloaded
+        private set
+
     // 本地模型同一时刻只能跑一次推理：聊天回复与后台剧情摘要共用 llmFlow，不加锁事件会串台。
+    // 加载、卸载也走这把锁，避免和生成同时发生。
     private val generateMutex = Mutex()
-    
-    // [FIX 1/6] contextLength 不再写死 2048，由调用方传入（来自设置里的用户选择）。
-    // 同时把 contextLength 纳入"是否需要重新加载"的判断条件：
-    // 之前只比较 modelUri，用户在设置里改了上下文长度也不会生效，直到换模型或重启 App。
-    suspend fun ensureLoaded(modelUri: String, contextLength: Int = 8192) {
+
+    /** 释放原生内存并回到"未加载"。 */
+    private fun releaseNative() {
+        val h = helper
+        helper = null
+        loadedUri = null
+        loadedContextLength = -1
+        loadMs = 0L
+        if (h != null) {
+            runCatching { h.abort() }
+            runCatching { h.release() }
+        }
+        status = LocalModelStatus.Unloaded
+        logD("releaseNative: done")
+    }
+
+    private fun failLoad(reason: String): Nothing {
+        releaseNative()
+        status = LocalModelStatus.Failed(reason)
+        logD("ensureLoaded: FAILED, $reason")
+        throw IllegalStateException(reason)
+    }
+
+    /**
+     * 调用方必须已持有 generateMutex。
+     * @return true 表示这次真的执行了加载；false 表示已经是加载好的状态。
+     */
+    private suspend fun ensureLoaded(modelUri: String, contextLength: Int): Boolean {
         if (loadedUri == modelUri && loadedContextLength == contextLength) {
             logD("ensureLoaded: already loaded with same contextLength, skip. uri=$modelUri")
-            return
+            return false
         }
+        if (loadedUri != null) {
+            // 换了模型或上下文长度：先释放旧的，避免两份模型同时占内存
+            logD("ensureLoaded: params changed, releasing old context first")
+            releaseNative()
+        }
+        val startedAt = System.currentTimeMillis()
+        status = LocalModelStatus.Loading(startedAt)
         logD("ensureLoaded: begin load, uri=$modelUri, contextLength=$contextLength")
-        suspendCancellableCoroutine<Unit> { cont ->
-            llamaHelper.load(path = modelUri, contextLength = contextLength) { id ->
-                logD("ensureLoaded: load callback fired, id=$id")
+
+        // load() 的回调只在成功时触发，失败没有回调：
+        // 一方面监听引擎的 Error 事件，另一方面设置超时，保证不会无限等待。
+        val outcome: Boolean? = try {
+            withTimeoutOrNull(LOAD_TIMEOUT_MS) {
+                suspendCancellableCoroutine<Boolean> { cont ->
+                    lateinit var errorJob: Job
+                    errorJob = scope.launch {
+                        llmFlow.collect { event ->
+                            if (event is LlamaHelper.LLMEvent.Error) {
+                                if (cont.isActive) cont.resume(false)
+                                errorJob.cancel()
+                            }
+                        }
+                    }
+                    cont.invokeOnCancellation { errorJob.cancel() }
+                    obtainHelper().load(path = modelUri, contextLength = contextLength) { id ->
+                        logD("ensureLoaded: load callback fired, id=$id")
+                        errorJob.cancel()
+                        if (cont.isActive) cont.resume(true)
+                    }
+                }
+            }
+        } catch (e: CancellationException) {
+            releaseNative()
+            throw e
+        }
+
+        return when (outcome) {
+            true -> {
                 loadedUri = modelUri
                 loadedContextLength = contextLength
-                if (cont.isActive) cont.resume(Unit)
+                loadMs = System.currentTimeMillis() - startedAt
+                status = LocalModelStatus.Loaded(contextLength, loadMs)
+                logD("ensureLoaded: loaded in ${loadMs}ms")
+                true
             }
+            false -> failLoad("加载过程中引擎报错")
+            null -> failLoad("加载超过 ${LOAD_TIMEOUT_MS / 1000} 秒仍未完成")
         }
-        logD("ensureLoaded: load coroutine resumed, done")
+    }
+
+    /** 加载模型。@return true 表示这次真的执行了加载。失败抛异常。 */
+    suspend fun load(modelUri: String, contextLength: Int): Boolean =
+        generateMutex.withLock { ensureLoaded(modelUri, contextLength) }
+
+    /** 卸载模型释放内存。正在生成时会等这一条结束。 */
+    suspend fun unload() {
+        generateMutex.withLock {
+            status = LocalModelStatus.Unloading
+            withContext(Dispatchers.IO) { releaseNative() }
+        }
     }
 
     suspend fun generate(
@@ -91,38 +177,50 @@ class GgufLocalModel(context: Context) {
         }
         logD("generate: called, chatMlPrompt.length=${chatMlPrompt.length}")
         return generateMutex.withLock {
-        ensureLoaded(modelUri, contextLength)
-        logD("generate: ensureLoaded returned, about to predict")
-        val builder = StringBuilder()
-        suspendCancellableCoroutine<String> { cont ->
-            lateinit var collectJob: Job
-            collectJob = scope.launch {
-                llmFlow.collect { event ->
-                    when (event) {
-                        is LlamaHelper.LLMEvent.Ongoing -> {
-                            logD("event: Ongoing, word='${event.word}'")
-                            builder.append(event.word)
+            ensureLoaded(modelUri, contextLength)
+            logD("generate: ensureLoaded returned, about to predict")
+            status = LocalModelStatus.Generating(loadedContextLength, loadMs)
+            try {
+                val builder = StringBuilder()
+                suspendCancellableCoroutine<String> { cont ->
+                    lateinit var collectJob: Job
+                    collectJob = scope.launch {
+                        llmFlow.collect { event ->
+                            when (event) {
+                                is LlamaHelper.LLMEvent.Ongoing -> {
+                                    logD("event: Ongoing, word='${event.word}'")
+                                    builder.append(event.word)
+                                }
+                                is LlamaHelper.LLMEvent.Done -> {
+                                    logD("event: Done, totalLength=${builder.length}")
+                                    if (cont.isActive) cont.resume(builder.toString())
+                                    collectJob.cancel()
+                                }
+                                is LlamaHelper.LLMEvent.Error -> {
+                                    logD("event: Error")
+                                    if (cont.isActive) cont.resumeWithException(
+                                        IllegalStateException("GGUF 本地模型生成失败")
+                                    )
+                                    collectJob.cancel()
+                                }
+                                else -> {}
+                            }
                         }
-                        is LlamaHelper.LLMEvent.Done -> {
-                            logD("event: Done, totalLength=${builder.length}")
-                            if (cont.isActive) cont.resume(builder.toString())
-                            collectJob.cancel()
-                        }
-                        is LlamaHelper.LLMEvent.Error -> {
-                            logD("event: Error")
-                            if (cont.isActive) cont.resumeWithException(
-                                IllegalStateException("GGUF 本地模型生成失败")
-                            )
-                            collectJob.cancel()
-                        }
-                        else -> {}
                     }
+                    cont.invokeOnCancellation { collectJob.cancel() }
+                    logD("generate: calling llamaHelper.predict()")
+                    scope.launch { obtainHelper().predict(chatMlPrompt) }
+                }
+            } finally {
+                if (loadedUri != null) {
+                    status = LocalModelStatus.Loaded(loadedContextLength, loadMs)
                 }
             }
-            cont.invokeOnCancellation { collectJob.cancel() }
-            logD("generate: calling llamaHelper.predict()")
-            scope.launch { llamaHelper.predict(chatMlPrompt) }
         }
     }
+
+    private companion object {
+        /** 7B 的 Q4 模型在手机上加载约几十秒，给 3 分钟。 */
+        const val LOAD_TIMEOUT_MS = 180_000L
     }
 }
