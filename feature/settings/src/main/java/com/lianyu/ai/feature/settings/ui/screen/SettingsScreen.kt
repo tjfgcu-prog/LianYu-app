@@ -113,6 +113,8 @@ import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.SecureLog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.lianyu.ai.domain.LocalModelResult
+import com.lianyu.ai.domain.LocalModelStatus
 import java.util.Locale
 import androidx.compose.foundation.isSystemInDarkTheme
 
@@ -682,7 +684,31 @@ private fun GgufLocalModelSection(
         context.getSharedPreferences("gguf_model_prefs", android.content.Context.MODE_PRIVATE)
     }
 
-    var ggufEnabled by remember { mutableStateOf(prefs.getBoolean("gguf_enabled", false)) }
+        val provider = remember {
+        com.lianyu.ai.domain.ServiceRegistry.get(com.lianyu.ai.domain.LocalModelProvider::class.java)
+    }
+    var status by remember {
+        mutableStateOf<LocalModelStatus>(provider?.getStatus() ?: LocalModelStatus.Unloaded)
+    }
+    var lastRecord by remember { mutableStateOf(provider?.getLastLoadRecord().orEmpty()) }
+    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    var testing by remember { mutableStateOf(false) }
+    var testMessage by remember { mutableStateOf<String?>(null) }
+    // 每 0.5 秒刷新一次真实状态（离开页面时自动停止）
+    LaunchedEffect(Unit) {
+        while (true) {
+            provider?.let {
+                status = it.getStatus()
+                lastRecord = it.getLastLoadRecord()
+            }
+            nowMs = System.currentTimeMillis()
+            delay(500)
+        }
+    }
+    val ggufOn = status is LocalModelStatus.Loading ||
+        status is LocalModelStatus.Loaded ||
+        status is LocalModelStatus.Generating
+    val busy = testing || status is LocalModelStatus.Loading || status is LocalModelStatus.Unloading
     var ggufFileName by remember { mutableStateOf(prefs.getString("gguf_file_name", null)) }
     var isCopying by remember { mutableStateOf(false) }
 
@@ -772,24 +798,25 @@ private fun GgufLocalModelSection(
                     )
                 }
 
-                Switch(
-                    checked = ggufEnabled,
+                                Switch(
+                    checked = ggufOn,
+                    enabled = !busy && !isCopying && ggufFileName != null,
                     onCheckedChange = { checked ->
-                        ggufEnabled = checked
-                        prefs.edit().putBoolean("gguf_enabled", checked).commit()
-                        if (checked) {
-                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                                val provider = com.lianyu.ai.domain.ServiceRegistry.get(
-                                    com.lianyu.ai.domain.LocalModelProvider::class.java
-                                )
-                                provider?.preloadIfEnabled()
-                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        "本地模型预加载完成",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                        testMessage = null
+                        // 先乐观更新界面，避免开关弹回；之后每 0.5 秒会用真实状态校正
+                        status = if (checked) LocalModelStatus.Loading(System.currentTimeMillis())
+                        else LocalModelStatus.Unloading
+                        scope.launch {
+                            if (checked) {
+                                val result = provider?.loadModel()
+                                    ?: LocalModelResult(false, "本地模型服务不可用")
+                                android.widget.Toast.makeText(
+                                    context,
+                                    if (result.success) "模型已加载" else "加载失败：${result.message}",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                provider?.unloadModel()
                             }
                         }
                     }
@@ -807,28 +834,89 @@ private fun GgufLocalModelSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // 状态行：只反映本进程内存里的真实情况
+            val ctxPref = prefs.getInt("gguf_context_length", 8192)
+            val currentStatus = status
+            val (statusText, statusColor) = when (currentStatus) {
+                is LocalModelStatus.Unloaded -> "○ 未加载" to textSecondaryColor
+                is LocalModelStatus.Loading ->
+                    "◐ 加载中… 已用 ${((nowMs - currentStatus.startedAtMs) / 1000).coerceAtLeast(0)} 秒" to Color(0xFFFFA000)
+                is LocalModelStatus.Loaded ->
+                    "● 已加载 · 上下文 ${currentStatus.contextLength / 1024}K · 用时 ${"%.1f".format(currentStatus.loadMs / 1000f)} 秒" to Color(0xFF4CAF50)
+                is LocalModelStatus.Generating ->
+                    "● 生成中 · 上下文 ${currentStatus.contextLength / 1024}K" to Color(0xFF4CAF50)
+                is LocalModelStatus.Unloading ->
+                    "◐ 卸载中…（正在生成时会等这一条结束）" to Color(0xFFFFA000)
+                is LocalModelStatus.Failed ->
+                    "✕ 加载失败：${currentStatus.reason}" to MaterialTheme.colorScheme.error
+            }
+            Text(
+                text = statusText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = statusColor,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (currentStatus is LocalModelStatus.Loaded && currentStatus.contextLength != ctxPref) {
+                Text(
+                    text = "上下文长度已改为 ${ctxPref / 1024}K，下次生成回复时会重新加载",
+                    fontSize = 11.sp,
+                    color = Color(0xFFFFA000),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (lastRecord.isNotBlank()) {
+                Text(
+                    text = lastRecord,
+                    fontSize = 11.sp,
+                    color = textSecondaryColor,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Button(
+                onClick = {
+                    testMessage = null
+                    scope.launch {
+                        testing = true
+                        val result = provider?.testModel() ?: LocalModelResult(false, "本地模型服务不可用")
+                        testMessage = (if (result.success) "✓ " else "✕ ") + result.message
+                        testing = false
+                    }
+                },
+                enabled = !busy && !isCopying && ggufFileName != null,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (testing) "测试中…" else "加载并测试")
+            }
+            testMessage?.let {
+                Text(text = it, fontSize = 11.sp, color = textSecondaryColor, modifier = Modifier.fillMaxWidth())
+            }
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
+                                Button(
                     onClick = {
-                        val modelFile = java.io.File(context.filesDir, "local_gguf_model.gguf")
-                        if (modelFile.exists()) modelFile.delete()
-                        prefs.edit()
-                            .remove("gguf_file_name")
-                            .remove("gguf_file_uri")
-                            .putBoolean("gguf_enabled", false)
-                            .commit()
-                        ggufFileName = null
-                        ggufEnabled = false
-                        android.widget.Toast.makeText(context, "模型已删除", android.widget.Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            // 先卸载，避免文件被删除时模型还占着内存
+                            provider?.unloadModel()
+                            val modelFile = java.io.File(context.filesDir, "local_gguf_model.gguf")
+                            if (modelFile.exists()) modelFile.delete()
+                            prefs.edit()
+                                .remove("gguf_file_name")
+                                .remove("gguf_file_uri")
+                                .putBoolean("gguf_enabled", false)
+                                .commit()
+                            ggufFileName = null
+                            android.widget.Toast.makeText(context, "模型已删除", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     },
-                    enabled = !isCopying && ggufFileName != null,
+                    enabled = !isCopying && !busy && ggufFileName != null,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("删除模型")
-                }
+                                }
 
                 Button(
                     onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
