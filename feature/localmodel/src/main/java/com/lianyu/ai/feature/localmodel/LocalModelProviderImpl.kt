@@ -5,6 +5,10 @@ import com.lianyu.ai.domain.LocalModelProvider
 import com.lianyu.ai.domain.LocalModelResult
 import com.lianyu.ai.domain.LocalModelStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -19,9 +23,18 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
     }
     private val ggufModel by lazy { GgufLocalModel(appContext) }
 
+    // 加载、卸载、测试都放在自己的作用域里执行：
+    // 即使设置页被关掉（调用方被取消），也要完整做完，状态不会停在半截。
+    private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private fun isGgufEnabled(): Boolean =
         ggufPrefs.getBoolean("gguf_enabled", false) &&
             !ggufPrefs.getString("gguf_file_uri", null).isNullOrBlank()
+
+    /** 开关的唯一写入口：开 = 模型已加载成功，关 = 未加载/已卸载/加载失败。 */
+    private fun setEnabled(enabled: Boolean) {
+        ggufPrefs.edit().putBoolean("gguf_enabled", enabled).commit()
+    }
 
     // [FIX 1/6] 读取设置里保存的上下文长度，没设置过就用 8192 兜底。
     private fun getContextLength(): Int =
@@ -35,19 +48,22 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         return ggufModel.generate(uri, context, prompt, getContextLength())
     }
 
-    override suspend fun preloadIfEnabled() {
-        if (isGgufEnabled()) loadModel()
-    }
-
     override fun getStatus(): LocalModelStatus = ggufModel.status
 
-    override suspend fun loadModel(): LocalModelResult {
+    override suspend fun loadModel(): LocalModelResult =
+        providerScope.async { doLoadModel() }.await()
+
+    private suspend fun doLoadModel(): LocalModelResult {
         val uri = ggufPrefs.getString("gguf_file_uri", null)
-        if (uri.isNullOrBlank()) return LocalModelResult(false, "未选择 GGUF 模型文件")
+        if (uri.isNullOrBlank()) {
+            setEnabled(false)
+            return LocalModelResult(false, "未选择 GGUF 模型文件")
+        }
         val startedAt = System.currentTimeMillis()
         return try {
             val didLoad = ggufModel.load(uri, getContextLength())
             val ms = System.currentTimeMillis() - startedAt
+            setEnabled(true)
             // 只有真的执行了加载才记录，避免"已加载"时把真实耗时覆盖成 0
             if (didLoad) saveLoadRecord(true, ms, "")
             LocalModelResult(true, "加载完成", ms)
@@ -56,17 +72,25 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
         } catch (e: Throwable) {
             val ms = System.currentTimeMillis() - startedAt
             val reason = e.message ?: "未知错误"
+            setEnabled(false)
             saveLoadRecord(false, ms, reason)
             LocalModelResult(false, reason, ms)
         }
     }
 
     override suspend fun unloadModel() {
-        ggufModel.unload()
+        providerScope.async {
+            // 先把开关置为关，聊天立刻不再使用本地模型；正在进行的这一条会等它结束再卸载
+            setEnabled(false)
+            ggufModel.unload()
+        }.await()
     }
 
-    override suspend fun testModel(): LocalModelResult {
-        val loadResult = loadModel()
+    override suspend fun testModel(): LocalModelResult =
+        providerScope.async { doTestModel() }.await()
+
+    private suspend fun doTestModel(): LocalModelResult {
+        val loadResult = doLoadModel()
         if (!loadResult.success) return loadResult
         val uri = ggufPrefs.getString("gguf_file_uri", null)
             ?: return LocalModelResult(false, "未选择 GGUF 模型文件")
