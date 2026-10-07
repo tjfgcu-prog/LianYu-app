@@ -73,6 +73,8 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
         System.setProperty("sun.net.spi.nameservice.domain", ".")
         super.onCreate()
         instance = this
+        // 新进程启动 = 本地模型一定不在内存里：把开关复位为关，保证开关等于"模型是否真的在运行"
+        getSharedPreferences("gguf_model_prefs", MODE_PRIVATE).edit().putBoolean("gguf_enabled", false).apply()
         initBusiness(this)
         // 冷启动清空媒体解密临时缓存，避免明文副本无限堆积（源文件一直是加密的，清空不丢数据）
         try {
