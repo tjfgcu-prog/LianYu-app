@@ -97,7 +97,7 @@ fun GeneralSettingsScreen(
     onNavigateBack: () -> Unit,
         // 自己设定
     onSelfProfileClick: () -> Unit,
-    onCompanionSelfProfileClick: (Long) -> Unit,
+    
     // 记忆与管理
     onMemoryClick: () -> Unit,
     onContextMemoryClick: () -> Unit,
@@ -144,10 +144,9 @@ fun GeneralSettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // === 自己设定（最顶部，记忆管理上方）===
-            SelfSettingsCard(
+                SelfSettingsCard(
                 isVisible = isVisible,
-                onSelfProfileClick = onSelfProfileClick,
-                onCompanionClick = onCompanionSelfProfileClick
+                onSelfProfileClick = onSelfProfileClick
             )
 
             Spacer(modifier = Modifier.height(12.dp))
