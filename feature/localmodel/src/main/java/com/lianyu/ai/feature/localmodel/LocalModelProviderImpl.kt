@@ -66,7 +66,7 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
             setEnabled(true)
             // 只有真的执行了加载才记录，避免"已加载"时把真实耗时覆盖成 0
             if (didLoad) saveLoadRecord(true, ms, "")
-            LocalModelResult(true, "加载完成", ms)
+            LocalModelResult(true, "加载完成")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -74,7 +74,7 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
             val reason = e.message ?: "未知错误"
             setEnabled(false)
             saveLoadRecord(false, ms, reason)
-            LocalModelResult(false, reason, ms)
+            LocalModelResult(false, reason)
         }
     }
 
@@ -99,14 +99,14 @@ class LocalModelProviderImpl(context: Context) : LocalModelProvider {
             val text = ggufModel.generate(uri, "", "请用一句话介绍你自己。", getContextLength())
             val ms = System.currentTimeMillis() - startedAt
             if (text.isBlank()) {
-                LocalModelResult(false, "模型已加载，但没有生成任何内容", ms)
+                LocalModelResult(false, "模型已加载，但没有生成任何内容")
             } else {
-                LocalModelResult(true, "测试通过：生成 ${text.length} 字，用时 ${"%.1f".format(ms / 1000f)} 秒", ms)
+                LocalModelResult(true, "测试通过：生成 ${text.length} 字，用时 ${"%.1f".format(ms / 1000f)} 秒")
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            LocalModelResult(false, e.message ?: "生成失败", System.currentTimeMillis() - startedAt)
+            LocalModelResult(false, e.message ?: "生成失败")
         }
     }
 
