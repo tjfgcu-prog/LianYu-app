@@ -26,9 +26,7 @@ class UserProfileProviderImpl(context: Context) : UserProfileProvider {
     override fun getNickname(): String = repository.userName.value
 
     override fun getAvatar(): String? = repository.userAvatar.value
-        override fun getSelfProfilePrompt(companionId: Long?): String =
-        repository.getEffectiveSelfProfile(companionId).toPromptText()
-    
+        
     override fun observeAvatar(onChange: (String?) -> Unit): () -> Unit {
         val job = observerScope.launch {
             repository.userAvatar.collect { avatar ->
