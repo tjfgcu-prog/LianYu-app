@@ -32,7 +32,9 @@ data class UserSelfProfile(
             if (callName.isNotBlank()) add("希望被称呼为：$callName")
             if (note.isNotBlank()) add("补充说明：$note")
         }
-        return if (lines.isEmpty()) "" else "【用户信息】\n" + lines.joinToString("\n")
+                return if (lines.isEmpty()) "" else
+            "【用户信息】\n" + lines.joinToString("\n") +
+                "\n以上是你早就知道的关于对方的事实，对方问起时要自然地回答，不要装作不知道。"
     }
 
     companion object {
