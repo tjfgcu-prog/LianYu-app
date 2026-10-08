@@ -13,6 +13,5 @@ sealed interface LocalModelStatus {
 /** 一次加载或测试的结果。 */
 data class LocalModelResult(
     val success: Boolean,
-    val message: String,
-    val durationMs: Long = 0L
+    val message: String
 )
