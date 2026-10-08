@@ -33,16 +33,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.common.UserSelfProfile
 
-/** 总设置顶部的"自己设定"卡片：我的信息入口 + 角色头像一排。 */
+/** 总设置顶部的"自己设定"卡片：我的信息入口。 */
 @Composable
 internal fun SelfSettingsCard(
     isVisible: Boolean,
-    onSelfProfileClick: () -> Unit,
-    onCompanionClick: (Long) -> Unit,
-    viewModel: SelfProfileViewModel = viewModel()
+    onSelfProfileClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val companions by viewModel.companions.collectAsState()
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
@@ -60,57 +57,8 @@ internal fun SelfSettingsCard(
                 title = "我的信息",
                 subtitle = "角色眼中的你：姓名、性别、年龄、职业等",
                 onClick = onSelfProfileClick,
-                showDivider = companions.isNotEmpty()
+                showDivider = false
             )
-            if (companions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "点头像，单独设定\u201c这个角色眼中的我\u201d",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(companions, key = { it.id }) { c ->
-                        Column(
-                            modifier = Modifier
-                                .width(60.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { onCompanionClick(c.id) }
-                                .padding(vertical = 4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFE5E5E5)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (c.avatarUrl != null) {
-                                    AsyncImage(
-                                        model = c.avatarUrl,
-                                        contentDescription = c.name,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Icon(Icons.Filled.Person, c.name, tint = Color(0xFFAAAAAA), modifier = Modifier.size(24.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                c.name,
-                                fontSize = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
         }
     }
 }
@@ -119,17 +67,78 @@ internal fun SelfSettingsCard(
 @Composable
 fun SelfProfileScreen(
     onNavigateBack: () -> Unit,
+    onCompanionClick: (Long) -> Unit,
     viewModel: SelfProfileViewModel = viewModel()
 ) {
     val initial = remember { viewModel.getSelf() }
+    val companions by viewModel.companions.collectAsState()
     SelfProfileEditor(
         title = "我的信息",
         hint = "这些信息会提供给所有角色（含群聊）。姓名同时是聊天里显示的昵称，留空则不改昵称。",
         initial = initial,
         placeholders = UserSelfProfile(),
         onSave = { viewModel.saveSelf(it) },
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        bottomContent = {
+            CompanionAvatarRow(companions = companions, onCompanionClick = onCompanionClick)
+        }
     )
+}
+
+/** 已创建角色的头像一排，点头像进入"这个角色眼中的我"。 */
+@Composable
+private fun CompanionAvatarRow(
+    companions: List<com.lianyu.ai.database.model.CompanionEntity>,
+    onCompanionClick: (Long) -> Unit
+) {
+    if (companions.isEmpty()) return
+    val colorScheme = MaterialTheme.colorScheme
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        "点头像，单独设定\u201c这个角色眼中的我\u201d",
+        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+        color = colorScheme.onSurfaceVariant
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(companions, key = { it.id }) { c ->
+            Column(
+                modifier = Modifier
+                    .width(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onCompanionClick(c.id) }
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE5E5E5)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (c.avatarUrl != null) {
+                        AsyncImage(
+                            model = c.avatarUrl,
+                            contentDescription = c.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(Icons.Filled.Person, c.name, tint = Color(0xFFAAAAAA), modifier = Modifier.size(24.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    c.name,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }
 
 /** 这个角色眼中的我 */
@@ -161,7 +170,8 @@ private fun SelfProfileEditor(
     initial: UserSelfProfile,
     placeholders: UserSelfProfile,
     onSave: (UserSelfProfile) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    bottomContent: @Composable () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
     var name by remember { mutableStateOf(initial.name) }
@@ -225,6 +235,7 @@ private fun SelfProfileEditor(
                 singleLine = false,
                 supportingText = "${note.length}/${UserSelfProfile.NOTE_MAX}"
             )
+            bottomContent()
             Spacer(modifier = Modifier.height(48.dp))
         }
     }
