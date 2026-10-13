@@ -748,6 +748,12 @@ class MemoryManager private constructor(
 
 // ── 剧情状态 ──
 
+    override suspend fun deleteCompanionMemories(companionId: Long) =
+        deleteAllMemories(MemoryScope.COMPANION, companionId)
+
+    override suspend fun deleteGroupMemories(groupId: Long) =
+        deleteAllMemories(MemoryScope.GROUP, groupId)
+
     private fun loadStory(id: Long): StoryState? =
         storyCache[id] ?: store.loadStoryState(MemoryScope.COMPANION, id)?.also { storyCache[id] = it }
 
