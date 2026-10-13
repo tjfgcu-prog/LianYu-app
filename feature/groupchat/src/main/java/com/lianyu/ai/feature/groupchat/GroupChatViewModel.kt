@@ -830,6 +830,7 @@ class GroupChatViewModel(
                 val group = _groupData.value
                     ?: throw IllegalStateException("Group data is null")
                 chatGroupRepository.deleteGroup(group)
+            memoryProvider.deleteGroupMemories(group.id)
             } catch (e: Exception) {
                 Log.e("GroupChatViewModel", "deleteGroup failed", e)
             }
