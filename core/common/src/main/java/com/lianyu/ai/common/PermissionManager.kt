@@ -16,7 +16,7 @@ object PermissionManager {
     const val CAMERA = Manifest.permission.CAMERA
     const val RECORD_AUDIO = Manifest.permission.RECORD_AUDIO
     const val READ_MEDIA_IMAGES = Manifest.permission.READ_MEDIA_IMAGES
-    const val READ_MEDIA_VIDEO = Manifest.permission.READ_MEDIA_VIDEO
+    
     const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
     const val WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE
     const val POST_NOTIFICATIONS = Manifest.permission.POST_NOTIFICATIONS
@@ -64,7 +64,7 @@ object PermissionManager {
             CAMERA -> "相机权限"
             RECORD_AUDIO -> "麦克风权限"
             READ_MEDIA_IMAGES, READ_EXTERNAL_STORAGE -> "存储/相册权限"
-            READ_MEDIA_VIDEO -> "视频读取权限"
+            
             WRITE_EXTERNAL_STORAGE -> "写入存储权限"
             POST_NOTIFICATIONS -> "通知权限"
             else -> "未知权限"
@@ -76,7 +76,7 @@ object PermissionManager {
             CAMERA -> "需要相机权限才能拍摄照片或视频"
             RECORD_AUDIO -> "需要麦克风权限才能录制语音"
             READ_MEDIA_IMAGES, READ_EXTERNAL_STORAGE -> "需要存储权限才能选择图片"
-            READ_MEDIA_VIDEO -> "需要存储权限才能选择视频"
+            
             WRITE_EXTERNAL_STORAGE -> "需要写入权限才能保存文件"
             POST_NOTIFICATIONS -> "需要通知权限才能接收消息提醒"
             else -> "需要此权限以使用完整功能"
