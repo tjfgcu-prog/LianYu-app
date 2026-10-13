@@ -17,12 +17,6 @@ class ChatTurnState {
     /** Sticker queued by TextProcessor but not yet persisted. Used to randomize sticker/text order. */
     var pendingSticker: StickerInfo? = null
 
-    /** Message ID of the pending sticker to broadcast (stale sticker pattern). */
-    var lastStickerMsgId: Long = -1
-
-    /** Content of the pending stale sticker message. */
-    var lastStickerContent: String = ""
-
     /** Active message-sending coroutine job, cancelled when a new message starts. */
     var sendMessageJob: Job? = null
 
@@ -33,8 +27,7 @@ class ChatTurnState {
     fun reset() {
         stickerSentThisTurn = false
         pendingSticker = null
-        lastStickerMsgId = -1
-        lastStickerContent = ""
+        
     }
 
     /** Cancel the active send job if any. Returns the cancelled job or null. */
@@ -48,20 +41,4 @@ class ChatTurnState {
         sendMessageJob = job
     }
 
-    /** Broadcast stale sticker if pending. Returns true if a stale sticker was broadcast. */
-    fun flushStaleSticker(broadcast: (Long, String) -> Unit): Boolean {
-        if (lastStickerMsgId > 0) {
-            broadcast(lastStickerMsgId, lastStickerContent)
-            lastStickerMsgId = -1
-            lastStickerContent = ""
-            return true
-        }
-        return false
-    }
-
-    /** Set the stale sticker pending for next-turn broadcast. */
-    fun enqueueStaleSticker(msgId: Long, content: String) {
-        lastStickerMsgId = msgId
-        lastStickerContent = content
-    }
 }
