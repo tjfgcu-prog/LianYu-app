@@ -25,20 +25,5 @@ class CompanionListViewModel(application: Application) : AndroidViewModel(applic
         emitAll(repository.getAllCompanions())
     }.flowOn(Dispatchers.IO)
 
-    fun deleteCompanion(companion: CompanionEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            // 如果删除的是默认测试伴侣（含新旧版 tag），标记用户已主动删除
-            val isDefaultCompanion = companion.tags.orEmpty()
-                .split(',')
-                .map { it.trim() }
-                .any { it == DefaultCompanionSeeder.LEGACY_TAG || it == DefaultCompanionSeeder.defaultExperienceCompanionTag }
-            if (isDefaultCompanion) {
-                getApplication<Application>()
-                    .getSharedPreferences("default_companion", android.content.Context.MODE_PRIVATE)
-                    .edit { putBoolean("deleted_by_user", true) }
-            }
-            repository.deleteCompanion(companion)
-            UserRepository(getApplication()).clearCompanionSelfProfile(companion.id)
-        }
-    }
+    
 }
