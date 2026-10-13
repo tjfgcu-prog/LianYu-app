@@ -32,7 +32,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.androidx.security.crypto)
+    
     // SQLCipher: zetetic not in repos
     // TODO: Add SQLCipher repo
     testImplementation(libs.junit)
