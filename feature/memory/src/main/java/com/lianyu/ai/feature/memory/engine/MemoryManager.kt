@@ -180,20 +180,17 @@ class MemoryManager private constructor(
     private fun loadScopeFromDisk(scope: MemoryScope, id: Long) {
         val key = scopeKey(scope, id)
         runCatching {
-            // 加载中期记忆到内存
-            val midItems = store.loadTier(scope, id, MemoryTier.MID)
+            // 先读长期层，用于剔除历史上被错误写入中期层的重复项
+            val longItems = store.loadTier(scope, id, MemoryTier.LONG)
+            val longIds = longItems.mapTo(HashSet()) { it.id }
+            val midItems = store.loadTier(scope, id, MemoryTier.MID).filter { it.id !in longIds }
             if (midItems.isNotEmpty()) {
                 midTermCache[key] = midItems.toMutableList()
             }
-
-            // 加载长期记忆索引
-            val longItems = store.loadTier(scope, id, MemoryTier.LONG)
             if (longItems.isNotEmpty()) {
                 val index = MemoryIndex()
                 longItems.forEach { index.add(it) }
                 longTermIndex[key] = index
-                // 同时缓存长期记忆内容供查询
-                midTermCache[key]?.addAll(0, longItems) // 长期记忆优先
             }
 
             // 加载索引
