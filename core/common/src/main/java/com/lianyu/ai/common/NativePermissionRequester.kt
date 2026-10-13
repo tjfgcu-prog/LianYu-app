@@ -194,7 +194,7 @@ object NativePermissionRequester {
             Manifest.permission.CAMERA -> "相机权限"
             Manifest.permission.RECORD_AUDIO -> "麦克风权限"
             Manifest.permission.READ_MEDIA_IMAGES -> "读取图片权限"
-            Manifest.permission.READ_MEDIA_VIDEO -> "读取视频权限"
+            
             Manifest.permission.READ_EXTERNAL_STORAGE -> "读取存储权限"
             Manifest.permission.WRITE_EXTERNAL_STORAGE -> "写入存储权限"
             else -> "未知权限"
