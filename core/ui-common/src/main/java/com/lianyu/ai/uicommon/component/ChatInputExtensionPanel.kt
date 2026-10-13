@@ -31,7 +31,7 @@ import androidx.compose.material.icons.filled.Image
 
 import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Videocam
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
