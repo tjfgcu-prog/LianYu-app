@@ -64,7 +64,7 @@ import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModel
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModelFactory
 import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
-import com.lianyu.ai.common.AppSettingsStore
+
 
 @Composable
 fun ChatDetailScreen(
@@ -79,13 +79,7 @@ fun ChatDetailScreen(
     )
     val companionData by viewModel.companionData.collectAsState()
     val settings by store.settingsFlow(companionId).collectAsState(initial = com.lianyu.ai.feature.chat.data.CompanionChatDetailSettings())
-    val appSettingsStore = remember { AppSettingsStore(context) }
-    var innerThoughtEnabled by remember { mutableStateOf(false) }
-
-    // 读取心理活动开关状态
-    LaunchedEffect(Unit) {
-        innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
-    }
+    
 
     var showBgPicker by remember { mutableStateOf(false) }
     var showBlockConfirm by remember { mutableStateOf(false) }
@@ -246,18 +240,7 @@ fun ChatDetailScreen(
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                SettingsToggleRow(
-                    title = "显示心理活动",
-                    subtitle = "AI回复中包含（脸红）（开心）等内心描写",
-                    checked = innerThoughtEnabled,
-                    onCheckedChange = { checked ->
-                        innerThoughtEnabled = checked
-                        scope.launch {
-                            appSettingsStore.setInnerThoughtEnabled(checked)
-                        }
-                    }
-                )
-                HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                
                 SettingsToggleRow(
                     title = "精确时间感知",
                     subtitle = "通过NTP网络校时获取精确时间，避免设备时钟不准",
