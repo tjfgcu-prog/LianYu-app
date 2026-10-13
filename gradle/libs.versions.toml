@@ -23,7 +23,7 @@ kotlinxSerialization = "1.8.1"
 kotlinxCoroutinesAndroid = "1.8.1"
 converterKotlinxSerialization = "1.0.0"
 datastore = "1.1.1"
-appUpdate = "2.1.0"
+
 workRuntimeKtx = "2.9.0"
 animation = "1.7.5"
 lottie = "6.5.0"
@@ -65,7 +65,7 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version = "0.36.0" }
-androidx-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "appUpdate" }
+
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tinkAndroid" }
