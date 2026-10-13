@@ -684,8 +684,8 @@ class ChatViewModel(
             timestamp = System.currentTimeMillis()
         )
         applicationApiScope.launch(Dispatchers.IO) {
-            val userMessageId = chatRepository.sendMessage(userMessage)
-            notifyExternalBridgeNoop(userMessageId)
+            chatRepository.sendMessage(userMessage)
+            
 
             if (_availableApis.value.isEmpty()) {
                 _events.tryEmit(ChatUiEvent.Error("请先配置API：我 → API设置 → 添加密钥"))
@@ -982,10 +982,7 @@ class ChatViewModel(
         }
     }
 
-    // 微信桥接功能已移除，保留空占位以避免大范围改动调用点。
-     private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
-         // no-op
-     }
+    
 
     /**
      * 发送表情包消息
@@ -1041,9 +1038,9 @@ class ChatViewModel(
                     type = MessageType.IMAGE,
                     linkString = imagePath
                 )
-                val userMessageId = chatRepository.sendMessage(userMessage)
+                chatRepository.sendMessage(userMessage)
                 SecureLog.d("ChatViewModel", "Image message sent, path=$imagePath")
-                notifyExternalBridgeNoop(userMessageId)
+                
 
                 // [P1 FIX] 图片理解使用用户设置的上下文条数，不再写死 50
                 val history = contextResolver.getHistoryForAi(companionId)
