@@ -61,6 +61,12 @@ interface MemoryProvider {
 
     /** 写入某角色的剧情摘要（备份导入用）。 */
     suspend fun setStorySummary(companionId: Long, summary: String)
+
+    /** 删除某个角色的全部记忆（含剧情摘要） */
+    suspend fun deleteCompanionMemories(companionId: Long)
+
+    /** 删除某个群聊的全部记忆 */
+    suspend fun deleteGroupMemories(groupId: Long)
     
 }
 
