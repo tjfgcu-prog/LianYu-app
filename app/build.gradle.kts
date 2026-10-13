@@ -14,7 +14,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 13
-        versionName = "9.9.9"
+        versionName = "0.0.1"
 
         // Force multi-DEX output
         multiDexEnabled = true
@@ -179,14 +179,14 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.accompanist.systemuicontroller)
+    
     implementation(libs.androidx.animation)
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.animation.graphics)
-    implementation(libs.lottie.compose)
+    
     
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.tracing)
+    
 
 
 
