@@ -26,8 +26,7 @@ data class ProactiveMessageSettings(
     val dndEndMinutes: Int = 8 * 60,
     /** DND 时段是否允许深夜消息 */
     val allowLateNightMessage: Boolean = false,
-    /** DND 时段是否允许优先级消息 */
-    val allowPriorityMessageInDnd: Boolean = false,
+    
     /** 是否屏蔽该伴侣的主动消息 */
     val blocked: Boolean = false
 )
