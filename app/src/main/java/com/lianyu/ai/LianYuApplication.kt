@@ -84,7 +84,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        applyStoredLanguage(this)
+        applyFixedLocale()
     }
 
     // App 切到后台（UI 不可见）时同步落盘一次待写入的记忆，防止系统随后杀掉进程
@@ -118,7 +118,7 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
         fun initBusiness(app: Application) {
             SaltStore.init(app)
             SecureLog.init(com.lianyu.ai.BuildConfig.DEBUG)
-            applyStoredLanguage(app)
+            applyFixedLocale()
             AiService.initialize(app)
             NtpTimeProvider.initialize(app)
             registerServiceProviders(app)
@@ -215,18 +215,8 @@ class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Confi
 
         
 
-        private fun applyStoredLanguage(app: Application) {
-            Locale.setDefault(
-                when (app.getSharedPreferences("language_prefs", android.content.Context.MODE_PRIVATE)
-                    .getString("language", "zh-CN") ?: "zh-CN"
-                ) {
-                    "zh-TW" -> Locale.TRADITIONAL_CHINESE
-                    "en" -> Locale.ENGLISH
-                    "ja" -> Locale.JAPANESE
-                    "ko" -> Locale.KOREAN
-                    else -> Locale.SIMPLIFIED_CHINESE
+        private fun applyFixedLocale() {
+            Locale.setDefault(Locale.SIMPLIFIED_CHINESE)
                 }
-            )
-        }
     }
 }
