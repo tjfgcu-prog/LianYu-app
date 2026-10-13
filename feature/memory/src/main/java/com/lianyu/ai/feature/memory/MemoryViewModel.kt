@@ -58,11 +58,7 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun deleteMemoriesForCompanion(companionId: Long) {
-        viewModelScope.launch {
-            memoryManager.deleteAllMemories(MemoryScope.COMPANION, companionId)
-        }
-    }
+    
     // ── 剧情摘要 ──
     private val storyRefresh = MutableStateFlow(0)
 
