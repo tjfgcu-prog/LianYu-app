@@ -94,10 +94,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _visionApiKey = MutableStateFlow("")
     val visionApiKey: StateFlow<String> = _visionApiKey.asStateFlow()
 
-    private val _innerThoughtEnabled = MutableStateFlow(false)
-    val innerThoughtEnabled: StateFlow<Boolean> = _innerThoughtEnabled.asStateFlow()
-
-    init {
+   init {
         viewModelScope.launch {
             appSettingsStore.contextLimitFlow.collect { limit ->
                 _contextLimit.value = limit
@@ -134,11 +131,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
         }
 
-        viewModelScope.launch {
-            appSettingsStore.innerThoughtEnabledFlow.collect { enabled ->
-                _innerThoughtEnabled.value = enabled
-            }
-        }
+        
     }
 
     fun setContextLimit(limit: Int) {
@@ -177,11 +170,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun setInnerThoughtEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            appSettingsStore.setInnerThoughtEnabled(enabled)
-        }
-    }
+    
 
     suspend fun testVisionConnection(provider: String, baseUrl: String, apiKey: String, model: String): Result<String> {
         return withContext(Dispatchers.IO) {
