@@ -878,10 +878,7 @@ class GroupChatViewModel(
         }
     }
 
-    // 微信桥接功能已移除，保留空占位以避免大范围改动调用点。
-     private fun notifyExternalBridgeNoop(companionId: Long, messageId: Long) {
-         // no-op
-     }
+    
 
     private fun cleanAiReply(raw: String, companionName: String? = null): String {
         var text = raw
@@ -945,8 +942,8 @@ class GroupChatViewModel(
 
         if (stickerNames.isEmpty() && textSegments.size <= 1) {
             val msg = GroupMessage(groupId = groupId, companionId = companionId, content = cleaned, timestamp = System.currentTimeMillis())
-            val msgId = groupMessageRepository.sendMessage(msg)
-            notifyExternalBridgeNoop(companionId, msgId)
+            groupMessageRepository.sendMessage(msg)
+            
         } else {
             // [M8 FIX] 按原文出现顺序交织发送 text 与 sticker：原实现先发完所有文字再发所有表情包，
             // 但表情包可能穿插在文字中间，顺序错乱破坏语义。
@@ -986,8 +983,8 @@ class GroupChatViewModel(
                 when (item) {
                     is Either.Left -> {
                         val msg = GroupMessage(groupId = groupId, companionId = companionId, content = item.value, timestamp = System.currentTimeMillis())
-                        val msgId = groupMessageRepository.sendMessage(msg)
-                        notifyExternalBridgeNoop(companionId, msgId)
+                        groupMessageRepository.sendMessage(msg)
+                        
                     }
                     is Either.Right -> {
                         sendStickerMessage(groupId, companionId, item.value)
@@ -1024,8 +1021,8 @@ class GroupChatViewModel(
                     content = "[$stickerId]",
                     timestamp = System.currentTimeMillis()
                 )
-                val msgId = groupMessageRepository.sendMessage(stickerMessage)
-                notifyExternalBridgeNoop(companionId, msgId)
+                groupMessageRepository.sendMessage(stickerMessage)
+                
                 Log.d("GroupChatViewModel", "群聊表情包已发送: [$stickerId]")
             } else {
                 Log.w("GroupChatViewModel", "表情包未找到: [$stickerDescription]，发送为文本")
