@@ -24,14 +24,5 @@ class CompanionRepository(private val companionDao: CompanionDao) {
 
     suspend fun getIntimacy(id: Long): Int? = companionDao.getIntimacy(id)
 
-    /**
-     * 查找默认体验伴侣（按默认标签匹配）。
-     * 角色切换时依赖此入口定位需要更新的实体，保证聊天记录不换 companionId。
-     */
-    suspend fun getDefaultExperienceCompanion(): CompanionEntity? {
-        val tag = DefaultCompanionSeeder.defaultExperienceCompanionTag
-        return companionDao.getAllCompanionsSync().firstOrNull { companion ->
-            companion.tags.orEmpty().split(',').map { it.trim() }.any { it == tag }
-        }
-    }
+    
 }
