@@ -50,7 +50,7 @@ data class ProactiveSettings(
     val dndStartMinutes: Int = 23 * 60,
     val dndEndMinutes: Int = 8 * 60,
     val allowLateNightMessage: Boolean = false,
-    val allowPriorityMessageInDnd: Boolean = false,
+    
     val blocked: Boolean = false
 )
 
@@ -94,7 +94,7 @@ class CompanionMessageWorker(
                     ?: ProactiveSettings()
 
                 // ── 免打扰检查 ──
-                if (settings.doNotDisturbEnabled && !settings.allowPriorityMessageInDnd) {
+                if (settings.doNotDisturbEnabled) {
                     val now = java.util.Calendar.getInstance()
                     val totalMinutes = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
                     val inDndRange = if (settings.dndStartMinutes > settings.dndEndMinutes) {
@@ -226,7 +226,7 @@ class CompanionMessageWorker(
         dndStartMinutes = dndStartMinutes,
         dndEndMinutes = dndEndMinutes,
         allowLateNightMessage = allowLateNightMessage,
-        allowPriorityMessageInDnd = allowPriorityMessageInDnd,
+        
         blocked = blocked
     )
 
