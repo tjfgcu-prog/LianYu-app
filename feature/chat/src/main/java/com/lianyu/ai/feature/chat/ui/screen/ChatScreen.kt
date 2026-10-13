@@ -204,26 +204,7 @@ fun ChatScreen(
 
     
 
-    // Video picker for album
-    val videoPickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            showExtensionPanel = false
-            scope.launch {
-                try {
-                    val videoPath = copyMediaUriToEncryptedCache(context, it)
-                    if (videoPath != null) {
-                        viewModel.sendVideoMessage(videoPath)
-                    } else {
-                        snackbarHostState.showSnackbar("视频读取失败")
-                    }
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar("视频处理失败: ${e.message}")
-                }
-            }
-        }
-    }
+    
 
     val userAvatar by viewModel.userAvatar.collectAsState()
     val userName by viewModel.userName.collectAsState()
