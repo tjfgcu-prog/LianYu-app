@@ -1098,23 +1098,6 @@ class ChatViewModel(
     /**
      * 发送视频消息（暂不支持视频理解，仅发送标记）
      */
-    fun sendVideoMessage(videoPath: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val videoMessage = ChatMessage(
-                    companionId = companionId,
-                    content = "[视频]",
-                    isFromUser = true,
-                    timestamp = System.currentTimeMillis()
-                )
-                chatRepository.sendMessage(videoMessage)
-                SecureLog.d("ChatViewModel", "Video message sent: $videoPath")
-            } catch (e: Exception) {
-                SecureLog.e("ChatViewModel", "sendVideoMessage failed", e)
-            }
-        }
-    }
-
     
 
     // ── 聊天页 TTS 控制（供 UI 调用）──
