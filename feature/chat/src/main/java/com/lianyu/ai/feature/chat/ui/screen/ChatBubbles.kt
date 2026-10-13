@@ -586,7 +586,7 @@ internal fun copyUriToCache(context: android.content.Context, uri: Uri): String?
 
 /**
  * Copy URI content to app cache directory, encrypting it at rest.
- * Used for user photo/video sends (private content) — unlike
+ * Used for user photo sends (private content) — unlike
  * [copyUriToCache] which is only used for transient sticker-pack zips.
  */
 internal fun copyMediaUriToEncryptedCache(context: android.content.Context, uri: Uri): String? {
@@ -597,8 +597,7 @@ internal fun copyMediaUriToEncryptedCache(context: android.content.Context, uri:
             "image/jpeg" -> "jpg"
             "image/gif" -> "gif"
             "image/webp" -> "webp"
-            "video/mp4" -> "mp4"
-            "video/3gpp" -> "3gp"
+            
             else -> "tmp"
         }
         val destFile = java.io.File(context.cacheDir, "media_${System.currentTimeMillis()}.$extension")
