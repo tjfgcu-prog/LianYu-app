@@ -22,7 +22,7 @@ data class CompanionChatDetailSettings(
     val doNotDisturbEnabled: Boolean = false,
     val dndStartMinutes: Int = 23 * 60,
     val dndEndMinutes: Int = 8 * 60,
-    val allowPriorityMessageInDnd: Boolean = false,
+    
     val blocked: Boolean = false,
     
     val stickerProbability: Int = 30, // AI发送表情包的概率 0-100
