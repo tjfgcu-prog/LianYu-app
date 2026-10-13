@@ -48,10 +48,7 @@ class UserRepository(context: Context) {
         _userBanner.value = bannerUri
     }
 
-    fun updateSelectedRole(role: CompanionRole) {
-        prefs.edit(commit = true) { putString("selected_role", role.name) }
-        _selectedRole.value = role
-    }
+    
     // ── 自己设定 ──
     // 直接读写 SharedPreferences，不缓存：项目里有多个 UserRepository 实例，缓存会互相读到旧值。
 
