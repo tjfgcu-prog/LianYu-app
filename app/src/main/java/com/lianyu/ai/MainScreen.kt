@@ -71,12 +71,10 @@ import kotlinx.coroutines.launch
 /**
  * 主界面 — NavHost + Pager + Scaffold 编排。
  *
- * 状态空间模型:
- *   S ∈ {Home, Contacts, Profile, Chat(id), ChatDetail(id), VoiceCall(id),
- *        GroupChat(id), GroupDetail(id), CreateGroup, Settings, Theme, Language,
- *        CheckUpdate, About, FrameRate, Team, Support, Memory,
- *        ContextMemory, TtsSettings, TokenUsage,
- *        AgreementView, CreateCompanion, EditCompanion(id)}
+ * 路由: Home, Contacts, Profile, Chat(id), ChatDetail(id),
+ *       GroupChat(id), GroupDetail(id), CreateGroup, CreateCompanion, EditCompanion(id),
+ *       Settings, TtsSettings, TokenUsage, Theme, FrameRate, YandereMode,
+ *       GeneralSettings, Memory, ContextMemory, SelfProfile, CompanionSelfProfile(id), DataBackup
  *   差分方程: S[k+1] = f(S[k], E[k])
  *   验证: 所有状态出度 ≥ 1 (popBackStack 保证)
  */
