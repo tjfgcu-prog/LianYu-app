@@ -72,7 +72,7 @@ class AiResponseFinalizer(
 ) {
     /**
      * Process and save an AI response: reasoning display, sticker processing, DB commit,
-     * External bridge hook (no-op). Returns the message ID for the saved response.
+     * Returns the message ID for the saved response.
      */
     suspend fun finalizeResponse(
         aiContent: String,
@@ -128,7 +128,7 @@ class AiResponseFinalizer(
                 flushPendingSticker()
             }
             delay(100)
-            broadcastAiMessage(id, safeProcessed)
+            
             id
         } else {
             // 多条回复：每段间隔0.8~2秒，模拟打字
@@ -153,19 +153,11 @@ class AiResponseFinalizer(
                 flushPendingSticker()
             }
             delay(100)
-            // 广播最后一条分段消息
-            if (lastId > 0) {
-                broadcastAiMessage(lastId, segments.last().ifBlank { "\u200B" })
-            }
+            
             lastId
         }
 
-        // Broadcast stale sticker message if any
-        if (turnState.lastStickerMsgId > 0) {
-            notifyExternalBridgeNoop(turnState.lastStickerMsgId, turnState.lastStickerContent)
-            turnState.lastStickerMsgId = -1
-            turnState.lastStickerContent = ""
-        }
+        
 
         // Save memory
         if (userContentForMemory != null && aiContent.isNotBlank()) {
@@ -190,14 +182,7 @@ class AiResponseFinalizer(
 
     // ── 辅助方法（从 ChatViewModel 迁移）──
 
-    // 微信桥接功能已移除，以下方法保留为空占位以避免大范围改动调用点。
-     private fun broadcastAiMessage(messageId: Long, finalContent: String) {
-         // no-op
-     }
- 
-     private fun notifyExternalBridgeNoop(messageId: Long, finalContent: String? = null) {
-         // no-op
-     }
+    
 
     /**
      * 连续追问：AI回复后按概率触发追问，让对话继续下去。
@@ -232,7 +217,7 @@ class AiResponseFinalizer(
                 val followUpMsg = buildAiMessage(followUp)
                 val msgId = chatRepository.sendMessageAndGetId(followUpMsg)
                 scheduleVoiceUpgrade(msgId, followUp)
-                notifyExternalBridgeNoop(msgId, followUp)
+                
                 SecureLog.d("ChatViewModel", "Follow-up question sent: $followUp")
             } catch (e: Exception) {
                 SecureLog.w("ChatViewModel", "Follow-up question failed: ${e.message}")
@@ -336,12 +321,7 @@ class AiResponseFinalizer(
             isFromUser = false,
             timestamp = System.currentTimeMillis()
         )
-        val msgId = chatRepository.sendMessageAndGetId(stickerMessage)
-        if (msgId > 0) {
-            turnState.lastStickerMsgId = msgId
-            turnState.lastStickerContent = stickerContent
-        }
-        return msgId
+        return chatRepository.sendMessageAndGetId(stickerMessage)
     }
 
     // companionInfoProvider 由 ChatViewModel 注入，用于 triggerFollowUp 获取当前 companion 数据
