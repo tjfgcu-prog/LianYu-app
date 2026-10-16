@@ -221,7 +221,7 @@ fun CreateCompanionScreen(
         }
     }
 
-        val colorScheme = MaterialTheme.colorScheme
+    val colorScheme = MaterialTheme.colorScheme
     val accentColor = Color(0xFFFF6B9D)
     val accentGradient = listOf(
         Color(0xFFFF6B9D).copy(alpha = 0.9f),
@@ -394,10 +394,10 @@ fun CreateCompanionScreen(
                     placeholder = stringResource(R.string.body_type_placeholder_girlfriend),
                     imeAction = ImeAction.Next,
                     accentColor = accentColor,
-                    suggestionChips = viewModel.bodyTypeSuggestions(role),
+                    suggestionChips = viewModel.bodyTypeSuggestions(),
                     onSuggestionClick = { bodyType = it }
                 )
-                viewModel.bodyTypeSuggestions()
+                
                 AnimatedFormField(
                     visible = isVisible,
                     delayMillis = 190,
@@ -407,10 +407,10 @@ fun CreateCompanionScreen(
                     placeholder = stringResource(R.string.profession_placeholder_girlfriend),
                     imeAction = ImeAction.Next,
                     accentColor = accentColor,
-                    suggestionChips = viewModel.professionSuggestions(role),
+                    suggestionChips = viewModel.professionSuggestions(),
                     onSuggestionClick = { profession = it }
                 )
-                viewModel.professionSuggestions()
+                
                 // 性格标签
                 AnimatedVisibility(
                     visible = isVisible,
@@ -447,7 +447,7 @@ fun CreateCompanionScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                viewModel.personalityTags()
+                                viewModel.personalityTags().forEach { tag ->
                                     val selected = selectedPersonalityTags.contains(tag)
                                     FilterChip(
                                         selected = selected,
