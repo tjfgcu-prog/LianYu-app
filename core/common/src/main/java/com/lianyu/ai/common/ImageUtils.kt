@@ -59,13 +59,18 @@ object ImageUtils {
         }
     }
 
-    fun deleteBannerFile(path: String?) {
-        path?.let {
-            try {
-                File(it).delete()
-            } catch (_: Exception) { }
+    /** 清理封面目录里除 keepPath 以外的文件（包含历史遗留的旧封面） */
+    suspend fun cleanupBannerFiles(context: Context, keepPath: String?) =
+        withContext(Dispatchers.IO) {
+            val dir = File(context.filesDir, "banners")
+            dir.listFiles()?.forEach { file ->
+                if (file.isFile && file.absolutePath != keepPath) {
+                    try {
+                        file.delete()
+                    } catch (_: Exception) { }
+                }
+            }
         }
-    }
 
     suspend fun saveUriToInternalStorage(context: Context, uri: String): String? = withContext(Dispatchers.IO) {
         try {
