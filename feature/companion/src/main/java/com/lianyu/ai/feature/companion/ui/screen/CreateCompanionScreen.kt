@@ -11,7 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +45,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Shield
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -93,7 +93,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.lianyu.ai.common.CompanionRole
+
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.feature.companion.ui.viewmodel.CreateCompanionViewModel
 
@@ -108,9 +108,9 @@ fun CreateCompanionScreen(
     val context = LocalContext.current
     val isEditMode = companionId != null
     val existingCompanion by viewModel.existingCompanion.collectAsState()
-    val globalRole by viewModel.selectedRole.collectAsState()
+    
 
-    var role by remember { mutableStateOf(globalRole) }
+    
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var bodyType by remember { mutableStateOf("") }
@@ -201,12 +201,7 @@ fun CreateCompanionScreen(
         existingCompanion?.let(::populateExistingCompanion)
     }
 
-    // 非编辑模式下，全局角色切换时跟随变化
-    LaunchedEffect(globalRole) {
-        if (!isEditMode && existingCompanion == null) {
-            role = globalRole
-        }
-    }
+    
 
     val isFormValid = name.isNotBlank() && rawPrompt.isNotBlank()
     val buttonScale by animateFloatAsState(
@@ -226,25 +221,13 @@ fun CreateCompanionScreen(
         }
     }
 
-    val colorScheme = MaterialTheme.colorScheme
-    val accentColor = when (role) {
-        CompanionRole.GIRLFRIEND -> Color(0xFFFF6B9D)
-        CompanionRole.BOYFRIEND -> Color(0xFF4A90E2)
-    }
-    val accentGradient = when (role) {
-        CompanionRole.GIRLFRIEND -> listOf(
-            Color(0xFFFF6B9D).copy(alpha = 0.9f),
-            Color(0xFFFF8FB3).copy(alpha = 0.8f)
-        )
-        CompanionRole.BOYFRIEND -> listOf(
-            Color(0xFF4A90E2).copy(alpha = 0.9f),
-            Color(0xFF6BA5E7).copy(alpha = 0.8f)
-        )
-    }
-    val roleIcon: ImageVector = when (role) {
-        CompanionRole.GIRLFRIEND -> Icons.Filled.Favorite
-        CompanionRole.BOYFRIEND -> Icons.Filled.Shield
-    }
+        val colorScheme = MaterialTheme.colorScheme
+    val accentColor = Color(0xFFFF6B9D)
+    val accentGradient = listOf(
+        Color(0xFFFF6B9D).copy(alpha = 0.9f),
+        Color(0xFFFF8FB3).copy(alpha = 0.8f)
+    )
+    val roleIcon: ImageVector = Icons.Filled.Favorite
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -252,11 +235,10 @@ fun CreateCompanionScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = when {
-                            isEditMode && role == CompanionRole.BOYFRIEND -> stringResource(R.string.edit_companion_boyfriend)
-                            isEditMode -> stringResource(R.string.edit_companion_girlfriend)
-                            role == CompanionRole.BOYFRIEND -> stringResource(R.string.create_companion_boyfriend)
-                            else -> stringResource(R.string.create_companion_girlfriend)
+                                                text = if (isEditMode) {
+                            stringResource(R.string.edit_companion_girlfriend)
+                        } else {
+                            stringResource(R.string.create_companion_girlfriend)
                         },
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
@@ -358,10 +340,7 @@ fun CreateCompanionScreen(
 
                         Text(
                             text = if (name.isBlank()) {
-                                when (role) {
-                                    CompanionRole.GIRLFRIEND -> stringResource(R.string.name_hint_girlfriend)
-                                    CompanionRole.BOYFRIEND -> stringResource(R.string.name_hint_boyfriend)
-                                }
+                                stringResource(R.string.name_hint_girlfriend)
                             } else name,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
@@ -381,58 +360,7 @@ fun CreateCompanionScreen(
             ) {
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // 角色类型选择
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(200, delayMillis = 40)) +
-        slideInVertically(tween(200, delayMillis = 40)) { it / 3 }
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.role_type),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 13.sp
-                                ),
-                                color = colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                RoleToggleChip(
-                                    role = CompanionRole.GIRLFRIEND,
-                                    icon = Icons.Filled.Favorite,
-                                    label = stringResource(R.string.role_girlfriend),
-                                    accentColor = Color(0xFFFF6B9D),
-                                    selected = role == CompanionRole.GIRLFRIEND,
-                                    onClick = { role = CompanionRole.GIRLFRIEND },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                RoleToggleChip(
-                                    role = CompanionRole.BOYFRIEND,
-                                    icon = Icons.Filled.Shield,
-                                    label = stringResource(R.string.role_boyfriend),
-                                    accentColor = Color(0xFF4A90E2),
-                                    selected = role == CompanionRole.BOYFRIEND,
-                                    onClick = { role = CompanionRole.BOYFRIEND },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        }
-                    }
-                }
+                
 
                 AnimatedFormField(
                     visible = isVisible,
@@ -440,10 +368,7 @@ fun CreateCompanionScreen(
                     label = stringResource(R.string.name_label),
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = when (role) {
-                        CompanionRole.GIRLFRIEND -> stringResource(R.string.name_placeholder_girlfriend)
-                        CompanionRole.BOYFRIEND -> stringResource(R.string.name_placeholder_boyfriend)
-                    },
+                    placeholder = stringResource(R.string.name_placeholder_girlfriend),
                     imeAction = ImeAction.Next,
                     accentColor = accentColor
                 )
@@ -466,32 +391,26 @@ fun CreateCompanionScreen(
                     label = stringResource(R.string.body_type_label),
                     value = bodyType,
                     onValueChange = { bodyType = it },
-                    placeholder = when (role) {
-                        CompanionRole.GIRLFRIEND -> stringResource(R.string.body_type_placeholder_girlfriend)
-                        CompanionRole.BOYFRIEND -> stringResource(R.string.body_type_placeholder_boyfriend)
-                    },
+                    placeholder = stringResource(R.string.body_type_placeholder_girlfriend),
                     imeAction = ImeAction.Next,
                     accentColor = accentColor,
                     suggestionChips = viewModel.bodyTypeSuggestions(role),
                     onSuggestionClick = { bodyType = it }
                 )
-
+                viewModel.bodyTypeSuggestions()
                 AnimatedFormField(
                     visible = isVisible,
                     delayMillis = 190,
                     label = stringResource(R.string.profession_label),
                     value = profession,
                     onValueChange = { profession = it },
-                    placeholder = when (role) {
-                        CompanionRole.GIRLFRIEND -> stringResource(R.string.profession_placeholder_girlfriend)
-                        CompanionRole.BOYFRIEND -> stringResource(R.string.profession_placeholder_boyfriend)
-                    },
+                    placeholder = stringResource(R.string.profession_placeholder_girlfriend),
                     imeAction = ImeAction.Next,
                     accentColor = accentColor,
                     suggestionChips = viewModel.professionSuggestions(role),
                     onSuggestionClick = { profession = it }
                 )
-
+                viewModel.professionSuggestions()
                 // 性格标签
                 AnimatedVisibility(
                     visible = isVisible,
@@ -528,7 +447,7 @@ fun CreateCompanionScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                viewModel.personalityTags(role).forEach { tag ->
+                                viewModel.personalityTags()
                                     val selected = selectedPersonalityTags.contains(tag)
                                     FilterChip(
                                         selected = selected,
@@ -617,7 +536,7 @@ fun CreateCompanionScreen(
                                                     ?: "未知角色"
                                                 viewModel.generatePersonaByAi(
                                                     name = effectiveName,
-                                                    role = role,
+                                                    
                                                     referenceCharacter = referenceCharacter.trim().takeIf { it.isNotBlank() && it != effectiveName },
                                                     bodyType = bodyType.trim().takeIf { it.isNotBlank() },
                                                     profession = profession.trim().takeIf { it.isNotBlank() },
@@ -688,10 +607,7 @@ fun CreateCompanionScreen(
                                 ),
                                 placeholder = {
                                     Text(
-                                        when (role) {
-                                            CompanionRole.GIRLFRIEND -> stringResource(R.string.reference_character)
-                                            CompanionRole.BOYFRIEND -> stringResource(R.string.reference_character_boyfriend)
-                                        },
+                                        stringResource(R.string.reference_character),
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                                         color = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                     )
@@ -702,10 +618,7 @@ fun CreateCompanionScreen(
 
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = when (role) {
-                                    CompanionRole.GIRLFRIEND -> stringResource(R.string.role_hint_girlfriend)
-                                    CompanionRole.BOYFRIEND -> stringResource(R.string.role_hint_boyfriend)
-                                },
+                                stringResource(R.string.role_hint_girlfriend),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 11.sp
                                 ),
@@ -828,7 +741,7 @@ fun CreateCompanionScreen(
                                     text = when {
                                         isSaving -> "保存中..."
                                         isEditMode -> stringResource(R.string.save_changes)
-                                        role == CompanionRole.BOYFRIEND -> stringResource(R.string.create_boyfriend)
+                                        
                                         else -> stringResource(R.string.create_girlfriend)
                                     },
                                     style = MaterialTheme.typography.titleMedium.copy(
@@ -916,51 +829,7 @@ fun CreateCompanionScreen(
     }
 }
 
-@Composable
-private fun RoleToggleChip(
-    role: CompanionRole,
-    icon: ImageVector,
-    label: String,
-    accentColor: Color,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val backgroundColor = if (selected) accentColor.copy(alpha = 0.12f) else colorScheme.surface.copy(alpha = 0.5f)
-    val borderColor = if (selected) accentColor else colorScheme.outline.copy(alpha = 0.3f)
 
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accentColor,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                fontSize = 14.sp
-            ),
-            color = if (selected) accentColor else colorScheme.onSurface
-        )
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
