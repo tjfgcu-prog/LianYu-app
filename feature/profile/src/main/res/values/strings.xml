@@ -43,4 +43,11 @@
     <string name="data_backup_desc">导出或导入聊天数据</string>
 
     <string name="back">返回上一步</string>
+
+    <string name="banner_edit_title">调整封面</string>
+    <string name="banner_edit_hint">单指拖动移动，双指捏合缩放</string>
+    <string name="banner_edit_reset">重置</string>
+    <string name="banner_edit_replace">更换图片</string>
+    <string name="banner_edit_cancel">取消</string>
+    <string name="banner_edit_confirm">确定</string>
 </resources>
