@@ -58,6 +58,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.feature.profile.R
+import androidx.compose.ui.geometry.Size
+import com.lianyu.ai.database.model.BannerTransform
+
 
 
 /**
@@ -81,6 +84,9 @@ fun ProfileScreen(
     val userName by viewModel.userName.collectAsState()
     val userAvatar by viewModel.userAvatar.collectAsState()
     val userBanner by viewModel.userBanner.collectAsState()
+    val bannerTransform by viewModel.bannerTransform.collectAsState()
+    var editorUri by remember { mutableStateOf<String?>(null) }
+    var bannerImageSize by remember(userBanner) { mutableStateOf(Size.Zero) }
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
     var isVisible by remember { mutableStateOf(true) }
@@ -94,8 +100,8 @@ fun ProfileScreen(
     val bannerPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { viewModel.updateUserBanner(it.toString()) }
-    }
+        uri?.let { editorUri = it.toString() }
+        }
 
     
 
@@ -105,46 +111,52 @@ fun ProfileScreen(
                 .background(colorScheme.background)
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // === 卡片 1：顶部封面大图 — 占满剩余空间，把下方"我"和"总设置"顶到贴近底部导航栏 ===
+    // ===  1 封面图框（固定高度，可调整图片大小和位置）===
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 },
-                modifier = Modifier.weight(1f)
+                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 4 }
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                        .height(200.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .background(colorScheme.surface)
-                        .clickable { bannerPicker.launch("image/*") },
+                        .clickable {
+                            if (userBanner == null) bannerPicker.launch("image/*")
+                            else editorUri = userBanner
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                if (userBanner != null) {
-                    AsyncImage(
-                        model = userBanner,
-                        contentDescription = stringResource(R.string.profile_banner),
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Filled.Image,
+                    if (userBanner != null) {
+                        AsyncImage(
+                            model = userBanner,
                             contentDescription = stringResource(R.string.profile_banner),
-                            tint = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .bannerTransform(bannerTransform, bannerImageSize),
+                            contentScale = ContentScale.Crop,
+                            onSuccess = { bannerImageSize = it.painter.intrinsicSize }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.profile_banner_hint),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            color = colorScheme.onSurfaceVariant
-                        )
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Filled.Image,
+                                contentDescription = stringResource(R.string.profile_banner),
+                                tint = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.profile_banner_hint),
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                color = colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -250,6 +262,19 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
     }
+    editorUri?.let { uri ->
+        val isNewImage = uri != userBanner
+        BannerEditorDialog(
+            imageUri = uri,
+            initial = if (isNewImage) BannerTransform() else bannerTransform,
+            onConfirm = { t ->
+                viewModel.saveBanner(if (isNewImage) uri else null, t)
+                editorUri = null
+            },
+            onReplace = { bannerPicker.launch("image/*") },
+            onDismiss = { editorUri = null }
+        )
+            }
 }
 
 // ============================================================================
