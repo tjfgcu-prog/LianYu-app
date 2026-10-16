@@ -32,7 +32,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             repository.updateUserAvatar(savedUri)
         }
     }
+    val bannerTransform: StateFlow<BannerTransform> by lazy { repository.bannerTransform }
 
+    /** newUri 为 null 表示只改显示方式，不换图 */
     fun saveBanner(newUri: String?, transform: BannerTransform) {
         viewModelScope.launch {
             val context = getApplication<Application>()
@@ -47,8 +49,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             }
             repository.updateBannerTransform(transform)
             Toast.makeText(context, R.string.banner_save_success, Toast.LENGTH_SHORT).show()
-        }
-        }
-        }
+          }
     }
 }
