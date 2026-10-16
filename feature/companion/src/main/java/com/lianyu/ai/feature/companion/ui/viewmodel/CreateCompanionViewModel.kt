@@ -3,7 +3,7 @@ package com.lianyu.ai.feature.companion.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.lianyu.ai.common.CompanionRole
+
 import com.lianyu.ai.database.DefaultCompanionSeeder
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.repository.CompanionRepository
@@ -28,7 +28,7 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
     private val repository by lazy { ServiceRegistry.getOrThrow(CompanionRepository::class.java) }
     private val userRepository by lazy { ServiceRegistry.getOrThrow(UserRepository::class.java) }
 
-    val selectedRole: StateFlow<CompanionRole> by lazy { userRepository.selectedRole }
+    
 
     private val _existingCompanion = MutableStateFlow<CompanionEntity?>(null)
     val existingCompanion: StateFlow<CompanionEntity?> = _existingCompanion
@@ -136,15 +136,12 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
             "温柔", "粘人", "体贴", "爱撒娇", "活泼", "害羞", "傲娇",
             "细心", "爱吃醋", "浪漫", "懂事", "软萌", "治愈", "俏皮"
         )
-        CompanionRole.BOYFRIEND -> listOf(
-            "可靠", "温柔", "有担当", "护短", "沉稳", "直率", "笨拙温柔",
-            "细心", "爱吃醋", "爽朗", "理性", "宠溺", "安全感", "闷骚"
-        )
+        
     }
 
     fun generatePersonaByAi(
         name: String,
-        role: CompanionRole,
+        
         referenceCharacter: String? = null,
         bodyType: String? = null,
         profession: String? = null,
