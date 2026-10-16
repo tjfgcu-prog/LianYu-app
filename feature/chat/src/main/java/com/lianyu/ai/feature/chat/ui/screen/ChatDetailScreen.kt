@@ -200,6 +200,7 @@ fun ChatDetailScreen(
             SettingsCard {
                 SettingsToggleRow(
                     title = "允许主动发消息",
+                    subtitle = "没有聊天时，每 60 分钟有 70% 概率触发",
                     checked = settings.proactiveEnabled,
                     onCheckedChange = { checked ->
                         scope.launch {
@@ -208,8 +209,7 @@ fun ChatDetailScreen(
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                SettingsRow(title = "主动消息规则", subtitle = "没有聊天时，每60分钟有70%概率触发") { }
-                HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                
                 SettingsToggleRow(
                     title = "允许主动开启新话题",
                     checked = settings.allowNewTopic,
