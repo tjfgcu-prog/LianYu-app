@@ -7,6 +7,7 @@ import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.common.UserSelfProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.lianyu.ai.database.model.BannerTransform
 
 class UserRepository(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -20,6 +21,15 @@ class UserRepository(context: Context) {
     private val _userBanner = MutableStateFlow(prefs.getString("user_banner", null))
     val userBanner: StateFlow<String?> = _userBanner
 
+    private val _bannerTransform = MutableStateFlow(
+        BannerTransform(
+            scale = prefs.getFloat("banner_scale", 1f),
+            offsetX = prefs.getFloat("banner_offset_x", 0f),
+            offsetY = prefs.getFloat("banner_offset_y", 0f)
+        ).sanitized()
+    )
+    val bannerTransform: StateFlow<BannerTransform> = _bannerTransform
+    
     private val _selectedRole = MutableStateFlow(
         CompanionRole.fromName(prefs.getString("selected_role", null))
     )
@@ -48,6 +58,16 @@ class UserRepository(context: Context) {
         _userBanner.value = bannerUri
     }
 
+    fun updateBannerTransform(transform: BannerTransform) {
+        val t = transform.sanitized()
+        prefs.edit {
+            putFloat("banner_scale", t.scale)
+            putFloat("banner_offset_x", t.offsetX)
+            putFloat("banner_offset_y", t.offsetY)
+        }
+        _bannerTransform.value = t
+        }
+    
     
     // ── 自己设定 ──
     // 直接读写 SharedPreferences，不缓存：项目里有多个 UserRepository 实例，缓存会互相读到旧值。
