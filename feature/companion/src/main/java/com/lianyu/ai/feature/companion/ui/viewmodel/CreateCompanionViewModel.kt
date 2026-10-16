@@ -112,32 +112,25 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    /**
-     * 根据当前角色返回身材建议选项。
+        /**
+     * 返回身材建议选项。
      */
-    fun bodyTypeSuggestions(role: CompanionRole): List<String> = when (role) {
-        CompanionRole.GIRLFRIEND -> listOf("纤细", "匀称", "娇小", "高挑", "微胖", "元气")
-        CompanionRole.BOYFRIEND -> listOf("偏瘦", "健壮", "高挑", "结实", "清瘦", "运动型")
-    }
+    fun bodyTypeSuggestions(): List<String> =
+        listOf("纤细", "匀称", "娇小", "高挑", "微胖", "元气")
 
     /**
-     * 根据当前角色返回职业建议选项。
+     * 返回职业建议选项。
      */
-    fun professionSuggestions(role: CompanionRole): List<String> = when (role) {
-        CompanionRole.GIRLFRIEND -> listOf("学生", "插画师", "幼师", "护士", "文员", "自由职业")
-        CompanionRole.BOYFRIEND -> listOf("程序员", "设计师", "医生", "工程师", "教师", "自由职业")
-    }
+    fun professionSuggestions(): List<String> =
+        listOf("学生", "插画师", "幼师", "护士", "文员", "自由职业")
 
     /**
-     * 根据当前角色返回典型性格标签。
+     * 返回典型性格标签。
      */
-    fun personalityTags(role: CompanionRole): List<String> = when (role) {
-        CompanionRole.GIRLFRIEND -> listOf(
-            "温柔", "粘人", "体贴", "爱撒娇", "活泼", "害羞", "傲娇",
-            "细心", "爱吃醋", "浪漫", "懂事", "软萌", "治愈", "俏皮"
-        )
-        
-    }
+    fun personalityTags(): List<String> = listOf(
+        "温柔", "粘人", "体贴", "爱撒娇", "活泼", "害羞", "傲娇",
+        "细心", "爱吃醋", "浪漫", "懂事", "软萌", "治愈", "俏皮"
+    )
 
     fun generatePersonaByAi(
         name: String,
@@ -152,14 +145,8 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
         _isGenerating.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val roleLabel = when (role) {
-                    CompanionRole.GIRLFRIEND -> "AI女友"
-                    CompanionRole.BOYFRIEND -> "AI男友"
-                }
-                val pronoun = when (role) {
-                    CompanionRole.GIRLFRIEND -> "她"
-                    CompanionRole.BOYFRIEND -> "他"
-                }
+                val roleLabel = "AI女友"
+                val pronoun = "她"
                 val refPart = if (!referenceCharacter.isNullOrBlank()) {
                     "\n参考角色风格：$referenceCharacter"
                 } else ""
