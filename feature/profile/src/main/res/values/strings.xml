@@ -50,4 +50,6 @@
     <string name="banner_edit_replace">更换图片</string>
     <string name="banner_edit_cancel">取消</string>
     <string name="banner_edit_confirm">确定</string>
+    <string name="banner_save_success">封面已保存</string>
+    <string name="banner_save_failed">封面保存失败，请换一张图片再试</string>
 </resources>
