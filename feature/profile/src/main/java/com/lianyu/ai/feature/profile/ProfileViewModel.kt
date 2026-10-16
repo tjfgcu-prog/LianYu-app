@@ -8,6 +8,8 @@ import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.domain.ServiceRegistry
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.lianyu.ai.database.model.BannerTransform
+
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val repository by lazy { ServiceRegistry.getOrThrow(UserRepository::class.java) }
@@ -29,12 +31,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateUserBanner(bannerUri: String?) {
+    val bannerTransform: StateFlow<BannerTransform> by lazy { repository.bannerTransform }
+
+    /** newUri 为 null 表示只改显示方式，不换图 */
+    fun saveBanner(newUri: String?, transform: BannerTransform) {
         viewModelScope.launch {
-            val savedUri = if (bannerUri != null) {
-                ImageUtils.saveBannerToInternalStorage(getApplication(), bannerUri)
-            } else null
-            repository.updateUserBanner(savedUri)
+            if (newUri != null) {
+                val saved = ImageUtils.saveBannerToInternalStorage(getApplication(), newUri)
+                    ?: return@launch
+                repository.updateUserBanner(saved)
+            }
+            repository.updateBannerTransform(transform)
         }
     }
 }
