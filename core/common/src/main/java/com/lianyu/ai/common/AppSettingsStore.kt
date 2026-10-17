@@ -42,7 +42,8 @@ class AppSettingsStore(context: Context) {
         private val VISION_API_KEY_KEY = stringPreferencesKey("vision_api_key")
         private const val DEFAULT_VISION_API_KEY = ""
 
-        private val INNER_THOUGHT_ENABLED_KEY = booleanPreferencesKey("inner_thought_enabled")
+        private fun innerThoughtKey(companionId: Long) =
+            booleanPreferencesKey("inner_thought_enabled_$companionId")
         private const val DEFAULT_INNER_THOUGHT_ENABLED = false
 
         private val CONTEXT_COMPRESSION_KEY = stringPreferencesKey("context_compression_mode")
@@ -182,14 +183,16 @@ class AppSettingsStore(context: Context) {
         dataStore.edit { prefs -> prefs[VISION_API_KEY_KEY] = key }
     }
 
-    val innerThoughtEnabledFlow: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[INNER_THOUGHT_ENABLED_KEY] ?: DEFAULT_INNER_THOUGHT_ENABLED
+    /** 心理活动描写：每个角色单独设置，默认关闭 */
+    fun innerThoughtEnabledFlow(companionId: Long): Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[innerThoughtKey(companionId)] ?: DEFAULT_INNER_THOUGHT_ENABLED
     }
 
-    suspend fun getInnerThoughtEnabled(): Boolean = innerThoughtEnabledFlow.first()
+    suspend fun getInnerThoughtEnabled(companionId: Long): Boolean =
+        innerThoughtEnabledFlow(companionId).first()
 
-    suspend fun setInnerThoughtEnabled(enabled: Boolean) {
-        dataStore.edit { prefs -> prefs[INNER_THOUGHT_ENABLED_KEY] = enabled }
+    suspend fun setInnerThoughtEnabled(companionId: Long, enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[innerThoughtKey(companionId)] = enabled }
     }
 
     val contextCompressionModeFlow: Flow<String> = dataStore.data.map { prefs ->
