@@ -20,8 +20,7 @@ dependencyResolutionManagement {
         maven { url = uri("https://maven.aliyun.com/repository/google") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://maven.aliyun.com/repository/central") }
-        // 厂商 Push SDK 仓库：华为 HMS
-        maven { url = uri("https://developer.huawei.com/repo/") }
+        
     }
 }
 
