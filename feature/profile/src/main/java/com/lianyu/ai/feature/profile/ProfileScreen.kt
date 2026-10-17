@@ -87,6 +87,7 @@ fun ProfileScreen(
     val bannerTransform by viewModel.bannerTransform.collectAsState()
     var editorUri by remember { mutableStateOf<String?>(null) }
     var bannerImageSize by remember(userBanner) { mutableStateOf(Size.Zero) }
+    val bannerHeight = rememberBannerHeight()
     var isEditingName by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(userName) }
     var isVisible by remember { mutableStateOf(true) }
@@ -120,7 +121,7 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 8.dp)
-                        .height(200.dp)
+                        .height(bannerHeight)
                         .clip(RoundedCornerShape(24.dp))
                         .background(colorScheme.surface)
                         .clickable {
@@ -130,14 +131,12 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (userBanner != null) {
-                        AsyncImage(
+                        BannerImage(
                             model = userBanner,
-                            contentDescription = stringResource(R.string.profile_banner),
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .bannerTransform(bannerTransform, bannerImageSize),
-                            contentScale = ContentScale.Crop,
-                            onSuccess = { bannerImageSize = it.painter.intrinsicSize }
+                            transform = bannerTransform,
+                            imageSize = bannerImageSize,
+                            onImageSize = { bannerImageSize = it },
+                            modifier = Modifier.fillMaxSize()
                         )
                     } else {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
