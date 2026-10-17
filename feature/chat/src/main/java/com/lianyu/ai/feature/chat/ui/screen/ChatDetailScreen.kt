@@ -59,7 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lianyu.ai.feature.chat.R
 import com.lianyu.ai.feature.chat.data.ChatDetailSettingsStore
-
+import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModel
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModelFactory
 import com.lianyu.ai.uicommon.component.ChatBackgroundPickerDialog
@@ -79,7 +79,8 @@ fun ChatDetailScreen(
     )
     val companionData by viewModel.companionData.collectAsState()
     val settings by store.settingsFlow(companionId).collectAsState(initial = com.lianyu.ai.feature.chat.data.CompanionChatDetailSettings())
-    
+    val appSettingsStore = remember { AppSettingsStore(context) }
+    val innerThoughtEnabled by appSettingsStore.innerThoughtEnabledFlow(companionId).collectAsState(initial = false)
 
     var showBgPicker by remember { mutableStateOf(false) }
     var showBlockConfirm by remember { mutableStateOf(false) }
@@ -266,6 +267,21 @@ fun ChatDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Dialogue style section
+            SectionTitle("对话风格")
+            SettingsCard {
+                SettingsToggleRow(
+                    title = "心理活动描写",
+                    subtitle = if (innerThoughtEnabled) "已开启 - AI 回复中可能包含括号内的心理活动" else "已关闭 - AI 不会输出括号内的心理活动",
+                    checked = innerThoughtEnabled,
+                    onCheckedChange = { checked ->
+                        scope.launch { appSettingsStore.setInnerThoughtEnabled(companionId, checked) }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            
             // Sticker section
             SectionTitle("表情包")
             SettingsCard {
@@ -410,6 +426,7 @@ fun ChatDetailScreen(
                     onClick = {
                         scope.launch {
                             store.resetSettings(companionId)
+                            appSettingsStore.setInnerThoughtEnabled(companionId, false)
                         }
                         showResetConfirm = false
                     }
