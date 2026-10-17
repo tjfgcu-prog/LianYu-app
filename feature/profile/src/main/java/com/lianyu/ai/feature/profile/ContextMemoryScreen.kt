@@ -62,7 +62,7 @@ private val PetalSurfaceContainer = Color(0xFFEFEDED)
 class ContextMemoryViewModel(context: android.content.Context) : androidx.lifecycle.ViewModel() {
     private val appSettingsStore = AppSettingsStore(context)
     val contextLimit: StateFlow<Int> = MutableStateFlow(50)
-    val innerThoughtEnabled: StateFlow<Boolean> = MutableStateFlow(false)
+    
     val contextCompressionMode: StateFlow<String> = MutableStateFlow(AppSettingsStore.CompressionMode.OFF)
     val compressionKeepRatio: StateFlow<Float> = MutableStateFlow(0.5f)
     val compressionMinKeep: StateFlow<Int> = MutableStateFlow(6)
@@ -74,11 +74,7 @@ class ContextMemoryViewModel(context: android.content.Context) : androidx.lifecy
             }
         }
 
-        viewModelScope.launch {
-            appSettingsStore.innerThoughtEnabledFlow.collect { enabled ->
-                (innerThoughtEnabled as MutableStateFlow).value = enabled
-            }
-        }
+        
 
         viewModelScope.launch {
             appSettingsStore.contextCompressionModeFlow.collect { mode ->
@@ -105,11 +101,7 @@ class ContextMemoryViewModel(context: android.content.Context) : androidx.lifecy
         }
     }
 
-    fun setInnerThoughtEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            appSettingsStore.setInnerThoughtEnabled(enabled)
-        }
-    }
+    
 
     fun setContextCompressionMode(mode: String) {
         viewModelScope.launch {
@@ -138,7 +130,7 @@ fun ContextMemoryScreen(
     val context = LocalContext.current
     val viewModel: ContextMemoryViewModel = viewModel(factory = ContextMemoryViewModelFactory(context))
     val contextLimit by viewModel.contextLimit.collectAsState()
-    val innerThoughtEnabled by viewModel.innerThoughtEnabled.collectAsState()
+    
     val compressionMode by viewModel.contextCompressionMode.collectAsState()
     val compressionKeepRatio by viewModel.compressionKeepRatio.collectAsState()
     val compressionMinKeep by viewModel.compressionMinKeep.collectAsState()
@@ -305,45 +297,7 @@ fun ContextMemoryScreen(
                 }
             }
 
-            // 心理活动描写开关
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(colorScheme.surfaceVariant)
-                    .padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "心理活动描写",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (innerThoughtEnabled) "已开启 - AI 回复中可能包含括号内的心理活动" else "已关闭 - AI 不会输出括号内的心理活动",
-                            fontSize = 12.sp,
-                            color = colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = innerThoughtEnabled,
-                        onCheckedChange = { viewModel.setInnerThoughtEnabled(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = PetalPrimary,
-                            checkedTrackColor = PetalPrimary.copy(alpha = 0.4f),
-                            uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                            uncheckedTrackColor = colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                        )
-                    )
-                }
-            }
+            
 
             // 上下文压缩
             Box(
