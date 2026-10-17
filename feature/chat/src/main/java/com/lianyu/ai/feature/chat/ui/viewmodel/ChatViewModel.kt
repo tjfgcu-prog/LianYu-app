@@ -545,7 +545,7 @@ class ChatViewModel(
     ): String {
         val sortedHistory = history.sortedBy { it.timestamp }
         val lastUserMessage = sortedHistory.lastOrNull { it.isFromUser }?.content ?: ""
-        val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
+        val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled(companion.id)
 
         val name = companion.name
         val personality = companion.personality?.take(300) ?: ""
