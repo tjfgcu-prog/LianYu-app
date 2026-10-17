@@ -4,31 +4,18 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    
     
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
-        tools:ignore="ProtectedPermissions" />
+    
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-    <!-- IQOO/OriginOS JobScheduler 保活 -->
-    <uses-permission android:name="android.permission.BIND_JOB_SERVICE"
-        tools:ignore="ProtectedPermissions" />
+       
 
     <!-- 病娇模式：读取应用使用统计（需用户在系统设置中授权） -->
     <uses-permission
@@ -70,16 +57,7 @@
                 tools:node="remove" />
         </provider>
 
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.lianyu.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true"
-            tools:ignore="TypoInNamespace">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+        
 
 
         
