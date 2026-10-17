@@ -187,19 +187,8 @@ fun GroupChatScreen(
 
     fun handleAlbumClick() {
         showExtensionPanel = false
-        if (PermissionManager.canPickImageWithoutPermission()) {
-            imagePickerLauncher.launch("image/*")
-        } else {
-            val requiredPermissions = PermissionManager.getImagePickPermissions()
-            if (requiredPermissions.isEmpty()) {
-                imagePickerLauncher.launch("image/*")
-            } else if (PermissionManager.hasPermissions(context, requiredPermissions.toList())) {
-                imagePickerLauncher.launch("image/*")
-            } else {
-                scope.launch { snackbarHostState.showSnackbar("需要存储权限才能选择图片") }
-            }
+        imagePickerLauncher.launch("image/*")
         }
-    }
 
     
 
