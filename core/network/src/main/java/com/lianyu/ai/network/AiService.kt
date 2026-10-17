@@ -186,9 +186,9 @@ class AiService(context: Context) : AiServiceProvider {
 
             builder.addInterceptor(RetryInterceptor(maxRetries = 2, initialDelayMs = 300))
 
-            builder.addInterceptor(RequestSecurityInterceptor(shouldSignRequest = ::shouldSignRequest))
+            
 
-            RequestSecurityInterceptor.enforceTls(builder)
+            TlsConfig.enforceTls(builder)
 
             builder.certificatePinner(CertificatePins.certificatePinner)
             builder
@@ -340,10 +340,7 @@ class AiService(context: Context) : AiServiceProvider {
             }
         }
 
-        private fun shouldSignRequest(request: okhttp3.Request): Boolean {
-            val host = request.url.host.lowercase()
-            return host == "api.lianyu.ai" || host.endsWith(".lianyu.ai")
-        }
+        
 
         private var context: Context? = null
 
