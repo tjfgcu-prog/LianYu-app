@@ -2,7 +2,7 @@ package com.lianyu.ai.network.tts
 
 import android.content.Context
 import com.lianyu.ai.common.SecureLog
-import com.lianyu.ai.network.RequestSecurityInterceptor
+import com.lianyu.ai.network.TlsConfig
 import com.lianyu.ai.network.CertificatePins
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,7 +25,7 @@ class MinimaxTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
         val builder = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-        RequestSecurityInterceptor.enforceTls(builder)
+        TlsConfig.enforceTls(builder)
         builder.certificatePinner(CertificatePins.certificatePinner)
         builder.build()
     }
