@@ -205,6 +205,16 @@ class YandereModeManager(private val context: Context) {
         }
     }
 
+    /** 关闭病娇模式时调用：删除本机缓存并清空内存里的快照 */
+    fun clearCache() {
+        _cacheSnapshot.value = null
+        try {
+            cacheFile.delete()
+        } catch (e: Exception) {
+            SecureLog.w("YandereModeManager", "clearCache failed: ${e.message}")
+        }
+    }
+    
     /**
      * 构建病娇模式系统提示词附加内容。
      *
