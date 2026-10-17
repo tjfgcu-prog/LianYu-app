@@ -33,9 +33,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
+
 import com.lianyu.ai.database.model.BannerTransform
 import com.lianyu.ai.feature.profile.R
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import coil.size.Scale
+
 
 /**
  * 按图片实际尺寸限制偏移范围：图片以"铺满相框"为基准，放大后超出相框的部分才允许拖动。
@@ -67,6 +75,44 @@ internal fun Modifier.bannerTransform(t: BannerTransform, imageSize: Size): Modi
         translationY = c.offsetY * size.height
     }
 
+/**
+ * 封面图：用 Modifier.paint 直接画图，不经过 Image 内部的裁剪，
+ * 放大、移动后超出相框的部分才有内容可显示，最后由外层容器裁剪。
+ */
+@Composable
+internal fun BannerImage(
+    model: Any?,
+    transform: BannerTransform,
+    imageSize: Size,
+    onImageSize: (Size) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val request = remember(model) {
+        ImageRequest.Builder(context)
+            .data(model)
+            .size(2048)
+            .scale(Scale.FIT)
+            .build()
+    }
+    val painter = rememberAsyncImagePainter(
+        model = request,
+        onSuccess = { onImageSize(it.painter.intrinsicSize) }
+    )
+    Box(
+        modifier = modifier
+            .bannerTransform(transform, imageSize)
+            .paint(painter, sizeToIntrinsics = false, contentScale = ContentScale.Crop)
+    )
+}
+
+/** 封面框高度：屏幕高度的 32%，限制在 200~320dp；弹窗和个人中心共用，保证两边一致 */
+@Composable
+internal fun rememberBannerHeight(): Dp {
+    val screenHeightDp = LocalConfiguration.current.screenHeightDp
+    return (screenHeightDp * 0.32f).dp.coerceIn(200.dp, 320.dp)
+}
+    
 @Composable
 internal fun BannerEditorDialog(
     imageUri: String,
@@ -78,7 +124,8 @@ internal fun BannerEditorDialog(
     val colorScheme = MaterialTheme.colorScheme
     var transform by remember(imageUri) { mutableStateOf(initial) }
     var imageSize by remember(imageUri) { mutableStateOf(Size.Zero) }
-
+    val bannerHeight = rememberBannerHeight()
+    
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -92,7 +139,7 @@ internal fun BannerEditorDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(bannerHeight)
                         .clipToBounds()
                         .background(colorScheme.surfaceVariant)
                         .pointerInput(imageUri) {
@@ -107,12 +154,12 @@ internal fun BannerEditorDialog(
                             }
                         }
                 ) {
-                    AsyncImage(
+                    BannerImage(
                         model = imageUri,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize().bannerTransform(transform, imageSize),
-                        contentScale = ContentScale.Crop,
-                        onSuccess = { imageSize = it.painter.intrinsicSize }
+                        transform = transform,
+                        imageSize = imageSize,
+                        onImageSize = { imageSize = it },
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
                 Column(modifier = Modifier.padding(16.dp)) {
