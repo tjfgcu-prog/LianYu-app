@@ -462,7 +462,7 @@ class AiService(context: Context) : AiServiceProvider {
                 }
                 val lastUserMessage = sanitizedHistory.lastOrNull { it.isFromUser }?.content ?: ""
                 val contextLimit = appSettingsStore.getContextLimit()
-                val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
+                val innerThoughtEnabled = companion?.id?.let { appSettingsStore.getInnerThoughtEnabled(it) } ?: false
                 val compressionMode = appSettingsStore.getContextCompressionMode()
                 val keepRatio = appSettingsStore.getCompressionKeepRatio()
                 val minKeep = appSettingsStore.getCompressionMinKeep()
@@ -1841,7 +1841,7 @@ $chatText
                 val sortedHistory = history.sortedBy { it.timestamp }
                 val lastUserMessage = sortedHistory.lastOrNull { it.isFromUser }?.content ?: ""
                 val contextLimit = appSettingsStore.getContextLimit()
-                val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
+                val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled(companion.id)
                 val memoryContext = memoryProvider.getMemoryContext(companion.id, null, lastUserMessage, contextLimit)
                 val storyContext = memoryProvider.getStoryContext(companion.id).take(1200)
                 val stickerManager = StickerManager.getInstance(appContext)
@@ -2224,7 +2224,7 @@ $chatText
                 }
                 val lastUserMessage = sanitizedHistory.lastOrNull { it.isFromUser }?.content ?: ""
                 val contextLimit = appSettingsStore.getContextLimit()
-                val innerThoughtEnabled = appSettingsStore.getInnerThoughtEnabled()
+                                val innerThoughtEnabled = companion?.id?.let { appSettingsStore.getInnerThoughtEnabled(it) } ?: false
                 val compressionMode = appSettingsStore.getContextCompressionMode()
                 val keepRatio = appSettingsStore.getCompressionKeepRatio()
                 val minKeep = appSettingsStore.getCompressionMinKeep()
