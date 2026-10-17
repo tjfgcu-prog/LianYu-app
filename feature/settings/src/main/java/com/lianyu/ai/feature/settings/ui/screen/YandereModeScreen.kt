@@ -161,6 +161,8 @@ fun YandereModeScreen(
                                         settingsStore.setYandereModeEnabled(enabled)
                                         if (enabled) {
                                             yandereModeManager.start()
+                                        } else {
+                                            yandereModeManager.clearCache()
                                         }
                                     } catch (e: CancellationException) {
                                         throw e
