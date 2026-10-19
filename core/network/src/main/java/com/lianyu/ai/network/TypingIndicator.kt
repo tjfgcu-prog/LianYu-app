@@ -14,66 +14,7 @@ import java.util.concurrent.atomic.AtomicLong
  * - UI 状态同步
  * - 超时自动清除
  */
-object TypingIndicator {
 
-    private val _isTyping = MutableStateFlow(false)
-    val isTyping: StateFlow<Boolean> = _isTyping.asStateFlow()
-
-    private var typingStartTime = AtomicLong(0L)
-    private const val TYPING_TIMEOUT_MS = 60000L // 60秒超时
-
-    /**
-     * 开始输入状态
-     */
-    fun startTyping(source: String = "unknown") {
-        _isTyping.value = true
-        typingStartTime.set(System.currentTimeMillis())
-        SecureLog.typing("START", "Typing started from $source")
-    }
-
-    /**
-     * 结束输入状态
-     */
-    fun stopTyping(source: String = "unknown") {
-        if (_isTyping.value) {
-            val elapsed = System.currentTimeMillis() - typingStartTime.get()
-            _isTyping.value = false
-            SecureLog.typing("STOP", "Typing stopped from $source, duration=${elapsed}ms")
-        }
-    }
-
-    /**
-     * 检查是否超时，超时时自动停止
-     */
-    fun checkTimeout(): Boolean {
-        if (!_isTyping.value) return false
-        val elapsed = System.currentTimeMillis() - typingStartTime.get()
-        if (elapsed > TYPING_TIMEOUT_MS) {
-            SecureLog.typing("TIMEOUT", "Typing timed out after ${elapsed}ms")
-            _isTyping.value = false
-            return true
-        }
-        return false
-    }
-
-    /**
-     * 获取当前 typing 持续时间
-     */
-    fun getTypingDuration(): Long {
-        return if (_isTyping.value) System.currentTimeMillis() - typingStartTime.get() else 0
-    }
-
-    /**
-     * 生成协议级别的 typing 参数
-     * 部分 API 支持在请求中包含 typing 指示
-     */
-    fun createTypingParameter(enabled: Boolean = true): Map<String, Any> {
-        return mapOf(
-            "stream" to enabled,
-            "stream_options" to mapOf("include_usage" to true)
-        )
-    }
-}
 
 /**
  * ChatTypingState — 每个对话的独立 typing 状态
@@ -116,7 +57,5 @@ class ChatTypingState {
         typingJob = null
     }
 
-    fun setTypingJob(job: kotlinx.coroutines.Job) {
-        typingJob = job
-    }
+    
 }
