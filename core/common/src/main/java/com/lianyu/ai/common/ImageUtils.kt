@@ -99,11 +99,5 @@ object ImageUtils {
         }
     }
 
-    fun deleteAvatarFile(path: String?) {
-        path?.let {
-            try {
-                File(it).delete()
-            } catch (_: Exception) { }
-        }
-    }
+    
 }
