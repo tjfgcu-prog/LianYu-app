@@ -15,8 +15,5 @@ object ReadStatusManager {
         _readEvents.tryEmit(id to timestamp)
     }
 
-    fun getReadTime(context: Context, id: Long): Long {
-        return context.getSharedPreferences("message_read_status", Context.MODE_PRIVATE)
-            .getLong("read_$id", 0L)
-    }
+    
 }
