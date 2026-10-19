@@ -95,13 +95,7 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
         }
     }
 
-    /**
-     * 获取当前选中模型的音色数量（供 UI 动态渲染 sid 滑动条）。
-     */
-    suspend fun getNumSpeakers(context: Context): Int {
-        val modelId = LocalTtsPreferences(context).selectedModelId.first()
-        return LocalTtsCatalog.findById(modelId).numSpeakers
-    }
+
 
     // ── 内部 ──
 
@@ -179,12 +173,6 @@ class SherpaLocalTtsProvider : TtsProviderInterface, ConfigurableTtsProvider {
         var lastError: String? = null
             private set
 
-        /**
-         * 释放引擎（供 LocalTtsModelManager.disable() 调用）。
-         */
-        fun releaseEngine() {
-            // 静态释放，因为 SherpaLocalTtsProvider 实例由 TtsService 持有
-            // 实际释放通过 updateConfig 触发模型重加载时自动进行
-        }
+
     }
 }
