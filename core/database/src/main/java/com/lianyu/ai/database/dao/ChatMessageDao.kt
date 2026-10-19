@@ -31,7 +31,7 @@ interface ChatMessageDao {
     fun getLastMessageForCompanion(companionId: Long): Flow<ChatMessage?>
 
     @Query("SELECT * FROM chat_messages WHERE id = :messageId")
-    suspend fun getMessageById(messageId: Long): ChatMessage?
+    
 
     @Query("SELECT * FROM chat_messages WHERE companionId = :companionId AND searchContent LIKE '%' || :query || '%' ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchMessages(companionId: Long, query: String, limit: Int): List<ChatMessage>
