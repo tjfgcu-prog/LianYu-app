@@ -24,13 +24,13 @@ object HardwareInfo {
             return _tier!!
         }
 
-    val maxFps: Int
+    
         get() = CpuInfo.maxRefreshRate
 
-    val isHighPerf: Boolean
+    
         get() = tier == Tier.HIGH || tier == Tier.ULTRA
 
-    val isMidPerf: Boolean
+    
         get() = tier == Tier.MEDIUM
 
     private fun detectTier(): Tier {
@@ -61,13 +61,7 @@ object HardwareInfo {
         val hardware: String by lazy { safeReadProp("ro.hardware", "").lowercase() }
         val chipset: String by lazy { safeReadProp("ro.board.platform", "").lowercase() }
         val socModel: String by lazy { safeReadProp("ro.soc.model", "").lowercase() }
-        val cpuAbiList: String by lazy {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Build.SUPPORTED_ABIS.joinToString(",")
-            } else {
-                @Suppress("DEPRECATION") Build.CPU_ABI
-            }
-        }
+        
         val coreCount: Int by lazy { Runtime.getRuntime().availableProcessors() }
         val maxFreqMhz: Int by lazy { readCpuMaxFreq() }
         val maxRefreshRate: Int by lazy {
@@ -110,32 +104,7 @@ object HardwareInfo {
             isExynos && (chipset.contains("2") || chipset.contains("2200") || chipset.contains("2400"))
     }
 
-    fun getFullInfo(): String {
-        val files = listOf(
-            "/proc/cpuinfo" to "cpuinfo",
-            "/sys/devices/soc0/soc_id" to "soc_id",
-            "/sys/devices/soc0/machine" to "machine"
-        )
-        val sb = StringBuilder()
-        sb.appendLine("=== Hardware Info ===")
-        sb.appendLine("Tier: $tier")
-        sb.appendLine("Hardware: ${CpuInfo.hardware}")
-        sb.appendLine("Chipset: ${CpuInfo.chipset}")
-        sb.appendLine("SoC Model: ${CpuInfo.socModel}")
-        sb.appendLine("Cores: ${CpuInfo.coreCount}")
-        sb.appendLine("Max Freq: ${CpuInfo.maxFreqMhz}MHz")
-        sb.appendLine("Max Refresh: ${CpuInfo.maxRefreshRate}Hz")
-        sb.appendLine("ABI: ${CpuInfo.cpuAbiList}")
-        sb.appendLine("Snapdragon: ${CpuInfo.isSnapdragon}")
-        sb.appendLine("MediaTek: ${CpuInfo.isMediatek}")
-        sb.appendLine("Kirin: ${CpuInfo.isHisilicon}")
-        files.forEach { (path, name) ->
-            try {
-                sb.appendLine("$name: ${File(path).readText().trim()}")
-            } catch (_: Exception) {}
-        }
-        return sb.toString()
-    }
+    
 
     private fun safeReadProp(key: String, default: String): String {
         try {
