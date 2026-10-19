@@ -23,91 +23,6 @@ import androidx.fragment.app.FragmentActivity
  */
 object NativePermissionRequester {
 
-    /**
-     * 获取应用需要请求的所有运行时权限列表。
-     */
-    fun getAllRequiredPermissions(): Array<String> {
-        return buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            // 相机和麦克风权限在需要时单独请求，不在启动时批量请求
-        }.toTypedArray()
-    }
-
-    /**
-     * 检查是否已授予所有必要权限。
-     */
-    fun hasAllRequiredPermissions(context: Context): Boolean {
-        return getAllRequiredPermissions().all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
-    /**
-     * 检查是否需要显示权限理由说明。
-     */
-    fun shouldShowRationale(activity: FragmentActivity, permission: String): Boolean {
-        return activity.shouldShowRequestPermissionRationale(permission)
-    }
-
-    /**
-     * 创建一个批量权限请求 Launcher，支持 rationale / 永久拒绝的差异化处理。
-     *
-     * @param activity FragmentActivity
-     * @param onAllGranted 所有权限都被授予时的回调
-     * @param onResult 详细的权限请求结果回调，方便调用方做 rationale / 永久拒绝引导
-     */
-    fun createBatchPermissionLauncher(
-        activity: FragmentActivity,
-        onAllGranted: () -> Unit,
-        onResult: (PermissionResult) -> Unit
-    ): ActivityResultLauncher<Array<String>> {
-        return activity.registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            val deniedPermissions = permissions.filter { !it.value }.keys.toList()
-            if (deniedPermissions.isEmpty()) {
-                onAllGranted()
-                return@registerForActivityResult
-            }
-
-            val grantedPermissions = permissions.filter { it.value }.keys.toList()
-            val rationalePermissions = deniedPermissions.filter { activity.shouldShowRequestPermissionRationale(it) }
-            val permanentlyDeniedPermissions = deniedPermissions.filter { !activity.shouldShowRequestPermissionRationale(it) }
-
-            onResult(
-                PermissionResult(
-                    grantedPermissions = grantedPermissions,
-                    deniedPermissions = deniedPermissions,
-                    rationalePermissions = rationalePermissions,
-                    permanentlyDeniedPermissions = permanentlyDeniedPermissions
-                )
-            )
-        }
-    }
-
-    /**
-     * 创建单个权限请求 Launcher。
-     */
-    fun createSinglePermissionLauncher(
-        activity: FragmentActivity,
-        onGranted: () -> Unit,
-        onDenied: () -> Unit
-    ): ActivityResultLauncher<String> {
-        return activity.registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) onGranted() else onDenied()
-        }
-    }
-
-    /**
-     * 请求所有必要权限（一次性弹窗）。
-     */
-    fun requestAllPermissions(launcher: ActivityResultLauncher<Array<String>>) {
-        launcher.launch(getAllRequiredPermissions())
-    }
 
     /**
      * 打开应用详情页（通用设置页，所有 ROM 都支持）。
@@ -185,34 +100,9 @@ object NativePermissionRequester {
         return powerManager.isIgnoringBatteryOptimizations(context.packageName)
     }
 
-    /**
-     * 获取权限的中文描述，用于用户提示。
-     */
-    fun getPermissionDescription(permission: String): String {
-        return when (permission) {
-            Manifest.permission.POST_NOTIFICATIONS -> "通知权限"
-            Manifest.permission.CAMERA -> "相机权限"
-            Manifest.permission.RECORD_AUDIO -> "麦克风权限"
-            Manifest.permission.READ_MEDIA_IMAGES -> "读取图片权限"
-            
-            Manifest.permission.READ_EXTERNAL_STORAGE -> "读取存储权限"
-            Manifest.permission.WRITE_EXTERNAL_STORAGE -> "写入存储权限"
-            else -> "未知权限"
-        }
-    }
 
-    /**
-     * 获取权限的引导说明。
-     */
-    fun getPermissionRationale(permission: String): String {
-        return when (permission) {
-            Manifest.permission.POST_NOTIFICATIONS -> "需要通知权限才能接收虚拟恋人的消息提醒"
-            Manifest.permission.CAMERA -> "需要相机权限才能拍摄照片"
-            Manifest.permission.RECORD_AUDIO -> "需要麦克风权限才能录制语音消息"
-            Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_EXTERNAL_STORAGE -> "需要存储权限才能选择图片"
-            else -> "需要此权限以使用完整功能"
-        }
-    }
+
+
 
     private fun safeStartActivity(context: Context, intent: Intent) {
         try {
@@ -230,15 +120,5 @@ object NativePermissionRequester {
         }
     }
 
-    /**
-     * 批量权限请求结果。
-     */
-    data class PermissionResult(
-        val grantedPermissions: List<String> = emptyList(),
-        val deniedPermissions: List<String> = emptyList(),
-        val rationalePermissions: List<String> = emptyList(),
-        val permanentlyDeniedPermissions: List<String> = emptyList()
-    ) {
-        val allGranted: Boolean get() = deniedPermissions.isEmpty()
-    }
+
 }
