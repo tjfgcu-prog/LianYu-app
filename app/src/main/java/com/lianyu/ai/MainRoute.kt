@@ -53,38 +53,6 @@ sealed class MainRoute(val route: String) {
 
     companion object {
         /** 从路由字符串解析（用于 NavHost currentRoute） */
-        fun fromRoute(route: String?): MainRoute = when {
-            route == null -> Home
-            route == "home" -> Home
-            route == "contacts" -> Contacts
-            route == "profile" -> Profile
-            route == "create" -> CreateCompanion
-            route == "create_group" -> CreateGroup
-            route == "settings" -> Settings
-            route == "tts_settings" -> TtsSettings
-            route == "token_usage" -> TokenUsage
-            route == "memory" -> Memory
-            route == "context_memory" -> ContextMemory
-            route == "self_profile" -> SelfProfile
-            route == "theme" -> Theme
-            
-            route == "frame_rate" -> FrameRate
-            route == "yandere_mode" -> YandereMode
-            
-            route == "general_settings" -> GeneralSettings
-            
-            
-            
-            route == "data_backup" -> DataBackup
-            
-            route?.startsWith("chat/") == true -> Chat(route.removePrefix("chat/").toLongOrNull() ?: 0L)
-            route?.startsWith("chat_detail/") == true -> ChatDetail(route.removePrefix("chat_detail/").toLongOrNull() ?: 0L)
-            
-            route?.startsWith("group_chat/") == true -> GroupChat(route.removePrefix("group_chat/").toLongOrNull() ?: 0L)
-            route?.startsWith("group_detail/") == true -> GroupDetail(route.removePrefix("group_detail/").toLongOrNull() ?: 0L)
-                        route?.startsWith("companion_self_profile/") == true -> CompanionSelfProfile(route.removePrefix("companion_self_profile/").toLongOrNull() ?: 0L)
-            route?.startsWith("edit/") == true -> EditCompanion(route.removePrefix("edit/").toLongOrNull() ?: 0L)
-            else -> Home
-        }
+        
     }
 }
