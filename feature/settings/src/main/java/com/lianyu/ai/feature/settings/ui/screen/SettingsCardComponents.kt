@@ -164,21 +164,4 @@ fun ProviderLogo(
     }
 }
 
-private fun providerInitials(provider: ApiProvider): Triple<String, Color, Color> {
-    return when (provider) {
-        ApiProvider.OPENAI -> Triple("O", Color(0xFF10A37F), Color.White)
-        ApiProvider.ANTHROPIC -> Triple("C", Color(0xFFCC785C), Color.White)
-        ApiProvider.GEMINI -> Triple("G", Color(0xFF4285F4), Color.White)
-        ApiProvider.DEEPSEEK -> Triple("D", Color(0xFF4D6BFA), Color.White)
-        ApiProvider.DASHSCOPE -> Triple("通", Color(0xFF615CED), Color.White)
-        ApiProvider.KIMI -> Triple("K", Color(0xFF10A37F), Color.White)
-        ApiProvider.XIAOMI -> Triple("米", Color(0xFFFF6900), Color.White)
-        ApiProvider.IFLYTEK -> Triple("讯", Color(0xFF1677FF), Color.White)
-        ApiProvider.ZHIPU -> Triple("智", Color(0xFF4169E1), Color.White)
-        ApiProvider.SILICONFLOW -> Triple("硅", Color(0xFF10A37F), Color.White)
-        ApiProvider.OPENROUTER -> Triple("OR", Color(0xFF7B68EE), Color.White)
-        ApiProvider.GROQ -> Triple("G", Color(0xFFF4845F), Color.White)
-        ApiProvider.PARTNER -> Triple("C", Color(0xFFFF69B4), Color.White)
-        ApiProvider.CUSTOM -> Triple("?", Color(0xFF888888).copy(alpha = 0.15f), Color(0xFF888888))
-    }
-}
+
