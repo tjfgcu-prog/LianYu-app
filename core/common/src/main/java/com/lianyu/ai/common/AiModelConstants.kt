@@ -23,6 +23,5 @@ object AiModelConstants {
         "deepseek", "qwen", "glm", "moonshot", "kimi", "yi-", "ernie", "hunyuan", "doubao"
     )
 
-    /** 判断模型是否应排除的名称关键词（embedding / moderation 等非对话模型） */
-    val EXCLUDED_MODEL_KEYWORDS = listOf("embed", "moderation")
+    
 }
