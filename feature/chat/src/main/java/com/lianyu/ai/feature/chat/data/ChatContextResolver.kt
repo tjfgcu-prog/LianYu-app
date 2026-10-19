@@ -65,8 +65,7 @@ class ChatContextResolver(
         }
     }
 
-    /** 当前压缩模式（off / local / ai） */
-    suspend fun getCompressionMode(): String = appSettingsStore.getContextCompressionMode()
+
 
     /**
      * 获取用于 AI 请求的历史消息。
@@ -106,12 +105,7 @@ class ChatContextResolver(
         }
     }
 
-    /** 清空全部上下文缓存；内存紧张时调用 */
-    fun clearAllCache() {
-        synchronized(cacheLock) {
-            contextCache.clear()
-        }
-    }
+
 
     /**
      * 对 UI 消息列表做上限保护。
