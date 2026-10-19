@@ -108,7 +108,7 @@ import coil.compose.AsyncImage
 import com.lianyu.ai.database.model.GroupMessage
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.common.StickerInfo
-import com.lianyu.ai.common.PermissionManager
+
 import com.lianyu.ai.uicommon.component.ChatInputExtensionPanel
 import com.lianyu.ai.uicommon.component.StickerPanel
 import com.lianyu.ai.uicommon.component.getChatBackground
