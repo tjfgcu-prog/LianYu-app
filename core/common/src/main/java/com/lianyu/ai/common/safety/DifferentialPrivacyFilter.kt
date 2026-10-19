@@ -104,13 +104,5 @@ object DifferentialPrivacyFilter {
         return e / (e + 1.0)
     }
 
-    /**
-     * Compute the effective ε from observed true/false ratio.
-     * Used for audit/verification.
-     */
-    fun estimateEpsilon(keptCount: Int, totalCount: Int): Double {
-        if (totalCount == 0 || keptCount == 0 || keptCount == totalCount) return Double.POSITIVE_INFINITY
-        val p = keptCount.toDouble() / totalCount
-        return ln(p / (1.0 - p))
-    }
+
 }
