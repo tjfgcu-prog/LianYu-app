@@ -50,14 +50,7 @@ data class MemoryItem(
         return importance >= 0.8f && accessCount >= 3
     }
 
-    /**
-     * 判断是否应从中期降级
-     * 条件：7天未访问且重要度<0.5
-     */
-    fun shouldDemoteFromMid(now: Long): Boolean {
-        val sevenDays = 7L * 24 * 60 * 60 * 1000
-        return (now - lastAccessed) > sevenDays && importance < 0.5f
-    }
+
 
     /**
      * 访问后更新访问信息
