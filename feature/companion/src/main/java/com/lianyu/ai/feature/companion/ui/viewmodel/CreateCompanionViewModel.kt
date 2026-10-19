@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.lianyu.ai.database.DefaultCompanionSeeder
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.repository.CompanionRepository
-
+import com.lianyu.ai.database.repository.UserRepository
 import com.lianyu.ai.common.ImageUtils
 import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.domain.ServiceRegistry
