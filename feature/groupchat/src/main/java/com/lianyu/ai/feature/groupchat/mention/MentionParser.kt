@@ -70,19 +70,7 @@ $contextLines
 """.trimIndent()
     }
 
-    fun formatHistoryForGroup(
-        messages: List<GroupHistoryItem>,
-        currentCompanionId: Long,
-        contextWindow: Int = 20
-    ): List<GroupHistoryItem> {
-        return messages.takeLast(contextWindow).map { msg ->
-            if (!msg.isUser && msg.companionId != currentCompanionId) {
-                msg.copy(prefix = "${msg.speakerName}: ")
-            } else {
-                msg
-            }
-        }
-    }
+    
 }
 
 data class MentionMessageSnapshot(
@@ -91,11 +79,4 @@ data class MentionMessageSnapshot(
     val speakerName: String
 )
 
-data class GroupHistoryItem(
-    val role: String,
-    val content: String,
-    val isUser: Boolean,
-    val companionId: Long,
-    val speakerName: String = "",
-    val prefix: String = ""
-)
+
