@@ -32,6 +32,5 @@ data class ChatMessage(
     val linkString: String = ""
 ) {
     val role: String get() = if (isFromUser) "user" else "assistant"
-    val isFromAssistant: Boolean get() = !isFromUser
-    val isSystem: Boolean get() = false
+    
 }
