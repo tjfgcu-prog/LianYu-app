@@ -305,24 +305,7 @@ class StickerManager(private val context: Context) {
         }
     }
 
-    /**
-     * 删除导入的表情包
-     */
-    suspend fun deleteImportedSticker(fileName: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val file = File(importedDir, fileName)
-            if (file.exists()) {
-                file.delete()
-                Log.i("StickerManager", "Deleted sticker: $fileName")
-                true
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            Log.e("StickerManager", "Failed to delete sticker", e)
-            false
-        }
-    }
+
 
     /**
      * 删除所有导入的表情包和规则文件
@@ -364,95 +347,10 @@ class StickerManager(private val context: Context) {
         }
     }
 
-    /**
-     * 获取导入目录路径
-     */
-    fun getImportedDir(): String = importedDir.absolutePath
+    
 
-    /**
-     * 根据回复文本的情绪/内容主动选择合适的表情包
-     * AI 不需要写 [描述] 标记也能自动发送表情包
-     */
-    fun pickStickerForMood(text: String): StickerInfo? {
-        if (text.isBlank()) return null
-
-        val lowerText = text.lowercase()
-        val rules = stickerRules
-        val allAvailableStickers = mutableListOf<StickerInfo>()
-
-        rules.values.forEach { rule ->
-            allAvailableStickers.add(StickerInfo(
-                name = rule.description,
-                path = rule.path,
-                category = "imported",
-                isBuiltIn = false,
-                description = rule.description,
-                fileName = rule.fileName
-            ))
-        }
-
-        importedDir.listFiles()?.filter { isImageFile(it.name) }?.forEach { file ->
-            val existingRule = rules.values.find { it.fileName == file.name }
-            if (existingRule == null) {
-                allAvailableStickers.add(StickerInfo(
-                    name = file.nameWithoutExtension,
-                    path = file.absolutePath,
-                    category = "imported",
-                    isBuiltIn = false,
-                    fileName = file.name
-                ))
-            }
-        }
-
-        try {
-            context.assets.list("stickers")?.filter { isImageFile(it) }?.forEach { filename ->
-                allAvailableStickers.add(StickerInfo(
-                    name = filename.substringBeforeLast("."),
-                    path = "asset://stickers/$filename",
-                    category = "default",
-                    isBuiltIn = true
-                ))
-            }
-        } catch (_: Exception) {}
-
-        if (allAvailableStickers.isEmpty()) return null
-
-        val moodKeywords = listOf(
-            "开心" to listOf("开心", "高兴", "快乐", "笑", "哈哈", "嘻嘻", "嘿嘿", "好耶", "太棒了", "棒", "赞", "好", "nice"),
-            "委屈" to listOf("委屈", "难过", "伤心", "哭", "呜呜", "呜", "眼泪", "可怜", "心疼", "好惨", "不想", "难过"),
-            "生气" to listOf("生气", "气", "哼", "烦", "讨厌", "滚", "不理你", "不想理", "气鼓鼓", "怒"),
-            "害羞" to listOf("害羞", "脸红", "不好意思", "羞", "呀", "哎呀", "啊这", "那个", "嗯..."),
-            "惊讶" to listOf("惊讶", "哇", "天哪", "什么", "真的吗", "不会吧", "居然", "竟然", "啊？"),
-            "撒娇" to listOf("撒娇", "嘛", "啦", "呢", "呀", "人家", "求你", "好不好", "嘛~", "拜托", "亲"),
-            "可爱" to listOf("可爱", "萌", "乖", "乖巧", "听话", "小", "宝贝", "宝宝", "亲亲", "抱抱", "喜欢"),
-            "无奈" to listOf("无奈", "算了", "服了", "无语", "行吧", "好吧", "随你", "随便", "额"),
-            "思考" to listOf("思考", "想想", "嗯", "让我想", "不知道", "好像", "也许", "可能", "这个"),
-            "困倦" to listOf("困", "累", "睡", "瞌睡", "哈欠", "晚安", "早安", " tired ")
-        )
-
-        for ((mood, keywords) in moodKeywords) {
-            for (keyword in keywords) {
-                if (lowerText.contains(keyword)) {
-                    val matched = allAvailableStickers.find { 
-                        (it.description?.contains(mood) == true) || 
-                        (it.name.contains(mood)) ||
-                        (it.fileName?.contains(mood) == true)
-                    } ?: allAvailableStickers.find {
-                        (it.description?.contains(keyword) == true) || 
-                        (it.name.contains(keyword))
-                    }
-                    if (matched != null) {
-                        Log.d("StickerManager", "Mood match: keyword='$keyword' → sticker='${matched.name}'")
-                        return matched
-                    }
-                }
-            }
-        }
-
-        val picked = allAvailableStickers.random()
-        Log.d("StickerManager", "Random pick from ${allAvailableStickers.size} stickers: '${picked.name}'")
-        return picked
-    }
+    
+    
 
     private fun isImageFile(filename: String): Boolean {
         val ext = filename.substringAfterLast(".", "").lowercase()
