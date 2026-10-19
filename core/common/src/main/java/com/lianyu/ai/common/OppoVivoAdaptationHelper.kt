@@ -16,10 +16,7 @@ import android.provider.Settings
  */
 object OppoVivoAdaptationHelper {
 
-    /**
-     * 当前 ROM 是否需要做 OPPO/vivo 深度适配引导。
-     */
-    fun needGuide(): Boolean = RomUtils.isOppoOrVivo()
+
 
     /**
      * 是否已经忽略电池优化（Doze 白名单）。
@@ -153,69 +150,11 @@ object OppoVivoAdaptationHelper {
         safeStartActivity(context, intent)
     }
 
-    /**
-     * 打开 vivo 神隐模式 / 后台耗电管理页（仅 vivo）。
-     */
-    fun openVivoGodModeSettings(context: Context) {
-        if (!RomUtils.isVivo) {
-            openBackgroundPowerSettings(context)
-            return
-        }
-        val candidates = listOf(
-            "com.iqoo.secure" to "com.iqoo.secure.safecenter.SmartManagerStateActivity",
-            "com.vivo.abe" to "com.vivo.abe.MainActivity",
-            "com.vivo.permissionmanager" to "com.vivo.permissionmanager.activity.PurviewTabActivity"
-        )
-        val component = RomUtils.findAvailableComponent(context, candidates)
-        val intent = if (component != null) {
-            Intent().setComponent(component)
-        } else {
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }
-        }
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        safeStartActivity(context, intent)
-    }
 
-    /**
-     * 一键打开最完整的 OPPO/vivo 后台保活设置（连续跳转多个页面）。
-     * 建议在设置页点击“后台运行设置”后调用，依次打开：
-     * 1. 自启动；2. 后台高耗电；3. 电池优化。
-     */
-    fun openFullBackgroundGuide(context: Context) {
-        openAutoStartSettings(context)
-        openBackgroundPowerSettings(context)
-        if (!isIgnoringBatteryOptimizations(context)) {
-            requestIgnoreBatteryOptimizations(context)
-        }
-    }
 
-    /**
-     * 获取当前 ROM 下用户需要手动开启的权限/开关清单，用于设置页文案提示。
-     */
-    fun getGuideSteps(): List<String> {
-        return when {
-            RomUtils.isOppo -> listOf(
-                "允许“自启动”",
-                "允许“后台运行”或关闭省电模式限制",
-                "将电池优化设为“不优化”",
-                "开启通知权限"
-            )
-            RomUtils.isVivo -> listOf(
-                "在 i管家 中允许“自启动”",
-                "在 i管家 → 电池管理 中加入“后台高耗电”白名单",
-                "设置 → 电池 → 电池优化 → 选择本应用 → 不优化",
-                "关闭“神隐模式”限制（如存在）",
-                "开启通知权限"
-            )
-            else -> listOf(
-                "允许自启动 / 后台运行",
-                "忽略电池优化",
-                "开启通知权限"
-            )
-        }
-    }
+
+
+
 
     private fun getOppoAutoStartCandidates(): List<Pair<String, String>> = listOf(
         // ColorOS 12+
