@@ -9,7 +9,7 @@ import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.common.TimeoutBudgets
 import com.lianyu.ai.common.YandereModeManager
-import com.lianyu.ai.common.FileLogger
+
 import com.lianyu.ai.common.RemoteKeyProvider
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ApiConfig
@@ -30,9 +30,7 @@ import com.lianyu.ai.database.repository.CompanionRepository
 
 import com.lianyu.ai.database.repository.TokenUsageRepository
 import com.lianyu.ai.database.repository.UserRepository
-import com.lianyu.ai.network.provider.AiProvider
-import com.lianyu.ai.network.provider.ClaudeProvider
-import com.lianyu.ai.network.provider.OpenAiCompatibleProvider
+
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,15 +63,7 @@ class AiService(context: Context) : AiServiceProvider {
     private val userRepository: UserRepository
     private val appSettingsStore = AppSettingsStore(appContext)
 
-    @Volatile
-    private var cachedBuiltinModel: String? = null
-
-    // 熔断器 + 速率限流 (控制论: 滞环非线性保护 + 饱和限)
-        // ============================================================
-    // [反馈回路] 熔断器 & 速率限流
-    // ============================================================
-    private val retryController = AiRetryController()
-    private val rateLimiter = AiRateLimiter()
+    
 
     init {
         val database = AppDatabase.getDatabase(appContext)
@@ -93,30 +83,7 @@ class AiService(context: Context) : AiServiceProvider {
         return apiConfigRepository.getActiveEnabledConfig()
     }
 
-    private suspend fun tryFetchBuiltinModel(keys: List<String>): String? {
-        return try {
-            val result = fetchModels(ApiProvider.PARTNER.defaultBaseUrl, keys.first())
-            result.getOrNull()?.let { models ->
-                if (models.isNotEmpty()) {
-                    val chatModels = models.filter { m ->
-                        chatKeywords.any { m.contains(it, ignoreCase = true) }
-                    }
-                    val candidatePool = if (chatModels.size > 1) chatModels
-                    else models.filter { !it.contains("embed", ignoreCase = true) && !it.contains("moderation", ignoreCase = true) }
-                    val selected = if (candidatePool.size > 1) {
-                        familyBalancedRandom(candidatePool)
-                    } else {
-                        candidatePool.firstOrNull() ?: models.first()
-                    }
-                    SecureLog.api("BUILTIN", "Auto-selected model: $selected from ${models.size} models (chatModels=${chatModels.size})")
-                    selected
-                } else null
-            }
-        } catch (e: Exception) {
-            SecureLog.w("AiService", "Auto-fetch builtin models failed: ${e.message}")
-            null
-        }
-    }
+    
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
@@ -139,7 +106,7 @@ class AiService(context: Context) : AiServiceProvider {
             "deepseek", "qwen", "glm", "kimi", "moonshot",
             "gpt", "claude", "gemini", "yi-", "ernie", "hunyuan", "doubao"
         )
-        private val chatKeywords = modelFamilyKeywords + listOf("chat", "completion", "instruct")
+        
 
         /**
          * 家族均衡随机：先随机选家族，再在家族内随机选模型，避免模型数量多的家族占比过高。
@@ -356,45 +323,15 @@ class AiService(context: Context) : AiServiceProvider {
                 .build()
         }
 
-        private val openAiApi: OpenAiApi by lazy { retrofit.create(OpenAiApi::class.java) }
+        
         private val anthropicApi: AnthropicApi by lazy { retrofit.create(AnthropicApi::class.java) }
-        private val geminiApi: GeminiApi by lazy { retrofit.create(GeminiApi::class.java) }
+        
 
         private val keyRoundRobinIndex = AtomicInteger(Random.nextInt(Int.MAX_VALUE))
         private val keyLastUsed = ConcurrentHashMap<String, Long>()
         private val keyCooldownUntil = ConcurrentHashMap<String, Long>()
 
-        // ── Provider registry ──
-        private val providers: Map<ApiProvider, AiProvider> = mapOf(
-            ApiProvider.OPENAI to OpenAiCompatibleProvider(),
-            ApiProvider.DEEPSEEK to OpenAiCompatibleProvider(),
-            ApiProvider.DASHSCOPE to OpenAiCompatibleProvider(),
-            ApiProvider.KIMI to OpenAiCompatibleProvider(),
-            ApiProvider.GEMINI to OpenAiCompatibleProvider(),
-            ApiProvider.XIAOMI to OpenAiCompatibleProvider(),
-            ApiProvider.ZHIPU to OpenAiCompatibleProvider(),
-            ApiProvider.SILICONFLOW to OpenAiCompatibleProvider(),
-            ApiProvider.OPENROUTER to OpenAiCompatibleProvider(),
-            ApiProvider.GROQ to OpenAiCompatibleProvider(),
-            ApiProvider.CUSTOM to OpenAiCompatibleProvider(),
-            ApiProvider.PARTNER to OpenAiCompatibleProvider(),
-            ApiProvider.IFLYTEK to OpenAiCompatibleProvider(),
-            ApiProvider.ANTHROPIC to ClaudeProvider(),
-        )
-
-        private fun providerFor(config: ApiConfig): AiProvider {
-            // CUSTOM provider respects formatHint: choose Claude format for "anthropic" hint
-            if (config.provider == ApiProvider.CUSTOM && config.formatHint == "anthropic") {
-                return ClaudeProvider()
-            }
-            return providers[config.provider] ?: OpenAiCompatibleProvider()
-        }
-
-        init {
-            AiProvider.okHttpClient = okHttpClient
-            AiProvider.keySelector = ::selectApiKey
-            AiProvider.keyFailureHandler = ::markKeyFailed
-        }
+        
 
         const val KEY_MIN_INTERVAL_MS = 800L
         const val KEY_FAILURE_COOLDOWN_MS = 5000L
@@ -425,10 +362,7 @@ class AiService(context: Context) : AiServiceProvider {
             SecureLog.w("AiService", "Key失败冷却5s: ${key.take(8)}...")
         }
 
-        fun resetKeyState() {
-            keyCooldownUntil.clear()
-            keyLastUsed.clear()
-        }
+        
     }
 
     /**
@@ -1041,43 +975,7 @@ class AiService(context: Context) : AiServiceProvider {
         return true
     }
 
-    /**
-     * 后处理：严格执行人设规则
-     * 1. 截断过长回复
-     * 2. 检测最近5轮内的重复词
-     */
-    private fun extractDirectReply(text: String): String {
-        val trimmed = text.trim()
-
-        // 1. 如果模型把最终回复用引号包起来，直接提取引号内容
-        val quoteMatches = Regex("""[\"“](.+?)[\"”]""", RegexOption.DOT_MATCHES_ALL).findAll(trimmed).toList()
-        if (quoteMatches.isNotEmpty()) {
-            val quoted = quoteMatches.joinToString("\n") { it.groupValues[1].trim() }
-            if (quoted.isNotBlank() && quoted.length >= 2) return quoted
-        }
-
-        // 2. 如果最后一段明显短于前面大段内心独白，取最后一段
-        val paragraphs = trimmed.split(Regex("""\n\s*\n""")).map { it.trim() }.filter { it.isNotBlank() }
-        if (paragraphs.size >= 2) {
-            val last = paragraphs.last()
-            val first = paragraphs.first()
-            if (last.length <= 80 && first.length > last.length * 2) {
-                return last
-            }
-        }
-
-        // 3. 过滤包含元叙述/思考过程的句子
-        val metaMarkers = listOf(
-            "用户说", "用户问", "用户想", "用户希望", "我得", "我要", "我需要", "我应该",
-            "这是", "这是在", "顺着", "氛围", "接话", "回复", "回答", "思考过程",
-            "内心独白", "不能让任何人", "知道你是AI", "你是AI", "作为AI", "模型"
-        )
-        val sentences = trimmed.split(Regex("""[。！？!?]""")).map { it.trim() }.filter { it.isNotBlank() }
-        val filtered = sentences.filter { sentence ->
-            metaMarkers.none { marker -> sentence.contains(marker) }
-        }
-        return if (filtered.isNotEmpty()) filtered.joinToString("。") else trimmed
-    }
+    
 
     private fun formatApiException(error: Throwable): String {
         val isTimeout = error is java.net.SocketTimeoutException ||
@@ -1625,61 +1523,7 @@ $chatText
             ?: throw Exception("API返回空内容")
     }
 
-    suspend fun callGeminiForTest(config: ApiConfig, messages: List<Message>, systemPrompt: String): String {
-        val baseUrl = normalizeOpenAiBaseUrl(config.baseUrl)
-        val url = "${baseUrl.trimEnd('/')}/chat/completions"
-
-        val jsonArray = org.json.JSONArray()
-        for (msg in messages) {
-            val msgObj = org.json.JSONObject()
-            msgObj.put("role", msg.role)
-            msgObj.put("content", msg.content)
-            jsonArray.put(msgObj)
-        }
-        val jsonBody = org.json.JSONObject()
-        jsonBody.put("model", config.model)
-        jsonBody.put("messages", jsonArray)
-        if (!requiresFixedTemperature(config.model)) {
-            jsonBody.put("temperature", 0.7)
-        }
-        // 根据API提供商选择正确的参数名称
-        val maxTokensParam = if (usesMaxCompletionTokens(config.provider)) {
-            "max_completion_tokens"
-        } else {
-            "max_tokens"
-        }
-        jsonBody.put(maxTokensParam, 5)
-
-        val requestBuilder = okhttp3.Request.Builder()
-            .url(url)
-            .addHeader("Content-Type", "application/json")
-        // 根据API提供商选择最优的认证方式
-        if (prefersApiKeyHeader(config.provider)) {
-            requestBuilder.addHeader("api-key", config.apiKey)
-        } else {
-            requestBuilder.addHeader("Authorization", "Bearer ${config.apiKey}")
-        }
-        val request = requestBuilder
-            .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-            .build()
-
-        val response = executeAdaptive(config, request)
-        val body = response.body?.string() ?: throw Exception("Empty response")
-
-        if (!response.isSuccessful) {
-            val errorMsg = runCatching { json.decodeFromString<ChatCompletionResponse>(body).error?.message }.getOrNull()
-                ?: "HTTP ${response.code}"
-            throw Exception(errorMsg)
-        }
-
-        val parsed = json.decodeFromString<ChatCompletionResponse>(body)
-        if (parsed.error != null) {
-            throw Exception(parsed.error.message ?: "API返回错误")
-        }
-
-        return parsed.choices?.firstOrNull()?.message?.content
-            ?: throw Exception("API返回空内容")
-    }
+    
 
     private suspend fun recordTokenUsage(companionId: Long, messageCount: Int, responseLength: Int) {
         try {
@@ -1698,7 +1542,7 @@ $chatText
         }
     }
 
-    fun getTokenUsageRepository(): TokenUsageRepository = tokenUsageRepository
+    
 
     /**
      * 发送图片消息并调用视觉AI模型进行识别
