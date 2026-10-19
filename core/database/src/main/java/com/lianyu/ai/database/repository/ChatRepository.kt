@@ -20,10 +20,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         private val recentCache = java.util.concurrent.ConcurrentHashMap<Long, List<ChatMessage>>()
     }
 
-    /** 缓存预热：由 HomeViewModel 在加载列表时调用 */
-    fun warmCache(companionId: Long, messages: List<ChatMessage>) {
-        recentCache[companionId] = messages
-    }
+
 
     /** 读取缓存（可能为 null），ChatViewModel 进入时先用它做初始数据 */
     fun getCachedRecent(companionId: Long): List<ChatMessage>? = recentCache[companionId]
