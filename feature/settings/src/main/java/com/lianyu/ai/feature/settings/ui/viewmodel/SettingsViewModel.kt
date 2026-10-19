@@ -356,12 +356,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun deleteConfigByProvider(provider: ApiProvider) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteConfig(provider)
-            connectionStatusMap.entries.removeIf {  it.key.startsWith("id:")  }; _connectionStatus.value = connectionStatusMap.toMap()
-        }
-    }
+    
 
     fun refreshConnectionStatus() {
         viewModelScope.launch {
@@ -520,8 +515,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     // [FIX] 补上 kimi，避免 kimi-k2.7-code 等模型被排除
                     val chatKeywords = com.lianyu.ai.common.AiModelConstants.CHAT_MODEL_KEYWORDS
 val chatModels = models.filter { m -> chatKeywords.any { m.contains(it, ignoreCase = true) } }
-fun isExcludedModel(m: String) =
-    com.lianyu.ai.common.AiModelConstants.EXCLUDED_MODEL_KEYWORDS.any { m.contains(it, ignoreCase = true) }
+
                     
 
                     // [FIX] PARTNER 始终走本地随机选择，避免 server randomModel 固定导致每次相同
@@ -783,20 +777,7 @@ fun isExcludedModel(m: String) =
         }
     }
 
-    fun queryBalanceForConfig(config: ApiConfig) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _balanceQueryFailed.value = false
-            val aiService = aiService
-            aiService.queryBalanceWithConfig(config)
-                .onSuccess { balance ->
-                    _balanceInfo.value = balance
-                    _balanceQueryFailed.value = false
-                }.onFailure {
-                    _balanceInfo.value = null
-                    _balanceQueryFailed.value = true
-                }
-        }
-    }
+    
 
     
 
