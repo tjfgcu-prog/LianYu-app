@@ -288,59 +288,9 @@ object OriginOSBatteryOptimizer {
         return safeStartActivity(context, intent)
     }
 
-    /**
-     * 一键打开 OriginOS 完整的后台保活设置引导。
-     * 按顺序跳转：自启动 → 后台高耗电 → 电池优化。
-     *
-     * 由于不能同时打开多个 Activity，这里返回需要用户依次打开的 Intent 列表。
-     */
-    fun getFullBackgroundGuideSteps(context: Context): List<GuideStep> {
-        return buildList {
-            add(
-                GuideStep(
-                    title = "允许自启动",
-                    description = "确保应用能在后台自动启动",
-                    action = { openAutoStartSettings(context) }
-                )
-            )
-            add(
-                GuideStep(
-                    title = "允许后台高耗电",
-                    description = "防止系统清理后台进程",
-                    action = { openBackgroundPowerSettings(context) }
-                )
-            )
-            if (!isIgnoringBatteryOptimizations(context)) {
-                add(
-                    GuideStep(
-                        title = "忽略电池优化",
-                        description = "防止 Doze 模式限制后台运行",
-                        action = { openBatteryOptimizationSettings(context) }
-                    )
-                )
-            }
-        }
-    }
 
-    /**
-     * 获取当前 OriginOS 版本下，电池优化设置的路径说明（用于 UI 文案）。
-     */
-    fun getBatteryOptimizationGuideText(): String {
-        return when {
-            RomUtils.isOriginOS6OrAbove() -> {
-                "设置 → 电池 → 后台耗电管理 → 找到「恋语」→ 允许后台运行 / 高耗电"
-            }
-            RomUtils.isOriginOS3OrAbove() -> {
-                "设置 → 电池 → 后台耗电管理 → 找到「恋语」→ 允许后台高耗电"
-            }
-            RomUtils.isVivo -> {
-                "i管家 → 电池管理 → 后台高耗电 → 找到「恋语」→ 允许"
-            }
-            else -> {
-                "设置 → 电池 → 电池优化 → 找到「恋语」→ 不优化"
-            }
-        }
-    }
+
+
 
     // ------------------------------------------------------------------
     // 私有辅助方法
@@ -397,12 +347,5 @@ object OriginOSBatteryOptimizer {
         }
     }
 
-    /**
-     * 引导步骤数据类。
-     */
-    data class GuideStep(
-        val title: String,
-        val description: String,
-        val action: () -> Boolean
-    )
+
 }
