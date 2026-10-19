@@ -27,10 +27,7 @@ data class CompanionChatDetailSettings(
     
     val stickerProbability: Int = 30, // AI发送表情包的概率 0-100
     val ttsEnabled: Boolean = false, // 是否启用AI回复转语音
-    val ttsProbability: Int = 50, // AI回复转语音的概率 0-100
-    val ntpTimeEnabled: Boolean = false, // 是否启用NTP精确时间感知（关闭则使用设备本地时间）
-        val storyModeEnabled: Boolean = false, // 剧情模式：开=记录每轮并每5轮生成摘要；关=日常模式
-    val updatedAt: Long = System.currentTimeMillis()
+    
 )
 
 class ChatDetailSettingsStore(context: Context) {
@@ -61,9 +58,7 @@ class ChatDetailSettingsStore(context: Context) {
         }
     }
 
-    suspend fun replaceSettings(companionId: Long, settings: CompanionChatDetailSettings) {
-        updateSettings(companionId) { settings }
-    }
+    
 
     suspend fun resetSettings(companionId: Long) {
         dataStore.edit { prefs ->
