@@ -88,29 +88,11 @@ object RomUtils {
 
     fun isOppoOrVivo(): Boolean = isOppo || isVivo
 
-    /**
-     * 判断当前 ROM 是否属于 ColorOS 12+（后台限制更严格）。
-     */
-    fun isColorOS12OrAbove(): Boolean {
-        if (!isOppo) return false
-        return majorVersion >= 12
-    }
 
-    /**
-     * 判断当前 ROM 是否属于 OriginOS 3+（后台限制更严格）。
-     */
-    fun isOriginOS3OrAbove(): Boolean {
-        if (romType != RomType.ORIGIN_OS) return false
-        return majorVersion >= 3
-    }
 
-    /**
-     * 判断当前 ROM 是否属于 OriginOS 5+。
-     */
-    fun isOriginOS5OrAbove(): Boolean {
-        if (romType != RomType.ORIGIN_OS) return false
-        return majorVersion >= 5
-    }
+
+
+
 
     /**
      * 判断当前 ROM 是否属于 OriginOS 6+（基于 Android 15，后台限制最严格）。
