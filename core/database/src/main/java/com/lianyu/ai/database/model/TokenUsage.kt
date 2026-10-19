@@ -25,13 +25,5 @@ data class TokenUsage(
     val timestamp: Long = System.currentTimeMillis(),
     val deviceId: String = ""
 ) {
-    fun addUsage(inputTokens: Long, outputTokens: Long): TokenUsage {
-        return this.copy(
-            inputTokens = this.inputTokens + inputTokens,
-            outputTokens = this.outputTokens + outputTokens,
-            totalTokens = this.totalTokens + inputTokens + outputTokens,
-            requestCount = this.requestCount + 1,
-            timestamp = System.currentTimeMillis()
-        )
-    }
+    
 }
