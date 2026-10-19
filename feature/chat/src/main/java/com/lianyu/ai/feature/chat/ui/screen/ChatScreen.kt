@@ -254,7 +254,7 @@ fun ChatScreen(
                 )
                 
                 is ChatUiEvent.Info -> snackbarHostState.showSnackbar(event.message)
-                is ChatUiEvent.StreamCompleted -> { /* 流式完成，不需要用户感知 */ }
+                
             }
         }
     }
