@@ -15,8 +15,4 @@ sealed class ChatUiEvent {
     /** Recoverable error to show as SnackBar/Toast */
     data class Error(val message: String) : ChatUiEvent()
 
-    
-
-    /** Stream completed successfully */
-    data object StreamCompleted : ChatUiEvent()
 }
