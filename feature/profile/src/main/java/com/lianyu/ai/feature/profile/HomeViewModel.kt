@@ -81,13 +81,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
-    fun markCompanionAsRead(companionId: Long) {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            prefs.edit().putLong("read_$companionId", now).apply()
-            readTimeTriggers[companionId]?.value = now
-        }
-    }
+    
 
     private fun getOrCreateReadTimeFlow(companionId: Long): Flow<Long> {
         return readTimeTriggers.getOrPut(companionId) {
