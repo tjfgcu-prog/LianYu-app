@@ -47,8 +47,7 @@ import java.util.Locale
 
 class LianYuApplication : Application(), ImageLoaderFactory, androidx.work.Configuration.Provider {
 
-    private val _startupState = MutableStateFlow<AppStartupState>(AppStartupState.CriticalInit)
-    val startupState: StateFlow<AppStartupState> = _startupState.asStateFlow()
+    
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
         .memoryCache {
