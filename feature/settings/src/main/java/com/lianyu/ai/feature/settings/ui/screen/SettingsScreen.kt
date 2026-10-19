@@ -639,37 +639,7 @@ private fun ApiCardsSection(
     }
 }
 
-@Composable
-private fun VisionModelSection(
-    isVisible: Boolean,
-    visionEnabled: Boolean,
-    visionModel: String,
-    isDarkTheme: Boolean,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color,
-    onVisionEnabledChanged: (Boolean) -> Unit,
-    onVisionModelChanged: (String) -> Unit
-) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(400, delayMillis = 200)) +
-                slideInVertically(tween(400, delayMillis = 200)) { it / 4 }
-    ) {
-        VisionModelSettingsCard(
-            visionEnabled = visionEnabled,
-            visionModel = visionModel,
-            isDarkTheme = isDarkTheme,
-            textPrimaryColor = textPrimaryColor,
-            textSecondaryColor = textSecondaryColor,
-            onVisionEnabledChanged = onVisionEnabledChanged,
-            onVisionModelChanged = onVisionModelChanged
-        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ApiTutorialCard(isDarkTheme, textPrimaryColor, textSecondaryColor)
-    }
-}
 // ==================== GGUF 本地大模型（自定义导入）====================
 
 @Composable
