@@ -72,7 +72,7 @@ import com.lianyu.ai.feature.settings.ui.viewmodel.SettingsViewModel
 // ============================================================
 
 internal val PetalBackgroundStart = Color(0xFFFBF9F8)
-internal val PetalBackgroundEnd = Color(0xFFFFF0F3)
+
 internal val PetalPrimary = Color(0xFF894C5C)
 internal val PetalPrimaryContainer = Color(0xFFF4A7B9)
 internal val PetalOnPrimaryContainer = Color(0xFF733949)
