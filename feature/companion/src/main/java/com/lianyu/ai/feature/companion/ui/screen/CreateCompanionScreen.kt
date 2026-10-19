@@ -162,9 +162,7 @@ fun CreateCompanionScreen(
         rawPrompt = content
     }
 
-    fun handleGenerateResult(result: String) {
-        if (result.isNotBlank()) rawPrompt = result
-    }
+    
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
