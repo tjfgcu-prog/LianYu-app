@@ -30,15 +30,8 @@ class ChatTurnState {
         
     }
 
-    /** Cancel the active send job if any. Returns the cancelled job or null. */
-    fun cancelSendJob() {
-        sendMessageJob?.cancel()
-    }
 
-    /** Start a new send job, cancelling any previous one. */
-    fun replaceSendJob(job: Job) {
-        sendMessageJob?.cancel()
-        sendMessageJob = job
-    }
+
+    
 
 }
