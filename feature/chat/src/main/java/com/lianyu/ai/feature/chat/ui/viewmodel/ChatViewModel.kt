@@ -99,7 +99,7 @@ class ChatViewModel(
     private val chatBackgroundScope = ApplicationScopeProvider.scope
 
     private val database = AppDatabase.getDatabase(application)
-    private val deviceId = DeviceIdProvider.getDeviceId(application)
+    
     private val chatRepository = ChatRepository(database.chatMessageDao())
     private val companionRepository = CompanionRepository(database.companionDao())
     private val apiConfigRepository = ApiConfigRepository(database.apiConfigDao())
@@ -217,8 +217,7 @@ class ChatViewModel(
     private val _currentApi = MutableStateFlow<ApiProviderInfo?>(null)
     val currentApi: StateFlow<ApiProviderInfo?> = _currentApi.asStateFlow()
 
-    private val _languageWarning = MutableStateFlow<String?>(null)
-    val languageWarning: StateFlow<String?> = _languageWarning.asStateFlow()
+    
 
     // Typing indicator state for this chat
     private val chatTypingState = ChatTypingState()
@@ -230,60 +229,11 @@ class ChatViewModel(
     // 背压: Channel 容量上限 = 100，满时拒绝新消息（不排队，不阻塞）
     private val messageQueue = Channel<String>(capacity = 100)
     private val _queueDepth = MutableStateFlow(0)
-    val queueDepth: StateFlow<Int> = _queueDepth.asStateFlow()
+    
 
     
 
-    // 打包状态: 合并所有 StateFlow 为单一 observable
-    val state: StateFlow<ChatState> = combine(
-        listOf(
-            _companionData, messages, _isLoading, chatTypingState.isTyping,
-            chatTypingState.typingText, _isRegenerating, _reasoningText, _isReasoning,
-            _currentApi, _availableApis, _userName, _userAvatar,
-            _queueDepth, _hasMoreMessages, _isLoadingMore, _languageWarning
-        )
-    ) { values ->
-        @Suppress("UNCHECKED_CAST")
-        ChatState(
-            companionData = values[0] as CompanionEntity?,
-            messages = values[1] as List<ChatMessage>,
-            visibleMessages = values[1] as List<ChatMessage>,
-            isLoading = values[2] as Boolean,
-            isTyping = values[3] as Boolean,
-            typingText = values[4] as String,
-            isRegenerating = values[5] as Boolean,
-            reasoningText = values[6] as String,
-            isReasoning = values[7] as Boolean,
-            currentApi = values[8] as ApiProviderInfo?,
-            availableApis = values[9] as List<ApiProviderInfo>,
-            userName = values[10] as String,
-            userAvatar = values[11] as String?,
-            queueDepth = values[12] as Int,
-            hasMoreMessages = values[13] as Boolean,
-            isLoadingMore = values[14] as Boolean,
-            languageWarning = values[15] as String?
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ChatState())
-
-    // 模块级心跳信号: 父组件可据此做性能决策
-    data class ScreenState(
-        val messageCount: Int = 0,
-        val isLoading: Boolean = false,
-        val isTyping: Boolean = false,
-        val queueDepth: Int = 0,
-        val error: String? = null
-    )
-
-    val screenState: StateFlow<ScreenState> = combine(
-        messages, _isLoading, chatTypingState.isTyping, _queueDepth
-    ) { msgs, loading, typing, depth ->
-        ScreenState(
-            messageCount = msgs.size,
-            isLoading = loading,
-            isTyping = typing,
-            queueDepth = depth
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ScreenState())
+    
 
     init {
         loadCompanionData()
@@ -1105,12 +1055,7 @@ class ChatViewModel(
     /** 是否开启"语音回复"模式（供 UI/Finalizer 读取，实时读取最新配置） */
     fun isVoiceReplyEnabled(): Boolean = chatTtsConfig.mode == ChatTtsMode.VOICE_BAR
 
-    /** 切换语音回复开关并持久化 */
-    fun setVoiceReplyEnabled(enabled: Boolean) {
-        val newConfig = chatTtsConfig.copy(mode = if (enabled) ChatTtsMode.VOICE_BAR else ChatTtsMode.SILENT)
-        chatTtsConfig = newConfig
-        ChatTtsConfig.saveToSharedPreferences(getApplication(), newConfig)
-    }
+    
 
     
 
