@@ -80,12 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        fun resetForTest() {
-            synchronized(LOCK) {
-                INSTANCE?.close()
-                INSTANCE = null
-            }
-        }
+        
 
         fun shutdown() {
             synchronized(LOCK) {
@@ -326,29 +321,7 @@ abstract class AppDatabase : RoomDatabase() {
          * This handles old SQLCipher/native-incompatible databases without crashing
          * the first main-screen render. Files stay inside app-private storage.
          */
-        private fun backupBrokenDatabase(context: Context) {
-            val dbFile = context.applicationContext.getDatabasePath(DB_NAME)
-            val candidates = listOf(
-                dbFile,
-                File(dbFile.path + "-wal"),
-                File(dbFile.path + "-shm"),
-                File(dbFile.path + "-journal")
-            ).filter { it.exists() }
-
-            if (candidates.isEmpty()) return
-
-            val backupDir = File(dbFile.parentFile, "recovery")
-            backupDir.mkdirs()
-            val suffix = System.currentTimeMillis().toString()
-
-            candidates.forEach { file ->
-                val target = File(backupDir, "${file.name}.broken.$suffix")
-                if (!file.renameTo(target)) {
-                    runCatching { file.copyTo(target, overwrite = true) }
-                    runCatching { file.delete() }
-                }
-            }
-        }
+        
 
         private fun addColumnIfMissing(
             db: SupportSQLiteDatabase,
@@ -779,55 +752,9 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        fun restoreFromBackup(context: Context): Boolean {
-            return try {
-                val backupDir = File(context.filesDir, "db_backup")
-                if (!backupDir.exists()) return false
+        
 
-                val backups = backupDir.listFiles()
-                    ?.filter { it.isDirectory && it.name.startsWith("backup_") }
-                    ?.sortedByDescending { it.name }
-                    ?: emptyList()
-
-                if (backups.isEmpty()) return false
-
-                val latestBackup = backups.first()
-                val dbFile = context.getDatabasePath(DB_NAME)
-
-                INSTANCE?.close()
-                INSTANCE = null
-
-                latestBackup.listFiles()?.forEach { backupFile ->
-                    val target = when {
-                        backupFile.name == DB_NAME -> dbFile
-                        else -> File(dbFile.parentFile, backupFile.name)
-                    }
-                    backupFile.copyTo(target, overwrite = true)
-                }
-
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        fun getBackupInfo(context: Context): List<Map<String, Any>> {
-            val backupDir = File(context.filesDir, "db_backup")
-            if (!backupDir.exists()) return emptyList()
-
-            return backupDir.listFiles()
-                ?.filter { it.isDirectory && it.name.startsWith("backup_") }
-                ?.sortedByDescending { it.name }
-                ?.map { backup ->
-                    val totalSize = backup.listFiles()?.sumOf { it.length() } ?: 0L
-                    mapOf(
-                        "name" to backup.name,
-                        "timestamp" to backup.name.removePrefix("backup_"),
-                        "size" to totalSize,
-                        "fileCount" to (backup.listFiles()?.size ?: 0)
-                    )
-                } ?: emptyList()
-        }
+        
 
         fun autoBackupIfNeeded(context: Context) {
             val now = System.currentTimeMillis()
