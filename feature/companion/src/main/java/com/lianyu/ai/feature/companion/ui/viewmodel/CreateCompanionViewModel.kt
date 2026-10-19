@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.lianyu.ai.database.DefaultCompanionSeeder
 import com.lianyu.ai.database.model.CompanionEntity
 import com.lianyu.ai.database.repository.CompanionRepository
-import com.lianyu.ai.database.repository.UserRepository
+
 import com.lianyu.ai.common.ImageUtils
 import com.lianyu.ai.domain.AiServiceProvider
 import com.lianyu.ai.domain.ServiceRegistry
@@ -26,9 +26,7 @@ class CreateCompanionViewModel(application: Application) : AndroidViewModel(appl
     // [C5 FIX] 改为 by lazy 延迟获取：原在构造函数立即 getOrThrow，若页面在 ServiceRegistry
     // 标记初始化完成前被导航到（冷启动 deep link / 配置变更），会抛 IllegalStateException 闪退。
     private val repository by lazy { ServiceRegistry.getOrThrow(CompanionRepository::class.java) }
-    private val userRepository by lazy { ServiceRegistry.getOrThrow(UserRepository::class.java) }
-
-    
+       
 
     private val _existingCompanion = MutableStateFlow<CompanionEntity?>(null)
     val existingCompanion: StateFlow<CompanionEntity?> = _existingCompanion
