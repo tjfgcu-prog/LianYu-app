@@ -43,6 +43,4 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.coil.compose)
     implementation(libs.androidx.datastore.preferences)
-    
-    compileOnly(files("libs/sherpa-onnx-1.13.3.aar"))
 }
