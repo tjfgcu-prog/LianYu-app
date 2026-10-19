@@ -58,11 +58,9 @@ data class ApiConfig(
         return keys.distinct()
     }
 
-    fun hasUserKeys(): Boolean = getUserApiKeys().isNotEmpty()
+    
 
-    fun isBuiltinKey(key: String): Boolean {
-        return BUILTIN_KEYS[provider]?.contains(key) == true
-    }
+    
 }
 
 enum class ApiProvider(val displayName: String, val defaultBaseUrl: String, val defaultModel: String) {
