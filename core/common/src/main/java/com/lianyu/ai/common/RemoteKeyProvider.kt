@@ -11,7 +11,7 @@ import org.json.JSONObject
  */
 object RemoteKeyProvider {
     @Volatile
-    var serverUrl: String = ""
+    
 
     fun openSourceHandshake(ctx: Context): JSONObject = JSONObject().apply {
         put("ok", false)
