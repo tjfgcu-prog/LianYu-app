@@ -141,9 +141,7 @@ class AndroidTtsProvider : TtsProviderInterface {
         }
     }
 
-    fun stopSpeaking() {
-        tts?.stop()
-    }
+    
 
     fun release() {
         synchronized(initLock) {
@@ -154,7 +152,7 @@ class AndroidTtsProvider : TtsProviderInterface {
     }
 
     companion object {
-        const val PROVIDER_ID = "android_tts"
+        
         const val SYSTEM_TTS_PLAYED = "system_tts_played"
         @Volatile
         var lastDiagnostic: String? = null
