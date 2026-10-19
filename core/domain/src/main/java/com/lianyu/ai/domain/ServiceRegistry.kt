@@ -70,12 +70,7 @@ object ServiceRegistry {
         _initialized.value = true
     }
 
-    /**
-     * 重置初始化状态。仅在测试或 Application 重建场景使用。
-     */
-    fun resetInitialized() {
-        _initialized.value = false
-    }
+
 
     /**
      * 获取服务实例。优先返回单例缓存，其次单例工厂（首次创建后缓存），最后工厂模式（每次新建）。
