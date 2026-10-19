@@ -155,16 +155,7 @@ class TokenUsageRepository(context: Context) {
         }
     }
 
-    suspend fun clearAllData(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            dao.deleteAll(deviceId)
-            SecureLog.i("TokenUsage", "Cleared all token usage data")
-            true
-        } catch (e: Exception) {
-            SecureLog.e("TokenUsage", "Failed to clear data", e)
-            false
-        }
-    }
+    
 
     companion object {
         @Volatile
