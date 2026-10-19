@@ -89,7 +89,7 @@ class GroupChatViewModel(
     }
 
     private val _hasMore = MutableStateFlow(false)
-    val hasMore: StateFlow<Boolean> = _hasMore.asStateFlow()
+    
 
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
@@ -113,22 +113,7 @@ class GroupChatViewModel(
         _userAvatar.value = provider?.getAvatar()
     }
 
-    fun loadMoreMessages() {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (_isLoadingMore.value) return@launch
-            _isLoadingMore.value = true
-            try {
-                val total = groupMessageRepository.getMessageCount(groupId)
-                val newLimit = (_messageLimit.value + 50).coerceAtMost(total)
-                if (newLimit > _messageLimit.value) {
-                    _messageLimit.value = newLimit
-                }
-                _hasMore.value = _messageLimit.value < total
-            } finally {
-                _isLoadingMore.value = false
-            }
-        }
-    }
+    
 
     private val _groupData = MutableStateFlow<ChatGroup?>(null)
     val groupData: StateFlow<ChatGroup?> = _groupData.asStateFlow()
@@ -662,7 +647,7 @@ class GroupChatViewModel(
         val mentionContextBlock = MentionParser.buildMentionContext(companion.name, recentSnapshots, currentUserName)
 
         val sessionId = "session_${companion.id}_${System.currentTimeMillis()}"
-        val personalitySeed = companion.personality.hashCode() + companion.name.hashCode()
+        
 
         val personalityTraits = extractPersonalityTraits(companion)
         val groupAtmosphere = detectGroupAtmosphere(historySnapshot, currentUserName)
@@ -900,9 +885,7 @@ class GroupChatViewModel(
         return text.trim().replace(Regex("\\n{2,}"), "\n")
     }
 
-    private fun splitIntoSegments(text: String): List<String> {
-        return MessageSegmenter.split(text, MessageSegmenter.SplitMode.GROUP)
-    }
+    
 
     private suspend fun sendSplitAiMessages(
         rawContent: String,
