@@ -90,13 +90,7 @@ object SecureLog {
         if (isDebug) Log.d(TAG, "[NET][$subtag] $msg")
     }
 
-    /**
-     * CHUNK: 分段/流式响应日志
-     */
-    @JvmStatic
-    fun chunk(subtag: String, msg: String) {
-        if (isDebug) Log.v(TAG, "[CHUNK][$subtag] $msg")
-    }
+
 
     /**
      * TYPING: 对方正在输入中状态日志
