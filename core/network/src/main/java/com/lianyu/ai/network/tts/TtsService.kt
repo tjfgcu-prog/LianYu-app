@@ -30,9 +30,9 @@ class TtsService(private val context: Context) {
         SecureLog.i("TtsService", "Switched TTS provider to ${provider.displayName}")
     }
 
-    fun getCurrentProvider(): TtsProvider = currentProvider
+    
 
-    fun getAvailableProviders(): List<TtsProvider> = TtsProvider.entries.toList()
+    
 
     fun updateConfig(config: TtsConfig) {
         currentConfig = config
@@ -44,7 +44,7 @@ class TtsService(private val context: Context) {
         SecureLog.i("TtsService", "TTS configuration updated")
     }
 
-    fun getConfig(): TtsConfig = currentConfig
+    
 
     suspend fun synthesize(text: String, voiceId: String? = null): String? = withContext(Dispatchers.IO) {
         try {
