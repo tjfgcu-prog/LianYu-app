@@ -84,7 +84,7 @@ Pass arguments via navigation path parameters, not global state.
 ### Network (`core:network`)
 
 - `AiService.kt` — AI dialogue gateway supporting OpenAI, DeepSeek, Codex, Gemini, DashScope, local model.
-TlsConfig — 仅允许 TLS 1.2/1.3，禁止明文 HTTP。
+- `TlsConfig.kt` — 仅允许 TLS 1.2/1.3，禁止明文 HTTP。
 
 ### Local AI Model (`feature:localmodel`)
 
