@@ -10,7 +10,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.lianyu.ai.database.AppDatabase
 
 import com.lianyu.ai.common.ChatConstants
-import com.lianyu.ai.common.text.MessageSegmenter
+
 import com.lianyu.ai.database.model.ChatGroup
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.CompanionEntity
