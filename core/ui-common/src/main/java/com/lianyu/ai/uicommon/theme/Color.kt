@@ -21,7 +21,7 @@ val WeChatDarkTextTertiary = Color(0xFF8A727C)
 val PinkPrimary = Color(0xFFF4A6B5)
 val PinkLight = Color(0xFFF8C8D8)
 val PinkDark = Color(0xFFD48494)
-val PinkMuted = Color(0xFF6B4A52)
+
 
 // ============================================================
 // Pink Romance Theme - Light Mode
@@ -31,26 +31,14 @@ val WeChatLightBackground = Color(0xFFFFF5F7)
 val WeChatLightSurface = Color(0xFFFFEEF2)
 val WeChatLightCard = Color(0xFFFFFFFF)
 val WeChatLightDivider = Color(0xFFF0D5DC)
-
 val WeChatLightTextPrimary = Color(0xFF2D1F24)
 val WeChatLightTextSecondary = Color(0xFF8A6B74)
-
-
-
-
-
 
 // ============================================================
 // Status Colors
 // ============================================================
 
-
 val ErrorRed = Color(0xFFFA5151)
-
-
-
-
-
 
 // ============================================================
 // Legacy / Compatibility Colors
