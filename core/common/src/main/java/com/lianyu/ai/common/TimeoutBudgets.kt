@@ -10,9 +10,6 @@ object TimeoutBudgets {
     
 
     // === 网络操作 ===
-    // [P0 FIX] API_CHAT_MS 从25s降至15s：原值导致消息队列串行堵塞，用户连续发消息时延迟=15s x N条
-    const val API_CHAT_MS = 15_000L          // 普通AI对话 (15s)
-    
     const val TTS_SYNTH_MS = 10_000L         // TTS合成 (10s)
     
     // [M11 FIX] ChatViewModel 使用的实际超时值（OkHttp callTimeout 对齐，网络慢时需更长）
