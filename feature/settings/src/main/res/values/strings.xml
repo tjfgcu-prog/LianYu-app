@@ -18,7 +18,7 @@
     <string name="theme_system_desc">自动切换浅色/深色</string>
 
     <!-- Settings Screen -->
-    <string name="settings_title">API 设置</string>
+    
     <string name="settings_hint">点击展开配置API，测试连接成功后显示已接入</string>
     <string name="configured">已配置</string>
     
@@ -55,11 +55,5 @@
     <string name="yandere_data_update_time">数据更新时间：%1$s</string>
     <string name="yandere_installed_apps_count">已安装应用数量：%1$d</string>
     <string name="yandere_top_usage_apps">今天使用最多的应用：</string>
-    <string name="yandere_what_is">什么是病娇模式？</string>
-    <string name="yandere_what_is_desc">病娇模式会让 AI 在合适的时机以略带占有欲、关心的语气提及你的设备使用情况，使互动更具沉浸感。</string>
-    <string name="yandere_what_data">收集了哪些数据？</string>
-    <string name="yandere_what_data_desc">仅收集应用使用统计和已安装应用列表，所有数据仅保存在设备本地，不会上传到任何服务器。</string>
-    <string name="yandere_upload_question">数据会离开设备吗？</string>
-    <string name="yandere_upload_answer">不会。所有数据仅作为本地 AI 提示词的一部分使用，不会上传、同步或共享。</string>
-    <string name="yandere_experimental_hint">实验性功能：开启后可能显著改变 AI 的对话风格，请根据个人偏好谨慎使用。</string>
+    
 </resources>
