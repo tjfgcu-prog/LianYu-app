@@ -1,6 +1,6 @@
 package com.lianyu.ai.feature.chat.ui.viewmodel
 
-import android.util.Log
+
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
