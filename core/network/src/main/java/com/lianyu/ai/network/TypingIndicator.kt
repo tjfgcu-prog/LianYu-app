@@ -1,10 +1,10 @@
 package com.lianyu.ai.network
 
-import com.lianyu.ai.common.SecureLog
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.atomic.AtomicLong
+
 
 /**
  * TypingIndicator — 对方正在输入中状态管理
