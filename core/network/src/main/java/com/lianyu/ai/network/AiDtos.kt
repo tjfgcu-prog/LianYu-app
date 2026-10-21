@@ -4,18 +4,10 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
-import retrofit2.http.Query
+
 import retrofit2.http.Url
 
-interface OpenAiApi {
-    @POST
-    suspend fun chatCompletion(
-        @Url url: String,
-        @Header("Authorization") authorization: String,
-        @Header("Content-Type") contentType: String = "application/json",
-        @Body request: ChatCompletionRequest
-    ): ChatCompletionResponse
-}
+
 
 interface AnthropicApi {
     @POST
@@ -28,55 +20,7 @@ interface AnthropicApi {
     ): AnthropicResponse
 }
 
-interface GeminiApi {
-    @POST
-    suspend fun generateContent(
-        @Url url: String,
-        @Query("key") apiKey: String,
-        @Header("Content-Type") contentType: String = "application/json",
-        @Body request: GeminiRequest
-    ): GeminiResponse
-}
 
-@Serializable
-data class ChatCompletionRequest(
-    val model: String,
-    val messages: List<Message>,
-    val temperature: Float = 0.7f,
-    val max_tokens: Int? = null,
-    val top_p: Float = 0.9f,
-    val frequency_penalty: Float = 0.0f,
-    val presence_penalty: Float = 0.0f,
-    val stream: Boolean = false,
-    val tools: List<ToolDefinition>? = null,
-    val tool_choice: String? = null
-)
-
-@Serializable
-data class ToolDefinition(
-    val type: String = "function",
-    val function: ToolFunction
-)
-
-@Serializable
-data class ToolFunction(
-    val name: String,
-    val description: String,
-    val parameters: ToolParameters
-)
-
-@Serializable
-data class ToolParameters(
-    val type: String = "object",
-    val properties: Map<String, ToolProperty>,
-    val required: List<String>? = null
-)
-
-@Serializable
-data class ToolProperty(
-    val type: String,
-    val description: String
-)
 
 @Serializable
 data class Message(
@@ -100,23 +44,8 @@ data class ToolCallFunction(
     val arguments: String
 )
 
-@Serializable
-data class VisionMessage(
-    val role: String,
-    val content: List<ContentPart>
-)
 
-@Serializable
-data class ContentPart(
-    val type: String,
-    val text: String? = null,
-    val image_url: ImageUrl? = null
-)
 
-@Serializable
-data class ImageUrl(
-    val url: String
-)
 
 @Serializable
 data class ChatCompletionResponse(
@@ -168,12 +97,7 @@ data class AnthropicError(
     val message: String? = null
 )
 
-@Serializable
-data class GeminiRequest(
-    val contents: List<GeminiContent>,
-    val systemInstruction: GeminiContent? = null,
-    val generationConfig: GeminiGenerationConfig? = null
-)
+
 
 @Serializable
 data class GeminiContent(
@@ -186,11 +110,7 @@ data class GeminiPart(
     val text: String
 )
 
-@Serializable
-data class GeminiGenerationConfig(
-    val temperature: Float? = null,
-    val maxOutputTokens: Int? = null
-)
+
 
 @Serializable
 data class GeminiResponse(
