@@ -56,7 +56,7 @@ import coil.request.ImageRequest
 import com.lianyu.ai.database.model.ChatGroup
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.CompanionEntity
-import com.lianyu.ai.uicommon.theme.PinkMuted
+
 import com.lianyu.ai.uicommon.theme.PinkPrimary
 import com.lianyu.ai.uicommon.theme.AdaptiveSizing
 import com.lianyu.ai.uicommon.theme.rememberAdaptiveSizing
