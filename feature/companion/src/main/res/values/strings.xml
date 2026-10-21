@@ -1,12 +1,12 @@
 <resources>
     <!-- 列表/联系人通用文案（角色中性） -->
-    <string name="create_companion">创建专属恋人</string>
-    <string name="edit_companion">编辑恋人</string>
+
+    
     <string name="add_avatar">添加头像</string>
     <string name="select_avatar">点击选择头像</string>
-    <string name="name_hint">给TA起个名字吧</string>
+    
     <string name="name_label">名字 *</string>
-    <string name="name_placeholder">例如：小樱</string>
+    
     <string name="age_label">年龄</string>
     <string name="age_placeholder">例如：18</string>
     <string name="role_setting">角色设定 *</string>
@@ -18,10 +18,10 @@
     <string name="delete_confirm_msg">确定要删除 %1$s 吗？此操作不可恢复。</string>
     <string name="delete">删除</string>
     <string name="cancel">取消</string>
-    <string name="my_girlfriends">我的恋人</string>
-    <string name="add_girlfriend">添加恋人</string>
+
+    
     <string name="no_companions">还没有虚拟恋人</string>
-    <string name="create_hint">点击右下角创建你的专属恋人吧</string>
+    
     <string name="group_chat">群聊</string>
     <string name="friends">好友</string>
     <string name="people_count">%1$d 人</string>
