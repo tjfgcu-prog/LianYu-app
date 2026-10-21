@@ -1,7 +1,7 @@
 package com.lianyu.ai.common.safety
 
 import kotlin.math.exp
-import kotlin.math.ln
+
 import java.security.SecureRandom
 
 /**
