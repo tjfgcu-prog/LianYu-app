@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.lianyu.ai.common.ApplicationScopeProvider
 import com.lianyu.ai.common.ChatConstants
 import com.lianyu.ai.common.CompanionRole
-import com.lianyu.ai.common.DeviceIdProvider
+
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
 
