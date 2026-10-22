@@ -22,9 +22,9 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:domain"))
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.datastore.preferences)
-    implementation(libs.kotlinx.serialization.json)
+    
+    
+    
     
     implementation("io.github.ljcamargo:llamacpp-kotlin:0.4.0")
     testImplementation(libs.junit)
