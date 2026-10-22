@@ -1,6 +1,6 @@
 package com.lianyu.ai.database.repository
 
-import com.lianyu.ai.database.DefaultCompanionSeeder
+
 import com.lianyu.ai.database.dao.CompanionDao
 import com.lianyu.ai.database.model.CompanionEntity
 import kotlinx.coroutines.flow.Flow
