@@ -1,8 +1,7 @@
 package com.lianyu.ai.feature.backup.model
 
 import com.lianyu.ai.common.UserSelfProfile
-import com.lianyu.ai.database.model.FileFormat
-import com.lianyu.ai.database.model.MessageType
+
 import kotlinx.serialization.Serializable
 
 /**
