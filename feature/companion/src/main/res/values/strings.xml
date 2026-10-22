@@ -1,12 +1,8 @@
 <resources>
     <!-- 列表/联系人通用文案（角色中性） -->
-
-    
     <string name="add_avatar">添加头像</string>
     <string name="select_avatar">点击选择头像</string>
-    
     <string name="name_label">名字 *</string>
-    
     <string name="age_label">年龄</string>
     <string name="age_placeholder">例如：18</string>
     <string name="role_setting">角色设定 *</string>
@@ -18,10 +14,7 @@
     <string name="delete_confirm_msg">确定要删除 %1$s 吗？此操作不可恢复。</string>
     <string name="delete">删除</string>
     <string name="cancel">取消</string>
-
-    
     <string name="no_companions">还没有虚拟恋人</string>
-    
     <string name="group_chat">群聊</string>
     <string name="friends">好友</string>
     <string name="people_count">%1$d 人</string>
@@ -33,28 +26,17 @@
 
     <!-- 角色差异化文案：创建/编辑页使用 -->
     <string name="create_companion_girlfriend">创建专属女友</string>
-    
     <string name="edit_companion_girlfriend">编辑女友</string>
-    
     <string name="name_hint_girlfriend">给她起个名字吧</string>
-    
     <string name="name_placeholder_girlfriend">例如：小樱</string>
-    
     <string name="body_type_label">身材</string>
     <string name="body_type_placeholder_girlfriend">例如：纤细、匀称、娇小</string>
-    
     <string name="profession_label">职业</string>
     <string name="profession_placeholder_girlfriend">例如：学生、插画师、幼师</string>
-    
     <string name="personality_tags_label">性格标签</string>
     <string name="personality_tags_hint">点击标签快速设置性格方向</string>
-
-
-    
     <string name="role_hint_girlfriend">直接输入完整人设，例如：林念安，18岁，温柔体贴的学霸女友...</string>
-    
     <string name="create_girlfriend">创建女友</string>
-    
     <string name="ai_generate">AI 生成</string>
     <string name="ai_generating">生成中...</string>
     <string name="reference_character">参考角色（如：明日方舟-阿米娅，可选）</string>
