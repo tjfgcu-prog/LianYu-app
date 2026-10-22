@@ -14,7 +14,7 @@ import com.lianyu.ai.common.AppForegroundTracker
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.ChatConstants
 import com.lianyu.ai.common.ChatDetailSettingsDataStoreProvider
-import com.lianyu.ai.common.SecureLog
+
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ChatMessage
 import com.lianyu.ai.database.model.MessageType
