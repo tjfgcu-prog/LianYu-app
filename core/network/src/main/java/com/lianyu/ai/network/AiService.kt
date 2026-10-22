@@ -4,7 +4,7 @@ import android.content.Context
 import com.lianyu.ai.common.AppSettingsStore
 import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.common.DeviceIdProvider
-import com.lianyu.ai.common.RolePromptProvider
+
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.common.TimeoutBudgets
@@ -31,7 +31,7 @@ import com.lianyu.ai.database.repository.CompanionRepository
 import com.lianyu.ai.database.repository.TokenUsageRepository
 import com.lianyu.ai.database.repository.UserRepository
 
-import kotlinx.coroutines.CancellationException
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -42,10 +42,10 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+
+
+
+
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
