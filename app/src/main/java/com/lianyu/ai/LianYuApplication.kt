@@ -3,8 +3,7 @@ package com.lianyu.ai
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
-import com.lianyu.ai.common.DeviceIdProvider
-import com.lianyu.ai.common.RomUtils
+
 import com.lianyu.ai.common.SaltStore
 import com.lianyu.ai.common.SecureLog
 import com.lianyu.ai.database.AppDatabase
