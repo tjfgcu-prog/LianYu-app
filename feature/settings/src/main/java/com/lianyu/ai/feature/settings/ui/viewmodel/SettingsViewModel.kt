@@ -10,7 +10,7 @@ import com.lianyu.ai.database.model.ApiConfig
 import com.lianyu.ai.database.model.ApiProvider
 import com.lianyu.ai.database.repository.ApiConfigRepository
 import com.lianyu.ai.domain.AiServiceProvider
-import com.lianyu.ai.domain.LocalModelProvider
+
 
 import com.lianyu.ai.domain.ServiceRegistry
 import com.lianyu.ai.network.AiService
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
