@@ -17,15 +17,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+
+
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.content.edit
 import com.lianyu.ai.common.AppForegroundTracker
-import com.lianyu.ai.common.BatteryOptimizationHelper
+
 import com.lianyu.ai.common.FrameRateManager
 import com.lianyu.ai.common.RomUtils
 import com.lianyu.ai.domain.ServiceRegistry
