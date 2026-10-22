@@ -15,16 +15,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
+
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -54,9 +54,9 @@ import com.lianyu.ai.database.dao.TokenUsageDao
 import com.lianyu.ai.uicommon.theme.PetalPrimary
 import com.lianyu.ai.uicommon.theme.PetalPrimaryContainer
 import com.lianyu.ai.uicommon.theme.PetalOnPrimaryContainer
-import com.lianyu.ai.uicommon.theme.PetalSurface
+
 import com.lianyu.ai.uicommon.theme.PetalGreen
-import com.lianyu.ai.uicommon.theme.PetalError
+
 
 
 import kotlinx.coroutines.flow.first
