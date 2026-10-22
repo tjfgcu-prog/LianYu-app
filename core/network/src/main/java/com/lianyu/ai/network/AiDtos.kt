@@ -97,30 +97,9 @@ data class AnthropicError(
     val message: String? = null
 )
 
-
-
-@Serializable
-data class GeminiContent(
-    val role: String? = null,
-    val parts: List<GeminiPart>
-)
-
-@Serializable
-data class GeminiPart(
-    val text: String
-)
-
-
-
 @Serializable
 data class GeminiResponse(
-    val candidates: List<GeminiCandidate>? = null,
     val error: GeminiError? = null
-)
-
-@Serializable
-data class GeminiCandidate(
-    val content: GeminiContent? = null
 )
 
 @Serializable
