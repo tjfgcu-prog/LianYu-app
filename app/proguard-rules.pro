@@ -106,9 +106,7 @@
 -dontwarn androidx.room.paging.**
 
 # Retrofit interfaces and HTTP annotations.
-
 -keep,allowobfuscation interface com.lianyu.ai.network.AnthropicApi { *; }
-
 -keepclassmembers,allowshrinking,allowobfuscation interface * {
     @retrofit2.http.* <methods>;
 }
