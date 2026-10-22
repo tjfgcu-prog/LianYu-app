@@ -19,11 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
+
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 
@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.lianyu.ai.uicommon.model.ApiProviderInfo
 import com.lianyu.ai.uicommon.theme.AdaptiveSizing
 import com.lianyu.ai.uicommon.theme.rememberAdaptiveSizing
-import kotlinx.coroutines.launch
+
 
 @Composable
 fun ChatInputExtensionPanel(
