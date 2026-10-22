@@ -1,7 +1,7 @@
 package com.lianyu.ai.feature.chat.ui.viewmodel
 
 import android.app.Application
-import android.util.Log
+
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -13,7 +13,7 @@ import com.lianyu.ai.common.CompanionRole
 import com.lianyu.ai.common.RolePromptProvider
 import com.lianyu.ai.common.SecureLog
 
-import com.lianyu.ai.common.text.MessageSegmenter
+
 import com.lianyu.ai.database.AppDatabase
 import com.lianyu.ai.database.model.ApiProvider
 import com.lianyu.ai.database.model.ChatMessage
@@ -62,13 +62,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
+
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+
+
+
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeoutOrNull
 
