@@ -1,7 +1,7 @@
 package com.lianyu.ai.network
 
 import com.lianyu.ai.database.model.ChatMessage
-import com.lianyu.ai.database.model.CompanionEntity as CompanionModel
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
