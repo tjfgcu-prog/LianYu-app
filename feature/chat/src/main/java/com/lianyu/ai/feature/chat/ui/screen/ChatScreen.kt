@@ -8,68 +8,68 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+
+
+
+
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.asImageBitmap
+
+
 import com.lianyu.ai.uicommon.theme.ThemeViewModel
 import com.lianyu.ai.uicommon.theme.ThemeMode
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.ExperimentalFoundationApi
+
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.combinedClickable
+
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+
+
+
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import kotlin.math.abs
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.statusBars
+
+
+
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.DeleteOutline
+
+
+
+
+
+
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,7 +77,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.ui.unit.DpOffset
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -93,10 +93,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
+
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -104,15 +104,15 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import com.lianyu.ai.feature.chat.R
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import com.lianyu.ai.database.model.ChatMessage
-import com.lianyu.ai.database.model.CompanionEntity as CompanionModel
-import com.lianyu.ai.database.model.MessageType
+
+
+
+
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModel
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatViewModelFactory
 import com.lianyu.ai.feature.chat.ui.viewmodel.ChatUiEvent
@@ -125,21 +125,21 @@ import com.lianyu.ai.uicommon.component.ChatTimeDivider
 import com.lianyu.ai.common.StickerInfo
 import com.lianyu.ai.common.StickerManager
 import com.lianyu.ai.uicommon.component.CompanionAvatar
-import com.lianyu.ai.uicommon.component.UserAvatar
 
-import com.lianyu.ai.uicommon.component.VoiceMessageBubble
-import com.lianyu.ai.uicommon.component.getChatBackground
+
+
+
 import com.lianyu.ai.uicommon.component.getChatBackgroundByKey
 import com.lianyu.ai.uicommon.component.getChatBackgroundKey
 import com.lianyu.ai.uicommon.component.isCustomBackground
 import com.lianyu.ai.uicommon.component.rememberBackgroundBitmap
 
-import com.lianyu.ai.uicommon.theme.AdaptiveSizing
+
 import com.lianyu.ai.uicommon.theme.rememberAdaptiveSizing
 import com.lianyu.ai.common.ReadStatusManager
 import com.lianyu.ai.common.HardwareInfo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
