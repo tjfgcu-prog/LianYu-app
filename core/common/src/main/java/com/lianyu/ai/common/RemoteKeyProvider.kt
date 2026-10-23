@@ -10,9 +10,6 @@ import org.json.JSONObject
  * credentials. Users must configure their own API keys in Settings.
  */
 object RemoteKeyProvider {
-    @Volatile
-    
-
     fun openSourceHandshake(ctx: Context): JSONObject = JSONObject().apply {
         put("ok", false)
         put("error", "open_source_build_requires_user_api_config")
