@@ -24,15 +24,6 @@ object HardwareInfo {
             return _tier!!
         }
 
-    
-        get() = CpuInfo.maxRefreshRate
-
-    
-        get() = tier == Tier.HIGH || tier == Tier.ULTRA
-
-    
-        get() = tier == Tier.MEDIUM
-
     private fun detectTier(): Tier {
         return when {
             CpuInfo.isSnapdragon8GenSeries -> Tier.ULTRA
